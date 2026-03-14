@@ -249,6 +249,61 @@ function kumbhInsights(rows){
   };
 }
 function renderGranth(){ const host=q('granthList'); host.innerHTML=''; const sel=q('deleteKumbhSelect'); if(sel){ sel.innerHTML='<option value=>Select Kumbh</option>'; state.granth.forEach(k=>{ const op=document.createElement('option'); op.value=String(k.id); op.textContent=`#${String(k.id).padStart(2,'0')} Kumbh`; sel.appendChild(op); }); } const items=[...state.granth].reverse(); if(!items.length){ host.innerHTML='<div class="kumbh">No Kumbh history yet.</div>'; return;} items.forEach(k=>{ const wrap=document.createElement('div'); wrap.className='kumbh'; const insight=kumbhInsights(k.rows||[]); const rows=[...(k.rows||[])].reverse().map(r=>{ const meta=insight.rowMeta.get(Number(r.chakra)) || { ySelectedInRound:'-', yDistanceTraveled:'-', kSelectedInRound:'-', kDistanceTraveled:'-', capped:[], returned:[] }; return `<tr><td>${r.chakra}</td><td>${r.y ?? '-'}</td><td>${meta.ySelectedInRound}</td><td>${meta.yDistanceTraveled}</td><td>${r.k ?? '-'}</td><td>${meta.kSelectedInRound}</td><td>${meta.kDistanceTraveled}</td><td>${formatRoundInfoEntries(meta.capped)}</td><td>${formatRoundInfoEntries(meta.returned)}</td><td>${r.ahuti}</td><td>${r.axyapatra}</td></tr>`; }).join(''); const repeatLine=Object.entries(insight.counts).map(([n,c])=>`<span class="repeat-pill">${n}: ${c}</span>`).join(''); wrap.innerHTML=`<div class="label">#${String(k.id).padStart(2,'0')} Kumbh</div><div class="table-wrap compact-table"><table><thead><tr><th>Chakra</th><th>Y</th><th>Y Selected in Round</th><th>Y Traveled Steps</th><th>K</th><th>K Selected in Round</th><th>K Traveled Steps</th><th>Capped</th><th>Return Hit</th><th>Āhuti</th><th>Axyapatra</th></tr></thead><tbody>${rows}</tbody></table></div><div class="granth-summary"><div class="summary-row"><span class="summary-label">Hot Numbers</span><span>${insight.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">Cool Numbers</span><span>${insight.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">Repeat Count</span><div class="repeat-grid">${repeatLine}</div></div></div>`; host.appendChild(wrap);}); }
+
+function renderDrishti(){
+  const body = q('drishtiTable')?.querySelector('tbody');
+  if(body){
+    body.innerHTML = (state.drishti||[]).slice().reverse().map(r => `
+      <tr>
+        <td>${r.side ?? '-'}</td>
+        <td>${r.number ?? '-'}</td>
+        <td>${r.activationChakra ?? '-'}</td>
+        <td>${r.winChakra ?? '-'}</td>
+        <td>${r.steps ?? '-'}</td>
+        <td>${r.prevLoss ?? '-'}</td>
+        <td>${r.winBet ?? '-'}</td>
+        <td>${r.net ?? '-'}</td>
+        <td>${r.status ?? '-'}</td>
+      </tr>`).join('');
+  }
+  if(q('sumChakras')) q('sumChakras').textContent = String(state.currentChakra || 0);
+  if(q('sumAhuti')) q('sumAhuti').textContent = String(state.summary?.totalAhuti || 0);
+  if(q('sumProfit')) q('sumProfit').textContent = String((state.liveBankroll || 0) - (state.settings?.bankroll || 0));
+  if(q('sumExposure')) q('sumExposure').textContent = String(state.summary?.maxExposure || 0);
+}
+
+function renderSopana(){
+  const body1 = q('ladderTable')?.querySelector('tbody');
+  if(body1){
+    body1.innerHTML = (state.ladder||[]).map((row, idx) => `
+      <tr>
+        <td>S${idx+1}</td>
+        <td><input type="number" data-ladder-index="${idx}" value="${Number(row.bet)||0}" inputmode="numeric"></td>
+        <td>${row.winReturn ?? ((Number(row.bet)||0) * 9)}</td>
+        <td>${row.netProfit ?? 0}</td>
+        <td>${row.ifLoseTotal ?? 0}</td>
+      </tr>`).join('');
+  }
+  const body2 = q('secondLadderTable')?.querySelector('tbody');
+  if(body2){
+    const rows = [];
+    let cumulative = 0;
+    for(let step=1; step<=15; step++){
+      const bet = secondLadderBet(step);
+      cumulative += bet;
+      rows.push(`
+        <tr>
+          <td>2S${step}</td>
+          <td>${bet}</td>
+          <td>${bet*9}</td>
+          <td>${(bet*9)-cumulative}</td>
+          <td>${-cumulative}</td>
+        </tr>`);
+    }
+    body2.innerHTML = rows.join('');
+  }
+}
+
 function renderYantra(){ const s=state.settings; q('setBankroll').value=s.bankroll; q('setTargetDollar').value=s.targetDollar; q('setTargetPercent').value=s.targetPercent; q('setStopLoss').value=s.stopLoss; q('setMin').value=s.min; q('setMax').value=s.max; q('setCoin').value=s.coin; q('setTargetNum').value=s.targetNum; q('setDoubleLadder').value=s.doubleLadder||'on'; q('setKeypadMode').value=s.keypadMode; q('setMaxSteps').value=s.maxSteps; q('setReserve').value=s.reserve; q('setCapRule').value=s.capRule; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; }
 function renderMedha(){ const active=[]; const cap=[]; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B') active.push(`${side}${n} ${info.ladder===2?'2S':'S'}${info.step}`); if(info.status==='C') cap.push(`${side}${n}`);} }); q('medhaPanel').innerHTML=`<div class="medha-item"><div class="label">Active Formation</div><div>${active.join(' | ') || 'None'}</div></div><div class="medha-item"><div class="label">CAP Numbers</div><div>${cap.join(' | ') || 'None'}</div></div>`; }
 function renderActiveTab(){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===`screen-${state.activeTab}`)); document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.target===state.activeTab)); q('screenTitle').textContent=titles[state.activeTab]||titles.sangram; }
