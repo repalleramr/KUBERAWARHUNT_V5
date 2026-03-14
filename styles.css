@@ -107,3 +107,9 @@ th{position:sticky;top:0;background:#22160d;color:var(--gold)}
 #granthList table{min-width:360px}
 #ladderTable th,#ladderTable td,#secondLadderTable th,#secondLadderTable td,#drishtiTable th,#drishtiTable td{padding:7px 5px;font-size:11px}
 #granthList th,#granthList td{padding:7px 5px;font-size:11px}
+
+.granth-summary{margin-top:12px;padding:12px;border:1px solid rgba(212,175,55,.18);border-radius:12px;background:rgba(255,255,255,.02)}
+.summary-row{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;margin:6px 0}
+.summary-label{min-width:110px;font-weight:700;color:var(--accent,#d4af37)}
+.repeat-grid{display:flex;gap:8px;flex-wrap:wrap}
+.repeat-pill{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.18);font-size:12px}
