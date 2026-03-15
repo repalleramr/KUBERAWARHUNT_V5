@@ -149,98 +149,7 @@ function renderBoards(){
 function renderVyuha(){ ['Y','K'].forEach(side=>{ const host=q(side==='Y'?'vyuhaY':'vyuhaK'); host.innerHTML=''; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const d=document.createElement('div'); d.className='state-cell'; d.innerHTML=`<div class="num">${n}</div><div class="meta">${statusCode(info)}</div>`; host.appendChild(d);} }); }
 function formatNextAhuti(side){ const groups=new Map(); for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B'){ const bet=currentBetFor(info); if(!groups.has(bet)) groups.set(bet,[]); groups.get(bet).push(`${n}(${info.ladder===2?'2S':'S'}${Math.max(1, Number(info.step)||0)})`); } } const parts=[...groups.entries()].sort((a,b)=>b[0]-a[0]).map(([bet,arr])=>`${bet} on ${arr.join(' ')}`); return `${side} ${parts.join(' | ') || '-'}`; }
 function renderSangram(){ q('bankValue').textContent=fmtMoney(state.liveBankroll); q('chakraValue').textContent=`Round : ${state.currentChakra}`; q('nextY').textContent=formatNextAhuti('Y'); q('nextK').textContent=formatNextAhuti('K'); q('nextT').textContent=`T ${nextExposureTotal()}`; const lastRow=currentKumbh()?.rows?.at(-1); const last = lastRow ? `${lastRow.y ?? '-'} | ${lastRow.k ?? '-'}` : '-'; if(q('lastResultValue')) q('lastResultValue').textContent=last; }
-function sideStatsSummary(counts){
-  const entries = Object.entries(counts).filter(([,v])=>v>0);
-  if(!entries.length) return { hot:['-'], cool:['-'] };
-  const maxCount = Math.max(...entries.map(([,v])=>v));
-  const minCount = Math.min(...entries.map(([,v])=>v));
-  return {
-    hot: entries.filter(([,v])=>v===maxCount).map(([n,v])=> `${n}(${v})`),
-    cool: entries.filter(([,v])=>v===minCount).map(([n,v])=> `${n}(${v})`)
-  };
-}
-function formatRoundInfoEntries(entries){ return entries.length ? entries.join(' | ') : '-'; }
-function kumbhInsights(rows){
-  const sortedRows = [...(rows||[])].sort((a,b)=>(Number(a.chakra)||0)-(Number(b.chakra)||0));
-  const rowMeta = new Map();
-  const counts = {
-    Y: Object.fromEntries(Array.from({length:10},(_,i)=>[String(i),0])),
-    K: Object.fromEntries(Array.from({length:10},(_,i)=>[String(i),0]))
-  };
-  const lastSeen = {
-    Y: Object.fromEntries(Array.from({length:10},(_,i)=>[String(i),null])),
-    K: Object.fromEntries(Array.from({length:10},(_,i)=>[String(i),null]))
-  };
-  const details = { Y: [], K: [] };
-
-  function processSide(side, value, chakra, meta){
-    if(value === '-' || value === '' || value === null || value === undefined) return;
-    const num = Number(value);
-    if(!Number.isFinite(num) || num < 0 || num > 9) return;
-    counts[side][String(num)] += 1;
-    const key = side==='Y' ? 'y' : 'k';
-    const prev = lastSeen[side][String(num)];
-    if(prev === null){
-      meta[`${key}SelCode`] = `S${num}S1`;
-    } else {
-      const travel = Math.max(1, chakra - prev);
-      meta[`${key}SelCode`] = `S${num}S1`;
-      meta[`${key}HitCode`] = `H${num}S${travel}`;
-      meta[`${key}SelectedRound`] = `R${prev}`;
-      meta[`${key}HitRound`] = `R${chakra}`;
-      meta[`${key}TravelSteps`] = `S${travel}`;
-      details[side].push({
-        side,
-        number: num,
-        selectedRound: prev,
-        hitRound: chakra,
-        travelSteps: travel,
-        selectCode: `S${num}S1`,
-        hitCode: `H${num}S${travel}`
-      });
-    }
-    lastSeen[side][String(num)] = chakra;
-  }
-
-  for(const row of sortedRows){
-    const chakra = Number(row.chakra)||0;
-    const meta = {
-      ySelCode:'-', yHitCode:'-', ySelectedRound:'-', yHitRound:'-', yTravelSteps:'-',
-      kSelCode:'-', kHitCode:'-', kSelectedRound:'-', kHitRound:'-', kTravelSteps:'-',
-      capped:[], returned:[]
-    };
-    processSide('Y', row.y, chakra, meta);
-    processSide('K', row.k, chakra, meta);
-    rowMeta.set(chakra, meta);
-  }
-
-  return { rowMeta, counts, details, yStats: sideStatsSummary(counts.Y), kStats: sideStatsSummary(counts.K) };
-}
-function renderGranth(){
-  const host=q('granthList'); host.innerHTML='';
-  const sel=q('deleteKumbhSelect');
-  if(sel){
-    sel.innerHTML='<option value=>Select Kumbh</option>';
-    state.granth.forEach(k=>{ const op=document.createElement('option'); op.value=String(k.id); op.textContent=`#${String(k.id).padStart(2,'0')} Kumbh`; sel.appendChild(op); });
-  }
-  const items=[...state.granth].reverse();
-  if(!items.length){ host.innerHTML='<div class="kumbh">No Kumbh history yet.</div>'; return; }
-  items.forEach(k=>{
-    const wrap=document.createElement('div'); wrap.className='kumbh';
-    const insight=kumbhInsights(k.rows||[]);
-    const rows=[...(k.rows||[])].reverse().map(r=>{
-      const meta=insight.rowMeta.get(Number(r.chakra)) || { ySelCode:'-', yHitCode:'-', kSelCode:'-', kHitCode:'-', capped:[], returned:[] };
-      return `<tr><td>${r.chakra}</td><td>${r.y ?? '-'}</td><td>${meta.ySelCode}</td><td>${meta.yHitCode}</td><td>${r.k ?? '-'}</td><td>${meta.kSelCode}</td><td>${meta.kHitCode}</td><td>${formatRoundInfoEntries(meta.capped)}</td><td>${formatRoundInfoEntries(meta.returned)}</td><td>${r.ahuti}</td><td>${r.axyapatra}</td></tr>`;
-    }).join('');
-    const yRpt=Object.entries(insight.counts.Y).map(([n,c])=>`<span class="repeat-pill">${n}:${c}</span>`).join('');
-    const kRpt=Object.entries(insight.counts.K).map(([n,c])=>`<span class="repeat-pill">${n}:${c}</span>`).join('');
-    const yDetails=insight.details.Y.length ? insight.details.Y.map(d=>`${d.number} ${d.selectCode} ${d.selectedRound} ${d.hitCode} ${d.hitRound} ${d.travelSteps}`).join(' | ') : '-';
-    const kDetails=insight.details.K.length ? insight.details.K.map(d=>`${d.number} ${d.selectCode} ${d.selectedRound} ${d.hitCode} ${d.hitRound} ${d.travelSteps}`).join(' | ') : '-';
-    wrap.innerHTML=`<div class="label">#${String(k.id).padStart(2,'0')} Kumbh</div><div class="table-wrap compact-table"><table><thead><tr><th>R</th><th>Y</th><th>YSel</th><th>YHit</th><th>K</th><th>KSel</th><th>KHit</th><th>Cap</th><th>Ret</th><th>Ah</th><th>Ax</th></tr></thead><tbody>${rows}</tbody></table></div><div class="granth-summary"><div class="summary-row"><span class="summary-label">Y Hot</span><span>${insight.yStats.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">Y Cool</span><span>${insight.yStats.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">Y Rpt</span><div class="repeat-grid">${yRpt}</div></div><div class="summary-row"><span class="summary-label">K Hot</span><span>${insight.kStats.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">K Cool</span><span>${insight.kStats.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">K Rpt</span><div class="repeat-grid">${kRpt}</div></div><div class="summary-row detail-row"><span class="summary-label">Y Det</span><span>${yDetails}</span></div><div class="summary-row detail-row"><span class="summary-label">K Det</span><span>${kDetails}</span></div></div>`;
-    host.appendChild(wrap);
-  });
-}
-
+function renderGranth(){ const host=q('granthList'); host.innerHTML=''; const sel=q('deleteKumbhSelect'); if(sel){ sel.innerHTML='<option value=>Select Kumbh</option>'; state.granth.forEach(k=>{ const op=document.createElement('option'); op.value=String(k.id); op.textContent=`#${String(k.id).padStart(2,'0')} Kumbh`; sel.appendChild(op); }); } const items=[...state.granth].reverse(); if(!items.length){ host.innerHTML='<div class="kumbh">No Kumbh history yet.</div>'; return;} items.forEach(k=>{ const wrap=document.createElement('div'); wrap.className='kumbh'; const rows=[...k.rows].reverse().map(r=>`<tr><td>${r.chakra}</td><td>${r.y ?? '-'}</td><td>${r.k ?? '-'}</td><td>${r.ahuti}</td><td>${r.axyapatra}</td></tr>`).join(''); wrap.innerHTML=`<div class="label">#${String(k.id).padStart(2,'0')} Kumbh</div><div class="table-wrap compact-table"><table><thead><tr><th>Chakra</th><th>Y</th><th>K</th><th>Āhuti</th><th>Axyapatra</th></tr></thead><tbody>${rows}</tbody></table></div>`; host.appendChild(wrap);}); }
 function renderDrishti(){ q('sumChakras').textContent=Math.max(0,state.currentChakra); q('sumAhuti').textContent=state.summary.totalAhuti; q('sumProfit').textContent=state.liveBankroll-state.settings.bankroll; q('sumExposure').textContent=state.summary.maxExposure; const tbody=q('drishtiTable').querySelector('tbody'); tbody.innerHTML=''; [...state.drishti].reverse().forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.side}</td><td>${r.number}</td><td>${r.activationChakra}</td><td>${r.winChakra}</td><td>${r.steps}</td><td>${r.prevLoss}</td><td>${r.winBet}</td><td>${r.net}</td><td>${r.status}</td>`; tbody.appendChild(tr); }); }
 function renderSopana(){ const tbody=q('ladderTable').querySelector('tbody'); tbody.innerHTML=''; state.ladder.forEach((row,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.step}</td><td><input class="ladder-bet-input" type="number" data-ladder-index="${idx}" inputmode="numeric" enterkeyhint="next" value="${row.bet}"></td><td>${row.winReturn}</td><td>${row.netProfit}</td><td>${row.ifLoseTotal}</td>`; tbody.appendChild(tr); }); const secondTable=q('secondLadderTable'); if(secondTable){ const tbody2=secondTable.querySelector('tbody'); tbody2.innerHTML=''; let prevLoss=0; for(let i=1;i<=Math.min(state.settings.maxSteps,15);i++){ const bet=secondLadderBet(i); const winReturn=bet*9; prevLoss += bet; const tr=document.createElement('tr'); tr.innerHTML=`<td>S${i}</td><td><input class="ladder-bet-input" type="number" data-second-ladder-index="${i-1}" inputmode="numeric" enterkeyhint="next" value="${bet}"></td><td>${winReturn}</td><td>${winReturn - prevLoss}</td><td>${-prevLoss}</td>`; tbody2.appendChild(tr); } } }
 function renderYantra(){ const s=state.settings; q('setBankroll').value=s.bankroll; q('setTargetDollar').value=s.targetDollar; q('setTargetPercent').value=s.targetPercent; q('setStopLoss').value=s.stopLoss; q('setMin').value=s.min; q('setMax').value=s.max; q('setCoin').value=s.coin; q('setTargetNum').value=s.targetNum; q('setDoubleLadder').value=s.doubleLadder||'on'; q('setKeypadMode').value=s.keypadMode; q('setMaxSteps').value=s.maxSteps; q('setReserve').value=s.reserve; q('setCapRule').value=s.capRule; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; }
@@ -291,7 +200,7 @@ async function handleTap(side,num,el){
     }
   } catch(err){
     console.error('Keypad entry failed', err);
-    showToast('ENTRY WARNING', (err && err.message) ? err.message : 'Entry kept unchanged', 'warn');
+    showToast('ENTRY ERROR','Result entry reset', 'warn');
   } finally {
     keypadBusy = false;
   }
@@ -507,51 +416,8 @@ async function exportLadderCsv(){ syncFirstLadderFromInputs(); const content=lad
 function exportDrishtiCsv(){ const header='Side,Number,ActivationChakra,WinChakra,StepsToWin,PreviousLoss,WinningBet,NetProfitLoss,Status\n'; const rows=state.drishti.map(r=>[r.side,r.number,r.activationChakra,r.winChakra,r.steps,r.prevLoss,r.winBet,r.net,r.status].join(',')).join('\n'); downloadFile('drishti.csv',header+rows,'text/csv'); }
 function exportDrishtiPdf(){ const html=`<html><head><title>Drishti</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #888;padding:6px;text-align:left}h1{font-size:20px}</style></head><body><h1>KUBERA WARHUNT V4 - DRISHTI</h1>${q('drishtiTable').outerHTML}</body></html>`; const w=window.open('','_blank'); if(!w) return; w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>w.print(), 250); }
 function importDrishtiCsv(e){ const file=e.target.files[0]; if(!file) return; file.text().then(text=>{ state.drishti=text.trim().split(/\r?\n/).slice(1).filter(Boolean).map(line=>{ const [side,number,activationChakra,winChakra,steps,prevLoss,winBet,net,status]=line.split(','); return {side,number,activationChakra,winChakra,steps,prevLoss,winBet,net,status}; }); renderAll(); showToast('DRISHTI LOADED','CSV imported'); }); e.target.value=''; }
-function escapeCsvValue(value){ const str=String(value ?? ""); return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str; }
-function parseSimpleCsvLines(text){
-  const lines=String(text||'').trim().split(/\r?\n/).filter(Boolean);
-  return lines.slice(1).map(line=>{
-    const out=[]; let cur=''; let inQuotes=false;
-    for(let i=0;i<line.length;i++){
-      const ch=line[i];
-      if(ch==='"'){
-        if(inQuotes && line[i+1]==='"'){ cur+='"'; i++; }
-        else inQuotes=!inQuotes;
-      } else if(ch===',' && !inQuotes){ out.push(cur); cur=''; }
-      else cur+=ch;
-    }
-    out.push(cur);
-    return out;
-  });
-}
-function granthCsvContent(){
-  const header='KumbhId,Chakra,Y,YSel,YHit,K,KSel,KHit,Cap,Ret,Ah,Ax,Side,Number,SelectedRound,HitRound,TravelSteps,SelectCode,HitCode\n';
-  const rows=[];
-  state.granth.forEach(k=>{
-    const insight=kumbhInsights(k.rows||[]);
-    const detailMap=new Map();
-    [...insight.details.Y, ...insight.details.K].forEach(d=>{
-      const key=`${d.side}-${d.hitRound}`;
-      if(!detailMap.has(key)) detailMap.set(key, []);
-      detailMap.get(key).push(d);
-    });
-    (k.rows||[]).forEach(r=>{
-      const chakra=Number(r.chakra)||0;
-      const meta=insight.rowMeta.get(chakra) || { ySelCode:'-', yHitCode:'-', kSelCode:'-', kHitCode:'-', capped:[], returned:[] };
-      const details=[...(detailMap.get(`Y-${chakra}`)||[]), ...(detailMap.get(`K-${chakra}`)||[])];
-      if(details.length){
-        details.forEach(d=>rows.push([k.id,r.chakra,r.y ?? '-',meta.ySelCode,meta.yHitCode,r.k ?? '-',meta.kSelCode,meta.kHitCode,formatRoundInfoEntries(meta.capped),formatRoundInfoEntries(meta.returned),r.ahuti ?? 0,r.axyapatra ?? 0,d.side,d.number,d.selectedRound,d.hitRound,d.travelSteps,d.selectCode,d.hitCode].map(escapeCsvValue).join(',')));
-      } else {
-        rows.push([k.id,r.chakra,r.y ?? '-',meta.ySelCode,meta.yHitCode,r.k ?? '-',meta.kSelCode,meta.kHitCode,formatRoundInfoEntries(meta.capped),formatRoundInfoEntries(meta.returned),r.ahuti ?? 0,r.axyapatra ?? 0,'','','','','',''].map(escapeCsvValue).join(','));
-      }
-    });
-  });
-  return header + rows.join('\n');
-}
 function exportGranthJson(){ downloadFile('granth.json',JSON.stringify(state.granth,null,2),'application/json'); }
-function exportGranthCsv(){ downloadFile('granth.csv',granthCsvContent(),'text/csv'); }
-function importGranthJson(e){ const file=e.target.files[0]; if(!file) return; file.text().then(text=>{ const name=(file.name||'').toLowerCase(); const trimmed=text.trim(); if(name.endsWith('.csv') || trimmed.startsWith('KumbhId,')){ const grouped=new Map(); parseSimpleCsvLines(text).forEach(cols=>{ const kumbhId=Number(cols[0])||0; const chakra=cols[1]; if(!kumbhId) return; if(!grouped.has(kumbhId)) grouped.set(kumbhId,{id:kumbhId,rows:[]}); if(chakra!=='' && chakra!==undefined){ grouped.get(kumbhId).rows.push({ chakra:Number(chakra)||'', y:(cols[2]==='-'?'':(Number(cols[2])||cols[2])), k:(cols[5]==='-'?'':(Number(cols[5])||cols[5])), ahuti:Number(cols[10])||0, axyapatra:Number(cols[11])||0 }); } }); state.granth=[...grouped.values()].sort((a,b)=>a.id-b.id); } else { state.granth=JSON.parse(text); } state.currentKumbhId=state.granth.at(-1)?.id||null; renderAll(); showToast('GRANTH LOADED','History imported'); }); e.target.value=''; }
-
+function importGranthJson(e){ const file=e.target.files[0]; if(!file) return; file.text().then(text=>{ state.granth=JSON.parse(text); state.currentKumbhId=state.granth.at(-1)?.id||null; renderAll(); showToast('GRANTH LOADED','History imported'); }); e.target.value=''; }
 function importLadderCsv(e){ const file=e.target.files[0]; if(!file) return; file.text().then(text=>{ const lines=text.trim().split(/\r?\n/).slice(1).filter(Boolean); let cumulative1=0, cumulative2=0; lines.forEach(line=>{ const [ladder,stepLabel,betRaw]=line.split(','); const idx=Math.max(0, Number(String(stepLabel).replace(/\D/g,''))-1); const bet=Number(betRaw)||0; if(String(ladder).trim().toUpperCase()==='L2'){ cumulative2 += bet; } else { cumulative1 += bet; state.ladder[idx] = { step:`S${idx+1}`, bet, winReturn:bet*9, netProfit:(bet*9)-cumulative1, ifLoseTotal:-cumulative1 }; } }); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA LOADED','CSV ladder loaded'); }).finally(()=>{ e.target.value=''; }); }
 function downloadFile(name,content,type){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
 function setupInstall(){ window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; q('installBtn').classList.remove('hidden'); }); q('installBtn').addEventListener('click', async()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; q('installBtn').classList.add('hidden'); }); }
@@ -606,7 +472,7 @@ function setupControls(){
   document.addEventListener('keydown', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; if(e.key==='Enter'){ e.preventDefault(); const current=Number(el.dataset.ladderIndex); const next=document.querySelector(`[data-ladder-index="${current+1}"]`); if(next){ next.focus(); next.select(); } else { el.blur(); } } });
   document.addEventListener('focusin', e=>{ const el=e.target; if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(()=>el.select(),0); });
   q('exportCsvBtn').addEventListener('click', exportDrishtiCsv); if(q('exportPdfBtn')) q('exportPdfBtn').addEventListener('click', exportDrishtiPdf); q('loadCsvBtn').addEventListener('click', ()=>q('loadCsvFile').click()); q('loadCsvFile').addEventListener('change', importDrishtiCsv);
-  q('exportGranthBtn').addEventListener('click', ()=>{ const fmt=q('granthExportFormat')?.value || 'json'; if(fmt==='csv') exportGranthCsv(); else exportGranthJson(); }); q('importGranthBtn').addEventListener('click', ()=>q('importGranthFile').click()); q('importGranthFile').addEventListener('change', importGranthJson);
+  q('exportGranthBtn').addEventListener('click', exportGranthJson); q('importGranthBtn').addEventListener('click', ()=>q('importGranthFile').click()); q('importGranthFile').addEventListener('change', importGranthJson);
   q('deleteGranthBtn').addEventListener('click', ()=>{ const sel=q('deleteKumbhSelect'); const id=Number(sel?.value||0); if(id){ state.granth=state.granth.filter(k=>k.id!==id).map((k,idx)=>({ ...k, id: idx+1 })); state.currentKumbhId=state.granth.at(-1)?.id||null; renderAll(); showToast('KUMBH DELETED','Selected Kumbh removed'); return; } state.granth=[]; state.currentKumbhId=null; renderAll(); showToast('GRANTH PURGED','All Kumbh history removed'); });
   q('historyUndoBtn')?.addEventListener('click', undoLast);
   q('confirmCancelBtn').addEventListener('click', ()=>closeClearKumbh(false));
