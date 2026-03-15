@@ -64,8 +64,8 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap}
 .table-wrap{margin-top:10px;overflow:auto;border-radius:14px;border:1px solid rgba(246,198,107,.15);-webkit-overflow-scrolling:touch}
-table{width:100%;border-collapse:collapse;min-width:460px;background:#1a110a}
-th,td{padding:8px 6px;border-bottom:1px solid rgba(246,198,107,.08);text-align:left;font-size:12px;white-space:nowrap}
+table{width:100%;border-collapse:collapse;min-width:420px;background:#1a110a;table-layout:fixed}
+th,td{padding:6px 4px;border-bottom:1px solid rgba(246,198,107,.08);text-align:left;font-size:11px;white-space:nowrap}
 th{position:sticky;top:0;background:#22160d;color:var(--gold)}
 .stat-value{font-size:28px;font-weight:800;margin-top:8px;color:var(--gold)}
 .settings-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px;max-height:calc(100dvh - 280px);overflow:auto;padding-right:2px}
@@ -107,3 +107,18 @@ th{position:sticky;top:0;background:#22160d;color:var(--gold)}
 #granthList table{min-width:360px}
 #ladderTable th,#ladderTable td,#secondLadderTable th,#secondLadderTable td,#drishtiTable th,#drishtiTable td{padding:7px 5px;font-size:11px}
 #granthList th,#granthList td{padding:7px 5px;font-size:11px}
+
+
+#granthList table{min-width:520px}
+#granthList th,#granthList td{padding:6px 4px;font-size:11px;white-space:nowrap}
+#granthList .granth-summary{margin-top:14px;display:grid;gap:10px}
+#granthList .summary-row{display:grid;grid-template-columns:70px 1fr;gap:10px;align-items:start}
+#granthList .summary-label{font-weight:700;color:#f2c974}
+#granthList .repeat-grid{display:flex;flex-wrap:wrap;gap:8px}
+#granthList .repeat-pill{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:999px;border:1px solid rgba(212,157,74,.28);background:rgba(255,255,255,.03)}
+#granthList .detail-row span:last-child{font-size:11px;line-height:1.5;word-break:break-word;white-space:normal}
+
+#granthList .table-wrap{overflow-x:auto}
+#granthList th,#granthList td{text-overflow:ellipsis;overflow:hidden}
+.action-strip{display:flex;gap:8px;flex-wrap:wrap}
+.strip-btn{flex:1 1 0;min-width:0}
