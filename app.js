@@ -284,16 +284,11 @@ function flashLockedKey(el){ if(!el) return; el.classList.add('key-locked-flash'
 
 async function handleTap(side,num,el){
   if(keypadBusy) return;
-  if(num!==0){
-    const info = state?.numbers?.[side]?.[num];
-    if(info && info.status==='L'){
-      flashLockedKey(el);
-      return;
-    }
-  }
+  const isLockedTap = num!==0 && state?.numbers?.[side]?.[num]?.status==='L';
   keypadBusy = true;
   try{
-    glowKey(el);
+    if(isLockedTap) flashLockedKey(el);
+    else glowKey(el);
     if(document.activeElement instanceof HTMLElement && document.activeElement !== el) document.activeElement.blur();
     if(state.settings.keypadMode==='combined'){
       pending[side]=num;
