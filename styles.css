@@ -110,7 +110,7 @@ th{position:sticky;top:0;background:#22160d;color:var(--gold)}
 #granthList th,#granthList td{padding:7px 5px;font-size:11px}
 
 
-#granthList table{min-width:520px}
+#granthList table{min-width:760px;width:max-content}
 #granthList th,#granthList td{padding:6px 4px;font-size:11px;white-space:nowrap}
 #granthList .granth-summary{margin-top:14px;display:grid;gap:10px}
 #granthList .summary-row{display:grid;grid-template-columns:70px 1fr;gap:10px;align-items:start}
@@ -119,7 +119,7 @@ th{position:sticky;top:0;background:#22160d;color:var(--gold)}
 #granthList .repeat-pill{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:999px;border:1px solid rgba(212,157,74,.28);background:rgba(255,255,255,.03)}
 #granthList .detail-row span:last-child{font-size:11px;line-height:1.5;word-break:break-word;white-space:normal}
 
-#granthList .table-wrap{overflow-x:auto}
-#granthList th,#granthList td{text-overflow:ellipsis;overflow:hidden}
+#granthList .table-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+#granthList th,#granthList td{text-overflow:clip;overflow:visible}
 .action-strip{display:flex;gap:8px;flex-wrap:wrap}
 .strip-btn{flex:1 1 0;min-width:0}
