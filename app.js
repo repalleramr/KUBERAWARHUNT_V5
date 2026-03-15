@@ -157,13 +157,9 @@ function formatNextAhuti(side){ const groups=new Map(); for(let n=1;n<=9;n++){ c
 function renderSangram(){ q('bankValue').textContent=fmtMoney(state.liveBankroll); q('chakraValue').textContent=`Round : ${state.currentChakra}`; q('nextY').textContent=formatNextAhuti('Y'); q('nextK').textContent=formatNextAhuti('K'); q('nextT').textContent=`T ${nextExposureTotal()}`; const lastRow=currentKumbh()?.rows?.at(-1); const last = lastRow ? `${lastRow.y ?? '-'} | ${lastRow.k ?? '-'}` : '-'; if(q('lastResultValue')) q('lastResultValue').textContent=last; }
 function sideStatsSummary(counts){
   const entries = Object.entries(counts).filter(([n])=>n!=='0');
-  const positive = entries.filter(([,v])=>v>0);
-  const hotPool = positive.length ? positive : entries;
-  const maxCount = Math.max(...hotPool.map(([,v])=>v));
-  const minCount = Math.min(...entries.map(([,v])=>v));
   return {
-    hot: hotPool.filter(([,v])=>v===maxCount).map(([n,v])=> `${n}(${v})`),
-    cool: entries.filter(([,v])=>v===minCount).map(([n,v])=> `${n}(${v})`)
+    hot: entries.filter(([,v])=>v>4).map(([n,v])=> `${n}(${v})`),
+    cool: entries.filter(([,v])=>v<4).map(([n,v])=> `${n}(${v})`)
   };
 }
 function formatRoundInfoEntries(entries){ return entries.length ? entries.join(' | ') : '-'; }
