@@ -117,12 +117,14 @@ function freshState(){
   };
 }
 function reviveState(raw){ const base = freshState(); const settings={...base.settings,...(raw.settings||{})}; if(!Number.isFinite(Number(settings.stopLoss)) || Number(settings.stopLoss)<=0) settings.stopLoss = base.settings.stopLoss; if(!Number.isFinite(Number(settings.stopLossPerNumber))) settings.stopLossPerNumber = base.settings.stopLossPerNumber; if(!settings.doubleLadder) settings.doubleLadder = 'on'; return {...base,...raw,settings,numbers:raw.numbers||base.numbers,summary:{...base.summary,...(raw.summary||{})},ladder:Array.isArray(raw.ladder)&&raw.ladder.length?raw.ladder:buildLadder(settings),activeTab:raw.activeTab||'sangram'}; }
-function snapshotState(){ return JSON.stringify({ state, pending, historyStack, redoStack }); }
-function restoreSnapshot(payload){ const snap = typeof payload==='string' ? JSON.parse(payload) : payload; state = reviveState(snap.state || snap); pending = snap.pending || {Y:null,K:null}; historyStack = Array.isArray(snap.historyStack) ? snap.historyStack : []; redoStack = Array.isArray(snap.redoStack) ? snap.redoStack : []; }
-function loadState(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return freshState(); const parsed = JSON.parse(raw); if(parsed && parsed.state) restoreSnapshot(parsed); else state = reviveState(parsed); return state; }catch{ return freshState(); } }
+function coreSnapshot(){ return { state: clone(state), pending: clone(pending) }; }
+function historySnapshot(){ return JSON.stringify(coreSnapshot()); }
+function persistedSnapshot(){ return JSON.stringify(coreSnapshot()); }
+function restoreSnapshot(payload){ const snap = typeof payload==='string' ? JSON.parse(payload) : payload; state = reviveState(snap.state || snap); pending = snap.pending || {Y:null,K:null}; if(!Array.isArray(historyStack)) historyStack = []; if(!Array.isArray(redoStack)) redoStack = []; }
+function loadState(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return freshState(); const parsed = JSON.parse(raw); restoreSnapshot(parsed); historyStack = []; redoStack = []; return state; }catch{ historyStack = []; redoStack = []; return freshState(); } }
 let state = freshState();
 loadState();
-function saveState(){ localStorage.setItem(STORAGE_KEY, snapshotState()); }
+function saveState(){ try{ localStorage.setItem(STORAGE_KEY, persistedSnapshot()); } catch(err){ console.warn('State save skipped', err); } }
 function currentKumbh(){ return state.granth.find(k => k.id === state.currentKumbhId) || null; }
 function ensureKumbh(){ if(currentKumbh()) return currentKumbh(); const id=(state.granth.at(-1)?.id||0)+1; const k={id,rows:[]}; state.granth.push(k); state.currentKumbhId=id; return k; }
 function secondLadderBet(step){ const start=roundUpToCoin(state.settings.max/4,state.settings.coin); if(step<=5) return start; if(step<=10) return Math.min(state.settings.max,start*2); if(step<=15) return Math.min(state.settings.max,start*3); return state.settings.max; }
@@ -252,9 +254,9 @@ function renderAll(){ renderActiveTab(); renderBoards(); renderVyuha(); renderSa
 
 function startPrayoga(){ if(state.currentChakra===0 && !(currentKumbh()?.rows?.length)){ state.liveBankroll = state.settings.bankroll; } else if(state.currentChakra!==0 || currentKumbh()?.rows?.length){ state.currentKumbhId=null; state.liveBankroll = state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; } const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('SANGRAM AARAMBHA', `#${String(kumbh.id).padStart(2,'0')} Kumbh ready`); }
 async function clearCurrentSession(){ if(!(await askClearKumbh())) return; state.liveBankroll=state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; state.currentKumbhId=null; const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('KUMBHA SHUDDHI',`#${String(kumbh.id).padStart(2,'0')} Kumbh ready`); }
-function recordSnapshot(){ historyStack.push(snapshotState()); if(historyStack.length>20) historyStack.shift(); redoStack = []; }
-function undoLast(){ const prev=historyStack.pop(); if(!prev) return; redoStack.push(snapshotState()); restoreSnapshot(prev); renderAll(); showToast('CHAKRA PUNARAVRITTI','Last chakra reverted'); }
-function redoLast(){ const next=redoStack.pop(); if(!next) return; historyStack.push(snapshotState()); restoreSnapshot(next); renderAll(); showToast('CHAKRA PUNARAGAMANA','Last chakra restored'); }
+function recordSnapshot(){ historyStack.push(historySnapshot()); if(historyStack.length>20) historyStack.shift(); redoStack = []; }
+function undoLast(){ const prev=historyStack.pop(); if(!prev) return; redoStack.push(historySnapshot()); restoreSnapshot(prev); renderAll(); showToast('CHAKRA PUNARAVRITTI','Last chakra reverted'); }
+function redoLast(){ const next=redoStack.pop(); if(!next) return; historyStack.push(historySnapshot()); restoreSnapshot(next); renderAll(); showToast('CHAKRA PUNARAGAMANA','Last chakra restored'); }
 
 function pushDrishti(rec){ state.drishti.push(rec); }
 function resolveNumber(side,num,notes,rowEvents){ const info=state.numbers[side][num]; if(info.status==='L'){ return; }
