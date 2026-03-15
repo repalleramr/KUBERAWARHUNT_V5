@@ -45,6 +45,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 .tile .meta{font-size:12px;font-weight:800;color:var(--muted)}
 .tile .meta.step1{color:var(--green)} .tile .meta.step2{color:var(--cyan)} .tile .meta.step3{color:var(--blue)} .tile .meta.step4{color:var(--orange)} .tile .meta.step5,.tile .meta.step6{color:var(--red)}
 .tile:active,.tile.key-glow{transform:scale(.98);border-color:rgba(246,198,107,.9);box-shadow:0 0 0 1px rgba(246,198,107,.55),0 0 12px rgba(246,198,107,.38),0 0 22px rgba(246,140,0,.18), inset 0 0 10px rgba(246,198,107,.1)}
+.tile.key-locked-flash{transform:scale(.98);border-color:rgba(207,76,60,.98)!important;box-shadow:0 0 0 1px rgba(207,76,60,.65),0 0 14px rgba(207,76,60,.42),0 0 24px rgba(207,76,60,.22), inset 0 0 12px rgba(207,76,60,.12)!important}
 .state-A,.state-B{border-color:rgba(246,198,107,.64);box-shadow:0 0 0 1px rgba(246,198,107,.35), 0 0 16px rgba(246,198,107,.14)}
 .state-L{background:linear-gradient(180deg,#6b511c,#3b2c11);border-color:rgba(246,198,107,.85)}
 .state-C{border-color:rgba(207,76,60,.95);box-shadow:0 0 0 1px rgba(207,76,60,.45),0 0 18px rgba(207,76,60,.18)}

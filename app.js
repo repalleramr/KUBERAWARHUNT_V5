@@ -158,7 +158,7 @@ function renderSangram(){ q('bankValue').textContent=fmtMoney(state.liveBankroll
 function sideStatsSummary(counts){
   const entries = Object.entries(counts).filter(([n])=>n!=='0');
   return {
-    hot: entries.filter(([,v])=>v>4).map(([n,v])=> `${n}(${v})`),
+    hot: entries.filter(([,v])=>v>=4).map(([n,v])=> `${n}(${v})`),
     cool: entries.filter(([,v])=>v<4).map(([n,v])=> `${n}(${v})`)
   };
 }
@@ -280,8 +280,17 @@ async function processIndividual(side,num){ recordSnapshot(); state.currentChakr
   state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const notes=[]; if(num===0) await advanceAfterLoss(side,notes); else { await advanceAfterLoss(side,[]); resolveNumber(side,num,notes); }
   currentKumbh()?.rows.push({ chakra:state.currentChakra, y: side==='Y'?num:'-', k: side==='K'?num:'-', ahuti:exposure, axyapatra:state.liveBankroll });
   renderAll(); notes.forEach(n=>showToast(n.title,n.text,n.kind||'')); }
+function flashLockedKey(el){ if(!el) return; el.classList.add('key-locked-flash'); setTimeout(()=>el.classList.remove('key-locked-flash'), 220); }
+
 async function handleTap(side,num,el){
   if(keypadBusy) return;
+  if(num!==0){
+    const info = state?.numbers?.[side]?.[num];
+    if(info && info.status==='L'){
+      flashLockedKey(el);
+      return;
+    }
+  }
   keypadBusy = true;
   try{
     glowKey(el);
