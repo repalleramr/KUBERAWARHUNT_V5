@@ -131,6 +131,7 @@ function secondLadderBet(step){ const start=roundUpToCoin(state.settings.max/4,s
 function currentBetFor(info){ return info.ladder===2 ? secondLadderBet(info.step||1) : (state.ladder[Math.max(0,(info.step||1)-1)]?.bet || state.settings.max); }
 function soldierStepNetProfit(info){ const bet=currentBetFor(info); return (bet*8) - (Number(info?.prevLoss) || 0); }
 async function askCapDecision(side,num,info){ const stopLossPerNumber=Number(state.settings.stopLossPerNumber); if(state.settings.capRule!=='on' || info.ladder!==1 || !Number.isFinite(stopLossPerNumber)) return false; const stepNetProfit=soldierStepNetProfit(info); if(stepNetProfit>stopLossPerNumber) return false; const capNow=await askModal({ title:'CAP DECISION', text:`${side}${num} step net profit ${stepNetProfit}. Stop Loss / Number ${stopLossPerNumber}. CAP now?`, okLabel:'Now', cancelLabel:'Next', okClass:'warn' }); return !!capNow; }
+async function askCapReturnDecision(side,num){ return !!(await askModal({ title:'CAP RETURN DECISION', text:`${side}${num} came back on track. Return this number to betting?`, okLabel:'Return', cancelLabel:'Stay CAP', okClass:'warn' })); }
 function nextExposureTotal(){ let total=0; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A' || info.status==='B') total += currentBetFor(info); }}); return total; }
 function previewNextAhutiFor(info){
   if(!info || (info.status!=='A' && info.status!=='B')) return null;
@@ -273,8 +274,10 @@ function undoLast(){ const prev=historyStack.pop(); if(!prev) return; redoStack.
 function redoLast(){ const next=redoStack.pop(); if(!next) return; historyStack.push(historySnapshot()); restoreSnapshot(next); renderAll(); showToast('CHAKRA PUNARAGAMANA','Last chakra restored'); }
 
 function pushDrishti(rec){ state.drishti.push(rec); }
-function resolveNumber(side,num,notes,rowEvents){ const info=state.numbers[side][num]; if(info.status==='L'){ return; }
+async function resolveNumber(side,num,notes,rowEvents){ const info=state.numbers[side][num]; if(info.status==='L'){ return; }
   if(info.status==='C'){
+    const shouldReturn = await askCapReturnDecision(side,num);
+    if(!shouldReturn) return;
     info.status='B'; info.ladder=2; info.step=1; info.pendingSecond=false; if(rowEvents) rowEvents.ret.push(`${side}${num}`); notes.push({title:'CAP RETURNED',text:`${side}${num} back on track`,kind:'warn'}); return;
   }
   if(info.status==='I'){
@@ -289,13 +292,13 @@ async function advanceAfterLoss(side,notes,rowEvents,winningNum=null){ for(let n
       else info.status='A';
     } else { if(info.step>15) info.step=15; info.status='B'; }
   } }
-async function processCombined(){ if(pending.Y===null || pending.K===null) return; recordSnapshot(); state.currentChakra += 1; ensureKumbh(); const y=pending.Y, k=pending.K; pending={Y:null,K:null}; let exposure=nextExposureTotal(); state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const notes=[]; const rowEvents={cap:[],ret:[]}; if(y===0) await advanceAfterLoss('Y',notes,rowEvents); else { await advanceAfterLoss('Y',[],rowEvents,y); resolveNumber('Y',y,notes,rowEvents); } if(k===0) await advanceAfterLoss('K',notes,rowEvents); else { await advanceAfterLoss('K',[],rowEvents,k); resolveNumber('K',k,notes,rowEvents); }
+async function processCombined(){ if(pending.Y===null || pending.K===null) return; recordSnapshot(); state.currentChakra += 1; ensureKumbh(); const y=pending.Y, k=pending.K; pending={Y:null,K:null}; let exposure=nextExposureTotal(); state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const notes=[]; const rowEvents={cap:[],ret:[]}; if(y===0) await advanceAfterLoss('Y',notes,rowEvents); else { await advanceAfterLoss('Y',[],rowEvents,y); await resolveNumber('Y',y,notes,rowEvents); } if(k===0) await advanceAfterLoss('K',notes,rowEvents); else { await advanceAfterLoss('K',[],rowEvents,k); await resolveNumber('K',k,notes,rowEvents); }
   currentKumbh()?.rows.push({ chakra:state.currentChakra, y, k, cap:rowEvents.cap, ret:rowEvents.ret, ahuti:exposure, axyapatra:state.liveBankroll });
   if(state.liveBankroll <= state.settings.bankroll - state.settings.stopLoss) notes.push({title:'TREASURY WARNING',text:'Axyapatra approaching Raksha Rekha',kind:'warn'});
   if(state.liveBankroll < state.settings.reserve) notes.push({title:'TREASURY WARNING',text:'Axyapatra below Raksha Nidhi',kind:'warn'});
   renderAll(); notes.forEach(n=>showToast(n.title,n.text,n.kind||'')); }
 async function processIndividual(side,num){ recordSnapshot(); state.currentChakra += 1; ensureKumbh(); let exposure=0; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B') exposure += currentBetFor(info); }
-  state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const notes=[]; if(num===0) await advanceAfterLoss(side,notes); else { await advanceAfterLoss(side,[],undefined,num); resolveNumber(side,num,notes); }
+  state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const notes=[]; if(num===0) await advanceAfterLoss(side,notes); else { await advanceAfterLoss(side,[],undefined,num); await resolveNumber(side,num,notes); }
   currentKumbh()?.rows.push({ chakra:state.currentChakra, y: side==='Y'?num:'-', k: side==='K'?num:'-', ahuti:exposure, axyapatra:state.liveBankroll });
   renderAll(); notes.forEach(n=>showToast(n.title,n.text,n.kind||'')); }
 function flashLockedKey(el){ if(!el) return; el.classList.add('key-locked-flash'); setTimeout(()=>el.classList.remove('key-locked-flash'), 220); }
@@ -385,10 +388,11 @@ function shouldCapNowSilent(side,num,info){
   }
   return info.ladder===1 && info.step>state.settings.maxSteps;
 }
-function resolveNumberSilent(side,num,rowEvents){
+function resolveNumberSilent(side,num,rowEvents,shouldReturnFromCap=false){
   const info=state.numbers[side][num];
   if(!info || info.status==='L') return;
   if(info.status==='C'){
+    if(!shouldReturnFromCap) return;
     info.status='B';
     info.ladder=2;
     info.step=1;
@@ -453,8 +457,9 @@ function replayKumbhRowsWithCurrentSettings(kumbh){
       state.summary.totalAhuti += exposure;
       state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure);
       const rowEvents={cap:[],ret:[]};
-      if(y===0) advanceAfterLossSilent('Y',rowEvents); else { advanceAfterLossSilent('Y',rowEvents,y); resolveNumberSilent('Y', y,rowEvents); }
-      if(k===0) advanceAfterLossSilent('K',rowEvents); else { advanceAfterLossSilent('K',rowEvents,k); resolveNumberSilent('K', k,rowEvents); }
+      const priorRet = Array.isArray(row.ret) ? row.ret.slice() : (row.ret ? [row.ret] : []);
+      if(y===0) advanceAfterLossSilent('Y',rowEvents); else { advanceAfterLossSilent('Y',rowEvents,y); resolveNumberSilent('Y', y,rowEvents, priorRet.includes(`Y${y}`)); }
+      if(k===0) advanceAfterLossSilent('K',rowEvents); else { advanceAfterLossSilent('K',rowEvents,k); resolveNumberSilent('K', k,rowEvents, priorRet.includes(`K${k}`)); }
       row.chakra = state.currentChakra;
       row.cap = rowEvents.cap;
       row.ret = rowEvents.ret;
@@ -475,7 +480,8 @@ function replayKumbhRowsWithCurrentSettings(kumbh){
         state.summary.totalAhuti += exposure;
         state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure);
         const rowEvents={cap:[],ret:[]};
-        if(y===0) advanceAfterLossSilent('Y',rowEvents); else { advanceAfterLossSilent('Y',rowEvents,y); resolveNumberSilent('Y', y,rowEvents); }
+        const priorRet = Array.isArray(row.ret) ? row.ret.slice() : (row.ret ? [row.ret] : []);
+        if(y===0) advanceAfterLossSilent('Y',rowEvents); else { advanceAfterLossSilent('Y',rowEvents,y); resolveNumberSilent('Y', y,rowEvents, priorRet.includes(`Y${y}`)); }
         row.chakra = state.currentChakra;
         row.cap = rowEvents.cap;
         row.ret = rowEvents.ret;
@@ -494,7 +500,8 @@ function replayKumbhRowsWithCurrentSettings(kumbh){
         state.summary.totalAhuti += exposure;
         state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure);
         const rowEvents={cap:[],ret:[]};
-        if(k===0) advanceAfterLossSilent('K',rowEvents); else { advanceAfterLossSilent('K',rowEvents,k); resolveNumberSilent('K', k,rowEvents); }
+        const priorRet = Array.isArray(row.ret) ? row.ret.slice() : (row.ret ? [row.ret] : []);
+        if(k===0) advanceAfterLossSilent('K',rowEvents); else { advanceAfterLossSilent('K',rowEvents,k); resolveNumberSilent('K', k,rowEvents, priorRet.includes(`K${k}`)); }
         row.chakra = state.currentChakra;
         row.cap = rowEvents.cap;
         row.ret = rowEvents.ret;
