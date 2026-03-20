@@ -13,8 +13,7 @@ const defaultSettings = {
   maxSteps: 30,
   reserve: 20000,
   capRule: 'on',
-  stopLossPerNumber: -100,
-  attackMode: 'classic'
+  stopLossPerNumber: -100
 };
 const titles = { sangram:'⚔ SANGRAM', vyuha:'🛡 VYUHA', granth:'📜 GRANTH', drishti:'👁 DRISHTI', sopana:'🪜 SOPANA', yantra:'⚙ YANTRA', medha:'🧠 MEDHA' };
 let deferredPrompt = null;
@@ -112,7 +111,6 @@ function freshState(){
     drishti: [],
     granth: [],
     currentKumbhId: null,
-    pendingAttackMode: null,
     summary: { totalAhuti: 0, maxExposure: 0 },
     ladder: buildLadder(settings),
     activeTab: 'sangram'
@@ -158,7 +156,7 @@ function showToast(title,text,kind=''){
   const layer=q('toastLayer'); const el=document.createElement('div'); el.className=`toast ${kind}`; el.innerHTML=`<div class="title">${title}</div><div>${text}</div>`; layer.appendChild(el); setTimeout(()=>el.remove(),3600);
 }
 function glowKey(el){ if(!el) return; el.classList.remove('key-glow'); void el.offsetWidth; el.classList.add('key-glow'); setTimeout(()=>el.classList.remove('key-glow'),220); }
-function statusCode(info){ if(!info) return '0'; if(info.pendingSecond && info.status==='I') return 'W2'; if(info.status==='A') return `S${Math.max(1, Number(info.step)||0)}`; if(info.status==='B') return 'B'; return info.status; }
+function statusCode(info){ if(!info) return '0'; if(info.status==='A') return `S${Math.max(1, Number(info.step)||0)}`; if(info.status==='B') return 'B'; return info.status; }
 function vijayDarshanaDisplay(info){ const bet=currentBetFor(info); const displayStep=Math.max(1,(Number(info.step)||1)-1); const displayNet=(bet*9)-(Number(info.prevLoss)||0); return { bet, displayStep, displayNet }; }
 
 function renderBoards(){
@@ -264,16 +262,169 @@ function renderGranth(){
 
 function renderDrishti(){ q('sumChakras').textContent=Math.max(0,state.currentChakra); q('sumAhuti').textContent=state.summary.totalAhuti; q('sumProfit').textContent=state.liveBankroll-state.settings.bankroll; q('sumExposure').textContent=state.summary.maxExposure; const tbody=q('drishtiTable').querySelector('tbody'); tbody.innerHTML=''; [...state.drishti].reverse().forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.side}</td><td>${r.number}</td><td>${r.activationChakra}</td><td>${r.winChakra}</td><td>${r.steps}</td><td>${r.prevLoss}</td><td>${r.winBet}</td><td>${r.net}</td><td>${r.status}</td>`; tbody.appendChild(tr); }); }
 function renderSopana(){ const tbody=q('ladderTable').querySelector('tbody'); tbody.innerHTML=''; state.ladder.forEach((row,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.step}</td><td><input class="ladder-bet-input" type="number" data-ladder-index="${idx}" inputmode="numeric" enterkeyhint="next" value="${row.bet}"></td><td>${row.winReturn}</td><td>${row.netProfit}</td><td>${row.ifLoseTotal}</td>`; tbody.appendChild(tr); }); const secondTable=q('secondLadderTable'); if(secondTable){ const tbody2=secondTable.querySelector('tbody'); tbody2.innerHTML=''; let prevLoss=0; for(let i=1;i<=Math.min(state.settings.maxSteps,15);i++){ const bet=secondLadderBet(i); const winReturn=bet*9; prevLoss += bet; const tr=document.createElement('tr'); tr.innerHTML=`<td>S${i}</td><td><input class="ladder-bet-input" type="number" data-second-ladder-index="${i-1}" inputmode="numeric" enterkeyhint="next" value="${bet}"></td><td>${winReturn}</td><td>${winReturn - prevLoss}</td><td>${-prevLoss}</td>`; tbody2.appendChild(tr); } } }
-function renderYantra(){ const s=state.settings; q('setBankroll').value=s.bankroll; q('setTargetDollar').value=s.targetDollar; q('setTargetPercent').value=s.targetPercent; q('setStopLoss').value=s.stopLoss; q('setMin').value=s.min; q('setMax').value=s.max; q('setCoin').value=s.coin; q('setTargetNum').value=s.targetNum; q('setDoubleLadder').value=s.doubleLadder||'on'; q('setKeypadMode').value=s.keypadMode; q('setMaxSteps').value=s.maxSteps; q('setReserve').value=s.reserve; q('setCapRule').value=s.capRule; q('setAttackMode').value=state.pendingAttackMode || s.attackMode || 'classic'; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; const note=q('strategyModeNote'); if(note){ const activeLabel=(s.attackMode||'classic')==='thirdstrike' ? 'ThirdStrike' : 'Classic'; note.textContent=state.pendingAttackMode ? `Active: ${activeLabel} · Pending next Kumbh: ${state.pendingAttackMode==='thirdstrike' ? 'ThirdStrike' : 'Classic'}` : `Active: ${activeLabel}`; } }
-function renderMedha(){ const active=[]; const cap=[]; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B') active.push(`${side}${n} ${info.ladder===2?'2S':'S'}${info.step}`); if(info.status==='C') cap.push(`${side}${n}`);} }); q('medhaPanel').innerHTML=`<div class="medha-item"><div class="label">Active Formation</div><div>${active.join(' | ') || 'None'}</div></div><div class="medha-item"><div class="label">CAP Numbers</div><div>${cap.join(' | ') || 'None'}</div></div>`; }
+function renderYantra(){ const s=state.settings; q('setBankroll').value=s.bankroll; q('setTargetDollar').value=s.targetDollar; q('setTargetPercent').value=s.targetPercent; q('setStopLoss').value=s.stopLoss; q('setMin').value=s.min; q('setMax').value=s.max; q('setCoin').value=s.coin; q('setTargetNum').value=s.targetNum; q('setDoubleLadder').value=s.doubleLadder||'on'; q('setKeypadMode').value=s.keypadMode; q('setMaxSteps').value=s.maxSteps; q('setReserve').value=s.reserve; q('setCapRule').value=s.capRule; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; }
+function medhaCollect(){
+  const out = { active:[], waiting:[], cap:[], locked:[], all:[] };
+  ['Y','K'].forEach(side=>{
+    for(let n=1;n<=9;n++){
+      const info=state.numbers[side][n];
+      const label=`${side}${n}`;
+      const item={ side, number:n, info, label };
+      out.all.push(item);
+      if(info.pendingSecond && info.status==='I') out.waiting.push(item);
+      if(info.status==='A' || info.status==='B') out.active.push(item);
+      if(info.status==='C') out.cap.push(item);
+      if(info.status==='L') out.locked.push(item);
+    }
+  });
+  return out;
+}
+function medhaPressure(summary){
+  if(summary.nextPreviewExposure >= Math.max(state.settings.reserve * 0.25, state.settings.min * 8) || summary.capCount >= 3 || summary.activeCount >= 6) return 'High';
+  if(summary.nextPreviewExposure >= Math.max(state.settings.reserve * 0.12, state.settings.min * 4) || summary.capCount >= 1 || summary.activeCount >= 3) return 'Medium';
+  return 'Low';
+}
+function medhaRiskFacts(summary){
+  const facts=[];
+  const drawdown = Math.max(0, Number(state.settings.bankroll||0) - Number(state.liveBankroll||0));
+  if(summary.nextPreviewExposure > 0) facts.push(`Next Āhuti preview is ${fmtMoney(summary.nextPreviewExposure)}.`);
+  if(summary.activeCount > 0) facts.push(`${summary.activeCount} active number${summary.activeCount===1?' is':'s are'} currently attacking.`);
+  if(summary.capCount > 0) facts.push(`${summary.capCount} CAP number${summary.capCount===1?' is':'s are'} holding pressure outside betting.`);
+  if(drawdown > 0) facts.push(`Current drawdown from start bankroll is ${fmtMoney(drawdown)}.`);
+  if(!facts.length) facts.push('No live exposure yet. Risk is calm until new attacks start.');
+  return facts.slice(0,4);
+}
+function medhaCapStatus(data){
+  if(!data.cap.length) return ['No numbers are in CAP right now.'];
+  return data.cap.slice(0,6).map(item=>{
+    const stepLabel = item.info.ladder===2 ? `2S${Math.max(1,item.info.step||1)}` : `S${Math.max(1,(item.info.step||0)+1)}`;
+    const net = soldierStepNetProfit(item.info);
+    return `${item.label} entered CAP near ${stepLabel} with net ${fmtMoney(net)} and needs permission to return.`;
+  });
+}
+function medhaGranthLines(rows){
+  const insight=kumbhInsights(rows||[]);
+  const allDetails=[...insight.details.Y,...insight.details.K].sort((a,b)=>a.travelSteps-b.travelSteps);
+  const leaders=(stats)=>stats.hot.slice(0,2).join(' | ') || stats.cool.slice(0,2).join(' | ') || '-';
+  const fastest=allDetails[0];
+  const slowest=allDetails.length ? allDetails[allDetails.length-1] : null;
+  const lines=[];
+  lines.push(`Y leaders: ${leaders(insight.yStats)}.`);
+  lines.push(`K leaders: ${leaders(insight.kStats)}.`);
+  if(fastest) lines.push(`Fastest travel so far: ${fastest.side}${fastest.number} in ${fastest.travelSteps} steps.`);
+  if(slowest && slowest!==fastest) lines.push(`Slowest travel so far: ${slowest.side}${slowest.number} in ${slowest.travelSteps} steps.`);
+  if(!allDetails.length) lines.push('No completed select-to-hit travel yet in this Kumbh.');
+  return lines.slice(0,4);
+}
+function medhaWhyLines(data){
+  const lines=[];
+  const mode=(state.settings.attackMode||'classic')==='thirdstrike' ? 'ThirdStrike' : 'Classic';
+  if(data.waiting.length){
+    const first=data.waiting[0];
+    lines.push(`${first.label} is waiting because first appearance is already seen. Second appearance will activate it.`);
+  }
+  if(data.active.length){
+    const first=data.active[0];
+    const stepLabel=first.info.ladder===2 ? `2S${Math.max(1, first.info.step||1)}` : `S${Math.max(1, (first.info.step||0)+1)}`;
+    lines.push(`${first.label} is active in ${mode} mode and its next betting preview is ${stepLabel}.`);
+  }
+  if(data.cap.length){
+    lines.push(`${data.cap[0].label} is in CAP, so it is paused until permission returns it to betting.`);
+  }
+  if(data.locked.length){
+    lines.push(`${data.locked[0].label} is locked for history lifecycle only. Later result entry is still allowed.`);
+  }
+  const lastRow=currentKumbh()?.rows?.at(-1);
+  if(lastRow){
+    lines.push(`Last result was ${lastRow.y ?? '-'} | ${lastRow.k ?? '-'} and Next Āhuti below is for the upcoming round only.`);
+  }
+  if(!lines.length) lines.push('No active pressure yet. Enter results and Medha will explain the current Kumbh.');
+  return lines.slice(0,4);
+}
+function renderMedha(){
+  const data=medhaCollect();
+  const waitingNames=data.waiting.map(x=>x.label);
+  const activeNames=data.active.map(x=>`${x.label} ${previewNextAhutiFor(x.info)?.stepLabel || (x.info.ladder===2 ? `2S${x.info.step||1}` : `S${Math.max(1,(x.info.step||0)+1)}`)}`);
+  const capNames=data.cap.map(x=>x.label);
+  const lockedNames=data.locked.map(x=>x.label);
+  const lastRow=currentKumbh()?.rows?.at(-1);
+  const modeLabel=(state.settings.attackMode||'classic')==='thirdstrike' ? 'ThirdStrike' : 'Classic';
+  const summary={
+    modeLabel,
+    round: state.currentChakra,
+    activeCount: data.active.length,
+    waitingCount: data.waiting.length,
+    capCount: data.cap.length,
+    lockedCount: data.locked.length,
+    nextPreviewExposure: nextPreviewExposureTotal(),
+    lastResult: lastRow ? `${lastRow.y ?? '-'} | ${lastRow.k ?? '-'}` : '-',
+    pressure: ''
+  };
+  summary.pressure = medhaPressure(summary);
+  const whyLines=medhaWhyLines(data);
+  const riskLines=medhaRiskFacts(summary);
+  const capLines=medhaCapStatus(data);
+  const insightLines=medhaGranthLines(currentKumbh()?.rows || []);
+  const nextY=formatNextAhuti('Y');
+  const nextK=formatNextAhuti('K');
+  const nextT=`T ${nextPreviewExposureTotal()}`;
+  q('medhaPanel').innerHTML=`
+    <div class="medha-grid">
+      <div class="medha-item">
+        <div class="label">Current Kumbh Summary</div>
+        <div class="medha-stat-grid">
+          <div><span class="medha-k">Mode</span><span class="medha-v">${summary.modeLabel}</span></div>
+          <div><span class="medha-k">Round</span><span class="medha-v">${summary.round}</span></div>
+          <div><span class="medha-k">Axyapatra</span><span class="medha-v">${fmtMoney(state.liveBankroll)}</span></div>
+          <div><span class="medha-k">Pressure</span><span class="medha-v medha-pressure medha-${summary.pressure.toLowerCase()}">${summary.pressure}</span></div>
+          <div><span class="medha-k">Active</span><span class="medha-v">${summary.activeCount}</span></div>
+          <div><span class="medha-k">Waiting</span><span class="medha-v">${summary.waitingCount}</span></div>
+          <div><span class="medha-k">CAP</span><span class="medha-v">${summary.capCount}</span></div>
+          <div><span class="medha-k">Locked</span><span class="medha-v">${summary.lockedCount}</span></div>
+        </div>
+        <div class="medha-note">Last Result: ${summary.lastResult}</div>
+      </div>
+      <div class="medha-item">
+        <div class="label">Why</div>
+        <div class="medha-lines">${whyLines.map(line=>`<div class="medha-line">• ${line}</div>`).join('')}</div>
+      </div>
+      <div class="medha-item">
+        <div class="label">Next Āhuti Explanation</div>
+        <div class="medha-lines">
+          <div class="medha-line">${nextY}</div>
+          <div class="medha-line">${nextK}</div>
+          <div class="medha-line">${nextT}</div>
+          <div class="medha-line">Preview uses upcoming round betting only, not current round state.</div>
+        </div>
+      </div>
+      <div class="medha-item">
+        <div class="label">Formation</div>
+        <div class="medha-lines">
+          <div class="medha-line"><strong>Active</strong> ${activeNames.join(' | ') || 'None'}</div>
+          <div class="medha-line"><strong>Waiting</strong> ${waitingNames.join(' | ') || 'None'}</div>
+          <div class="medha-line"><strong>CAP</strong> ${capNames.join(' | ') || 'None'}</div>
+          <div class="medha-line"><strong>Locked</strong> ${lockedNames.join(' | ') || 'None'}</div>
+        </div>
+      </div>
+      <div class="medha-item">
+        <div class="label">Risk View</div>
+        <div class="medha-lines">${riskLines.map(line=>`<div class="medha-line">• ${line}</div>`).join('')}</div>
+      </div>
+      <div class="medha-item">
+        <div class="label">CAP Monitor</div>
+        <div class="medha-lines">${capLines.map(line=>`<div class="medha-line">• ${line}</div>`).join('')}</div>
+      </div>
+      <div class="medha-item medha-span-2">
+        <div class="label">Granth Insights</div>
+        <div class="medha-lines">${insightLines.map(line=>`<div class="medha-line">• ${line}</div>`).join('')}</div>
+      </div>
+    </div>`;
+}
 function renderActiveTab(){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===`screen-${state.activeTab}`)); document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.target===state.activeTab)); q('screenTitle').textContent=titles[state.activeTab]||titles.sangram; }
 function renderAll(){ renderActiveTab(); renderBoards(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderSopana(); renderYantra(); renderMedha(); saveState(); }
 
-function clearUndoRedoStacks(){ historyStack = []; redoStack = []; }
-function hasCurrentKumbhProgress(){ return state.currentChakra!==0 || !!(currentKumbh()?.rows?.length); }
-function applyPendingAttackModeIfNeeded(){ if(state.pendingAttackMode){ state.settings.attackMode = state.pendingAttackMode; state.pendingAttackMode = null; } }
-function startPrayoga(){ if(state.currentChakra===0 && !(currentKumbh()?.rows?.length)){ applyPendingAttackModeIfNeeded(); clearUndoRedoStacks(); state.liveBankroll = state.settings.bankroll; } else if(state.currentChakra!==0 || currentKumbh()?.rows?.length){ state.currentKumbhId=null; state.liveBankroll = state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; applyPendingAttackModeIfNeeded(); clearUndoRedoStacks(); } const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('SANGRAM AARAMBHA', `#${String(kumbh.id).padStart(2,'0')} Kumbh ready`); }
-async function clearCurrentSession(){ if(!(await askClearKumbh())) return; state.liveBankroll=state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; state.currentKumbhId=null; applyPendingAttackModeIfNeeded(); clearUndoRedoStacks(); const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('KUMBHA SHUDDHI',`#${String(kumbh.id).padStart(2,'0')} Kumbh ready`); }
+function startPrayoga(){ if(state.currentChakra===0 && !(currentKumbh()?.rows?.length)){ state.liveBankroll = state.settings.bankroll; } else if(state.currentChakra!==0 || currentKumbh()?.rows?.length){ state.currentKumbhId=null; state.liveBankroll = state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; } const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('SANGRAM AARAMBHA', `#${String(kumbh.id).padStart(2,'0')} Kumbh ready`); }
+async function clearCurrentSession(){ if(!(await askClearKumbh())) return; state.liveBankroll=state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; state.currentKumbhId=null; const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('KUMBHA SHUDDHI',`#${String(kumbh.id).padStart(2,'0')} Kumbh ready`); }
 function recordSnapshot(){ historyStack.push(historySnapshot()); if(historyStack.length>20) historyStack.shift(); redoStack = []; }
 function undoLast(){ const prev=historyStack.pop(); if(!prev) return; redoStack.push(historySnapshot()); restoreSnapshot(prev); renderAll(); showToast('CHAKRA PUNARAVRITTI','Last chakra reverted'); }
 function redoLast(){ const next=redoStack.pop(); if(!next) return; historyStack.push(historySnapshot()); restoreSnapshot(next); renderAll(); showToast('CHAKRA PUNARAGAMANA','Last chakra restored'); }
@@ -286,17 +437,13 @@ async function resolveNumber(side,num,notes,rowEvents){ const info=state.numbers
     info.status='B'; info.ladder=2; info.step=1; info.pendingSecond=false; if(rowEvents) rowEvents.ret.push(`${side}${num}`); notes.push({title:'CAP RETURNED',text:`${side}${num} back on track`,kind:'warn'}); return;
   }
   if(info.status==='I'){
-    if((state.settings.attackMode || 'classic')==='thirdstrike'){
-      if(!info.pendingSecond){ info.pendingSecond=true; return; }
-      info.pendingSecond=false;
-    }
     info.status='A'; info.step=0; info.ladder=1; info.activeAt=state.currentChakra; info.prevLoss=0; return;
   }
   const bet=currentBetFor(info); const totalReturn=bet*9; const net=(bet*8)-info.prevLoss;
   state.liveBankroll += totalReturn;
   info.winningBet=bet; info.lastNet=net; pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'WIN' });
   const vd=vijayDarshanaDisplay(info);
-  info.status='L'; info.pendingSecond=false; notes.push({title:'VIJAY DARSHANA', text:`${side}${num} ${info.ladder===2?'2S':'S'}${vd.displayStep} Āhuti ${vd.bet} Net +${vd.displayNet}`}); }
+  info.status='L'; notes.push({title:'VIJAY DARSHANA', text:`${side}${num} ${info.ladder===2?'2S':'S'}${vd.displayStep} Āhuti ${vd.bet} Net +${vd.displayNet}`}); }
 async function advanceAfterLoss(side,notes,rowEvents,winningNum=null){ for(let n=1;n<=9;n++){ if(winningNum!==null && Number(winningNum)===n) continue; const info=state.numbers[side][n]; if(info.status!=='A' && info.status!=='B') continue; const bet=currentBetFor(info); info.prevLoss += bet; info.step += 1; if(info.ladder===1){ if(await askCapDecision(side,n,info)){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:info.step, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'CAP' }); if(rowEvents) rowEvents.cap.push(`${side}${n}`); notes.push({title:'REKHA BANDHA', text:`${side}${n} reached CAP`, kind:'warn'}); } else if(info.step>state.settings.maxSteps){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:state.settings.maxSteps, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'CAP' }); if(rowEvents) rowEvents.cap.push(`${side}${n}`); notes.push({title:'REKHA BANDHA', text:`${side}${n} reached CAP`, kind:'warn'}); }
       else info.status='A';
     } else { if(info.step>15) info.step=15; info.status='B'; }
@@ -410,13 +557,6 @@ function resolveNumberSilent(side,num,rowEvents,shouldReturnFromCap=false){
     return;
   }
   if(info.status==='I'){
-    if((state.settings.attackMode || 'classic')==='thirdstrike'){
-      if(!info.pendingSecond){
-        info.pendingSecond=true;
-        return;
-      }
-      info.pendingSecond=false;
-    }
     info.status='A';
     info.step=0;
     info.ladder=1;
@@ -432,7 +572,6 @@ function resolveNumberSilent(side,num,rowEvents,shouldReturnFromCap=false){
   info.lastNet=net;
   pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'WIN' });
   info.status='L';
-  info.pendingSecond=false;
 }
 function advanceAfterLossSilent(side,rowEvents,winningNum=null){
   for(let n=1;n<=9;n++){
@@ -644,24 +783,13 @@ function readYantraSettings(){
   current.maxSteps = Number(q('setMaxSteps').value)||30;
   current.reserve = Number(q('setReserve').value)||20000;
   current.capRule = q('setCapRule').value || 'on';
-  current.attackMode = q('setAttackMode').value || current.attackMode || 'classic';
   const stopLossPerNumberValue = Number(q('setStopLossPerNumber').value);
   current.stopLossPerNumber = Number.isFinite(stopLossPerNumberValue) ? stopLossPerNumberValue : -100;
   return current;
 }
 async function applyYantraSettings(){
   if(!(await askApplyYantra())) return;
-  const nextSettings = readYantraSettings();
-  const currentMode = state.settings.attackMode || 'classic';
-  const requestedMode = nextSettings.attackMode || 'classic';
-  const shouldDeferAttackMode = requestedMode !== currentMode && hasCurrentKumbhProgress();
-  if(shouldDeferAttackMode){
-    state.pendingAttackMode = requestedMode;
-    nextSettings.attackMode = currentMode;
-  } else {
-    state.pendingAttackMode = requestedMode === currentMode ? null : state.pendingAttackMode;
-  }
-  state.settings = nextSettings;
+  state.settings = readYantraSettings();
   state.ladder = buildLadder(state.settings);
   const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length);
   if(hasRecordedRows){
@@ -670,7 +798,7 @@ async function applyYantraSettings(){
     state.liveBankroll = state.settings.bankroll;
   }
   renderAll();
-  showToast('YANTRA APPLIED', shouldDeferAttackMode ? 'Settings updated. Strategy mode will apply from next Kumbh' : 'Settings updated');
+  showToast('YANTRA APPLIED','Settings updated');
 }
 
 function setupControls(){
