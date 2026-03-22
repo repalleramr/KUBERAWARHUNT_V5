@@ -79,12 +79,12 @@
           <div class="toolbar">
             <div class="label">GRANTH</div>
             <div class="btn-row">
-              <select id="granthExportFormat" class="toolbar-select"><option value="json">JSON</option><option value="csv">CSV</option><option value="xlsx">XLSX</option></select>
+              <select id="granthExportFormat" class="toolbar-select"><option value="json">JSON</option><option value="csv">CSV</option></select>
               <button id="exportGranthBtn" type="button">Export</button>
               <button id="importGranthBtn" type="button">Load</button>
               <select id="deleteKumbhSelect" class="toolbar-select"><option value="">Select Kumbh</option></select>
               <button id="deleteGranthBtn" class="warn" type="button">Delete</button>
-              <input id="importGranthFile" type="file" accept="application/json,.csv,text/csv" hidden>
+              <input id="importGranthFile" type="file" accept="application/json,.csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
             </div>
           </div>
           <div id="granthList" class="granth-list"></div>
