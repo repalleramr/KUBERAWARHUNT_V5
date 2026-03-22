@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'kubera-warhunt-v5pro-final-locked';
+const STORAGE_KEY = 'kubera-warhunt-v5pro-medha-v2-stepfix';
 const defaultSettings = {
   bankroll: 30000,
   targetDollar: 500,
@@ -157,7 +157,7 @@ function showToast(title,text,kind=''){
 }
 function glowKey(el){ if(!el) return; el.classList.remove('key-glow'); void el.offsetWidth; el.classList.add('key-glow'); setTimeout(()=>el.classList.remove('key-glow'),220); }
 function statusCode(info){ if(!info) return '0'; if(info.status==='A') return `S${Math.max(1, Number(info.step)||0)}`; if(info.status==='B') return 'B'; return info.status; }
-function vijayDarshanaDisplay(info){ const bet=currentBetFor(info); const displayStep=Math.max(1,(Number(info.step)||1)-1); const displayNet=(bet*9)-(Number(info.prevLoss)||0); return { bet, displayStep, displayNet }; }
+function vijayDarshanaDisplay(info){ const bet=currentBetFor(info); const displayStep=Math.max(1, Number(info.step)||1); const displayNet=Number.isFinite(Number(info.lastNet)) ? Number(info.lastNet) : ((bet*8)-(Number(info.prevLoss)||0)); return { bet, displayStep, displayNet }; }
 
 function renderBoards(){
   ['Y','K'].forEach(side=>{
