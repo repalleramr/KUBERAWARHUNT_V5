@@ -123,6 +123,3 @@ th{position:sticky;top:0;background:#22160d;color:var(--gold)}
 #granthList th,#granthList td{text-overflow:clip;overflow:visible}
 .action-strip{display:flex;gap:8px;flex-wrap:wrap}
 .strip-btn{flex:1 1 0;min-width:0}
-
-.subtle-note{font-size:12px;color:var(--muted)}
-.strategy-note{margin-top:10px}
