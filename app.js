@@ -156,7 +156,7 @@ function showToast(title,text,kind=''){
   const layer=q('toastLayer'); const el=document.createElement('div'); el.className=`toast ${kind}`; el.innerHTML=`<div class="title">${title}</div><div>${text}</div>`; layer.appendChild(el); setTimeout(()=>el.remove(),3600);
 }
 function glowKey(el){ if(!el) return; el.classList.remove('key-glow'); void el.offsetWidth; el.classList.add('key-glow'); setTimeout(()=>el.classList.remove('key-glow'),220); }
-function statusCode(info){ if(!info) return '0'; if(info.status==='A') return `S${Math.max(1, Number(info.step)||0)}`; if(info.status==='B') return 'B'; return info.status; }
+function statusCode(info){ if(!info) return '0'; if(info.status==='A') return `S${Math.max(1, Number(info.step)||1)}`; if(info.status==='B') return 'B'; return info.status; }
 function vijayDarshanaDisplay(info){ const bet=currentBetFor(info); const displayStep=Math.max(1,(Number(info.step)||1)-1); const displayNet=(bet*8)-(Number(info.prevLoss)||0); return { bet, displayStep, displayNet }; }
 
 function renderBoards(){
@@ -250,12 +250,12 @@ function renderGranth(){
     const insight=kumbhInsights(k.rows||[]);
     const rows=[...(k.rows||[])].reverse().map(r=>{
       const meta=insight.rowMeta.get(Number(r.chakra)) || { ySelCode:'-', yHitCode:'-', kSelCode:'-', kHitCode:'-', capped:[], returned:[] };
-      return `<tr><td>${r.chakra}</td><td>${r.y ?? '-'}</td><td>${r.k ?? '-'}</td><td>${meta.ySelCode}</td><td>${meta.yHitCode}</td><td>${meta.kSelCode}</td><td>${meta.kHitCode}</td><td>${formatRoundInfoEntries(meta.capped)}</td><td>${formatRoundInfoEntries(meta.returned)}</td><td>${r.axyapatra ?? '-'}</td></tr>`;
+      return `<tr><td>${r.chakra}</td><td>${r.y ?? '-'}</td><td>${r.k ?? '-'}</td><td>${meta.ySelCode}</td><td>${meta.yHitCode}</td><td>${meta.kSelCode}</td><td>${meta.kHitCode}</td><td>${formatRoundInfoEntries(meta.capped)}</td><td>${formatRoundInfoEntries(meta.returned)}</td><td>${formatRoundInfoEntries(Array.isArray(r.np)?r.np:(r.np?[r.np]:[]))}</td><td>${r.axyapatra ?? '-'}</td></tr>`;
     }).join('');
     const yRpt=Object.entries(insight.counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`<span class="repeat-pill">${n}:${c}</span>`).join('');
     const kRpt=Object.entries(insight.counts.K).filter(([n])=>n!=='0').map(([n,c])=>`<span class="repeat-pill">${n}:${c}</span>`).join('');
     const travelRows = [...insight.details.Y, ...insight.details.K].sort((a,b)=>a.hitRound-b.hitRound).map(d=>`<tr><td>${d.side}</td><td>${d.number}</td><td>${d.selectedRound}</td><td>${d.hitRound}</td><td>${d.travelSteps}</td></tr>`).join('') || '<tr><td colspan="5">No completed travel yet.</td></tr>';
-    wrap.innerHTML=`<div class="label">#${String(k.id).padStart(2,'0')} Kumbh</div><div class="table-wrap compact-table"><table><thead><tr><th>R</th><th>Y</th><th>K</th><th>YSel</th><th>YHit</th><th>KSel</th><th>KHit</th><th>Cap</th><th>Ret</th><th>Ax</th></tr></thead><tbody>${rows}</tbody></table></div><div class="granth-summary"><div class="summary-row"><span class="summary-label">Y Hot</span><span>${insight.yStats.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">Y Cool</span><span>${insight.yStats.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">Y Rpt</span><div class="repeat-grid">${yRpt}</div></div><div class="summary-row"><span class="summary-label">K Hot</span><span>${insight.kStats.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">K Cool</span><span>${insight.kStats.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">K Rpt</span><div class="repeat-grid">${kRpt}</div></div></div><div class="table-wrap compact-table"><table><thead><tr><th>Side</th><th>Number</th><th>SelectedRound</th><th>HitRound</th><th>TravelSteps</th></tr></thead><tbody>${travelRows}</tbody></table></div>`;
+    wrap.innerHTML=`<div class="label">#${String(k.id).padStart(2,'0')} Kumbh</div><div class="table-wrap compact-table"><table><thead><tr><th>R</th><th>Y</th><th>K</th><th>YSel</th><th>YHit</th><th>KSel</th><th>KHit</th><th>Cap</th><th>Ret</th><th>NP</th><th>Ax</th></tr></thead><tbody>${rows}</tbody></table></div><div class="granth-summary"><div class="summary-row"><span class="summary-label">Y Hot</span><span>${insight.yStats.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">Y Cool</span><span>${insight.yStats.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">Y Rpt</span><div class="repeat-grid">${yRpt}</div></div><div class="summary-row"><span class="summary-label">K Hot</span><span>${insight.kStats.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">K Cool</span><span>${insight.kStats.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">K Rpt</span><div class="repeat-grid">${kRpt}</div></div></div><div class="table-wrap compact-table"><table><thead><tr><th>Side</th><th>Number</th><th>SelectedRound</th><th>HitRound</th><th>TravelSteps</th></tr></thead><tbody>${travelRows}</tbody></table></div>`;
     host.appendChild(wrap);
   });
 }
@@ -281,25 +281,26 @@ async function resolveNumber(side,num,notes,rowEvents){ const info=state.numbers
     info.status='B'; info.ladder=2; info.step=1; info.pendingSecond=false; if(rowEvents) rowEvents.ret.push(`${side}${num}`); notes.push({title:'CAP RETURNED',text:`${side}${num} back on track`,kind:'warn'}); return;
   }
   if(info.status==='I'){
-    info.status='A'; info.step=0; info.ladder=1; info.activeAt=state.currentChakra; info.prevLoss=0; return;
+    info.status='A'; info.step=1; info.ladder=1; info.activeAt=state.currentChakra; info.prevLoss=0; return;
   }
   const bet=currentBetFor(info); const totalReturn=bet*9; const net=(bet*8)-info.prevLoss;
   state.liveBankroll += totalReturn;
   info.winningBet=bet; info.lastNet=net; pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'WIN' });
+  if(rowEvents) rowEvents.np.push(`${side}${num} ${net >= 0 ? '+' : ''}${net}`);
   const vd=vijayDarshanaDisplay(info);
   info.status='L'; notes.push({title:'VIJAY DARSHANA', text:`${side}${num} ${info.ladder===2?'2S':'S'}${vd.displayStep} Āhuti ${vd.bet} Net +${vd.displayNet}`}); }
-async function advanceAfterLoss(side,notes,rowEvents,winningNum=null){ for(let n=1;n<=9;n++){ if(winningNum!==null && Number(winningNum)===n) continue; const info=state.numbers[side][n]; if(info.status!=='A' && info.status!=='B') continue; const bet=currentBetFor(info); info.prevLoss += bet; info.step += 1; if(info.ladder===1){ if(await askCapDecision(side,n,info)){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:info.step, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'CAP' }); if(rowEvents) rowEvents.cap.push(`${side}${n}`); notes.push({title:'REKHA BANDHA', text:`${side}${n} reached CAP`, kind:'warn'}); } else if(info.step>state.settings.maxSteps){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:state.settings.maxSteps, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'CAP' }); if(rowEvents) rowEvents.cap.push(`${side}${n}`); notes.push({title:'REKHA BANDHA', text:`${side}${n} reached CAP`, kind:'warn'}); }
+async function advanceAfterLoss(side,notes,rowEvents,winningNum=null){ for(let n=1;n<=9;n++){ if(winningNum!==null && Number(winningNum)===n) continue; const info=state.numbers[side][n]; if(info.status!=='A' && info.status!=='B') continue; const bet=currentBetFor(info); info.prevLoss += bet; info.step += 1; if(info.ladder===1){ if(await askCapDecision(side,n,info)){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:info.step, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'CAP' }); if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); } notes.push({title:'REKHA BANDHA', text:`${side}${n} reached CAP`, kind:'warn'}); } else if(info.step>state.settings.maxSteps){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:state.settings.maxSteps, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'CAP' }); if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); } notes.push({title:'REKHA BANDHA', text:`${side}${n} reached CAP`, kind:'warn'}); }
       else info.status='A';
     } else { if(info.step>15) info.step=15; info.status='B'; }
   } }
-async function processCombined(){ if(pending.Y===null || pending.K===null) return; recordSnapshot(); state.currentChakra += 1; ensureKumbh(); const y=pending.Y, k=pending.K; pending={Y:null,K:null}; let exposure=nextExposureTotal(); state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const notes=[]; const rowEvents={cap:[],ret:[]}; if(y===0) await advanceAfterLoss('Y',notes,rowEvents); else { await advanceAfterLoss('Y',[],rowEvents,y); await resolveNumber('Y',y,notes,rowEvents); } if(k===0) await advanceAfterLoss('K',notes,rowEvents); else { await advanceAfterLoss('K',[],rowEvents,k); await resolveNumber('K',k,notes,rowEvents); }
-  currentKumbh()?.rows.push({ chakra:state.currentChakra, y, k, cap:rowEvents.cap, ret:rowEvents.ret, ahuti:exposure, axyapatra:state.liveBankroll });
+async function processCombined(){ if(pending.Y===null || pending.K===null) return; recordSnapshot(); state.currentChakra += 1; ensureKumbh(); const y=pending.Y, k=pending.K; pending={Y:null,K:null}; let exposure=nextExposureTotal(); state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const notes=[]; const rowEvents={cap:[],ret:[],np:[]}; if(y===0) await advanceAfterLoss('Y',notes,rowEvents); else { await advanceAfterLoss('Y',[],rowEvents,y); await resolveNumber('Y',y,notes,rowEvents); } if(k===0) await advanceAfterLoss('K',notes,rowEvents); else { await advanceAfterLoss('K',[],rowEvents,k); await resolveNumber('K',k,notes,rowEvents); }
+  currentKumbh()?.rows.push({ chakra:state.currentChakra, y, k, cap:rowEvents.cap, ret:rowEvents.ret, np:rowEvents.np, ahuti:exposure, axyapatra:state.liveBankroll });
   if(state.liveBankroll <= state.settings.bankroll - state.settings.stopLoss) notes.push({title:'TREASURY WARNING',text:'Axyapatra approaching Raksha Rekha',kind:'warn'});
   if(state.liveBankroll < state.settings.reserve) notes.push({title:'TREASURY WARNING',text:'Axyapatra below Raksha Nidhi',kind:'warn'});
   renderAll(); notes.forEach(n=>showToast(n.title,n.text,n.kind||'')); }
 async function processIndividual(side,num){ recordSnapshot(); state.currentChakra += 1; ensureKumbh(); let exposure=0; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B') exposure += currentBetFor(info); }
-  state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const notes=[]; if(num===0) await advanceAfterLoss(side,notes); else { await advanceAfterLoss(side,[],undefined,num); await resolveNumber(side,num,notes); }
-  currentKumbh()?.rows.push({ chakra:state.currentChakra, y: side==='Y'?num:'-', k: side==='K'?num:'-', ahuti:exposure, axyapatra:state.liveBankroll });
+  state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const notes=[]; const rowEvents={cap:[],ret:[],np:[]}; if(num===0) await advanceAfterLoss(side,notes,rowEvents); else { await advanceAfterLoss(side,[],rowEvents,num); await resolveNumber(side,num,notes,rowEvents); }
+  currentKumbh()?.rows.push({ chakra:state.currentChakra, y: side==='Y'?num:'-', k: side==='K'?num:'-', cap:rowEvents.cap, ret:rowEvents.ret, np:rowEvents.np, ahuti:exposure, axyapatra:state.liveBankroll });
   renderAll(); notes.forEach(n=>showToast(n.title,n.text,n.kind||'')); }
 function flashLockedKey(el){ if(!el) return; el.classList.add('key-locked-flash'); setTimeout(()=>el.classList.remove('key-locked-flash'), 220); }
 
@@ -402,7 +403,7 @@ function resolveNumberSilent(side,num,rowEvents,shouldReturnFromCap=false){
   }
   if(info.status==='I'){
     info.status='A';
-    info.step=0;
+    info.step=1;
     info.ladder=1;
     info.activeAt=state.currentChakra;
     info.prevLoss=0;
@@ -415,6 +416,7 @@ function resolveNumberSilent(side,num,rowEvents,shouldReturnFromCap=false){
   info.winningBet=bet;
   info.lastNet=net;
   pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'WIN' });
+  if(rowEvents) rowEvents.np.push(`${side}${num} ${net >= 0 ? '+' : ''}${net}`);
   info.status='L';
 }
 function advanceAfterLossSilent(side,rowEvents,winningNum=null){
@@ -429,7 +431,7 @@ function advanceAfterLossSilent(side,rowEvents,winningNum=null){
       if(shouldCapNowSilent(side,n,info)){
         const cappedAt = info.step>state.settings.maxSteps ? state.settings.maxSteps : info.step;
         info.status='C';
-        pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:cappedAt, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'CAP' }); if(rowEvents) rowEvents.cap.push(`${side}${n}`);
+        pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:cappedAt, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'CAP' }); if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); }
       } else {
         info.status='A';
       }
@@ -456,13 +458,14 @@ function replayKumbhRowsWithCurrentSettings(kumbh){
       state.liveBankroll -= exposure;
       state.summary.totalAhuti += exposure;
       state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure);
-      const rowEvents={cap:[],ret:[]};
+      const rowEvents={cap:[],ret:[],np:[]};
       const priorRet = Array.isArray(row.ret) ? row.ret.slice() : (row.ret ? [row.ret] : []);
       if(y===0) advanceAfterLossSilent('Y',rowEvents); else { advanceAfterLossSilent('Y',rowEvents,y); resolveNumberSilent('Y', y,rowEvents, priorRet.includes(`Y${y}`)); }
       if(k===0) advanceAfterLossSilent('K',rowEvents); else { advanceAfterLossSilent('K',rowEvents,k); resolveNumberSilent('K', k,rowEvents, priorRet.includes(`K${k}`)); }
       row.chakra = state.currentChakra;
       row.cap = rowEvents.cap;
       row.ret = rowEvents.ret;
+      row.np = rowEvents.np;
       row.ahuti = exposure;
       row.axyapatra = state.liveBankroll;
     } else {
@@ -479,12 +482,13 @@ function replayKumbhRowsWithCurrentSettings(kumbh){
         state.liveBankroll -= exposure;
         state.summary.totalAhuti += exposure;
         state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure);
-        const rowEvents={cap:[],ret:[]};
+        const rowEvents={cap:[],ret:[],np:[]};
         const priorRet = Array.isArray(row.ret) ? row.ret.slice() : (row.ret ? [row.ret] : []);
         if(y===0) advanceAfterLossSilent('Y',rowEvents); else { advanceAfterLossSilent('Y',rowEvents,y); resolveNumberSilent('Y', y,rowEvents, priorRet.includes(`Y${y}`)); }
         row.chakra = state.currentChakra;
         row.cap = rowEvents.cap;
         row.ret = rowEvents.ret;
+        row.np = rowEvents.np;
         row.ahuti = exposure;
         row.axyapatra = state.liveBankroll;
       }
@@ -499,12 +503,13 @@ function replayKumbhRowsWithCurrentSettings(kumbh){
         state.liveBankroll -= exposure;
         state.summary.totalAhuti += exposure;
         state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure);
-        const rowEvents={cap:[],ret:[]};
+        const rowEvents={cap:[],ret:[],np:[]};
         const priorRet = Array.isArray(row.ret) ? row.ret.slice() : (row.ret ? [row.ret] : []);
         if(k===0) advanceAfterLossSilent('K',rowEvents); else { advanceAfterLossSilent('K',rowEvents,k); resolveNumberSilent('K', k,rowEvents, priorRet.includes(`K${k}`)); }
         row.chakra = state.currentChakra;
         row.cap = rowEvents.cap;
         row.ret = rowEvents.ret;
+        row.np = rowEvents.np;
         row.ahuti = exposure;
         row.axyapatra = state.liveBankroll;
       }
@@ -570,7 +575,7 @@ function parseSimpleCsvLines(text){
   });
 }
 function granthCsvContent(){
-  const header='KumbhId,Chakra,Y,YSel,YHit,K,KSel,KHit,Cap,Ret,Ah,Ax,Side,Number,SelectedRound,HitRound,TravelSteps,SelectCode,HitCode\n';
+  const header='KumbhId,Chakra,Y,YSel,YHit,K,KSel,KHit,Cap,Ret,NP,Ah,Ax,Side,Number,SelectedRound,HitRound,TravelSteps,SelectCode,HitCode\n';
   const rows=[];
   state.granth.forEach(k=>{
     const insight=kumbhInsights(k.rows||[]);
@@ -585,9 +590,9 @@ function granthCsvContent(){
       const meta=insight.rowMeta.get(chakra) || { ySelCode:'-', yHitCode:'-', kSelCode:'-', kHitCode:'-', capped:[], returned:[] };
       const details=[...(detailMap.get(`Y-${chakra}`)||[]), ...(detailMap.get(`K-${chakra}`)||[])];
       if(details.length){
-        details.forEach(d=>rows.push([k.id,r.chakra,r.y ?? '-',meta.ySelCode,meta.yHitCode,r.k ?? '-',meta.kSelCode,meta.kHitCode,formatRoundInfoEntries(meta.capped),formatRoundInfoEntries(meta.returned),r.ahuti ?? 0,r.axyapatra ?? 0,d.side,d.number,d.selectedRound,d.hitRound,d.travelSteps,d.selectCode,d.hitCode].map(escapeCsvValue).join(',')));
+        details.forEach(d=>rows.push([k.id,r.chakra,r.y ?? '-',meta.ySelCode,meta.yHitCode,r.k ?? '-',meta.kSelCode,meta.kHitCode,formatRoundInfoEntries(meta.capped),formatRoundInfoEntries(meta.returned),formatRoundInfoEntries(Array.isArray(r.np)?r.np:(r.np?[r.np]:[])),r.ahuti ?? 0,r.axyapatra ?? 0,d.side,d.number,d.selectedRound,d.hitRound,d.travelSteps,d.selectCode,d.hitCode].map(escapeCsvValue).join(',')));
       } else {
-        rows.push([k.id,r.chakra,r.y ?? '-',meta.ySelCode,meta.yHitCode,r.k ?? '-',meta.kSelCode,meta.kHitCode,formatRoundInfoEntries(meta.capped),formatRoundInfoEntries(meta.returned),r.ahuti ?? 0,r.axyapatra ?? 0,'','','','','',''].map(escapeCsvValue).join(','));
+        rows.push([k.id,r.chakra,r.y ?? '-',meta.ySelCode,meta.yHitCode,r.k ?? '-',meta.kSelCode,meta.kHitCode,formatRoundInfoEntries(meta.capped),formatRoundInfoEntries(meta.returned),formatRoundInfoEntries(Array.isArray(r.np)?r.np:(r.np?[r.np]:[])),r.ahuti ?? 0,r.axyapatra ?? 0,'','','','','',''].map(escapeCsvValue).join(','));
       }
     });
   });
@@ -598,7 +603,7 @@ function exportPayload(){ return { app:'Kubera_V5Pro Final locked', version:'Kub
 async function exportGranthJson(){ const content=JSON.stringify(exportPayload(),null,2); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.json',content,'application/json'); if(saved===null) return; if(!saved) downloadFile('Kubera_V5Pro_Final_locked.json',content,'application/json'); }
 async function exportGranthCsv(){ const content=granthCsvContent(); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.csv',content,'text/csv'); if(saved===null) return; if(!saved) downloadFile('Kubera_V5Pro_Final_locked.csv',content,'text/csv'); }
 function importGranthJson(e){ const file=e.target.files[0]; if(!file) return; file.text().then(text=>{ const name=(file.name||'').toLowerCase(); const trimmed=text.trim(); if(name.endsWith('.csv') || trimmed.startsWith('KumbhId,')){
-      const grouped=new Map(); parseSimpleCsvLines(text).forEach(cols=>{ const kumbhId=Number(cols[0])||0; const chakra=Number(cols[1])||0; if(!kumbhId || !chakra) return; if(!grouped.has(kumbhId)) grouped.set(kumbhId,{id:kumbhId,rows:[]}); const target=grouped.get(kumbhId); if(!target.rows.some(r=>Number(r.chakra)===chakra)) target.rows.push({ chakra, y:(cols[2]==='-'?'':(Number(cols[2])||cols[2])), k:(cols[5]==='-'?'':(Number(cols[5])||cols[5])), cap: cols[8] && cols[8] !== '-' ? cols[8].split(' | ') : [], ret: cols[9] && cols[9] !== '-' ? cols[9].split(' | ') : [], ahuti:Number(cols[10])||0, axyapatra:Number(cols[11])||0 }); });
+      const grouped=new Map(); parseSimpleCsvLines(text).forEach(cols=>{ const kumbhId=Number(cols[0])||0; const chakra=Number(cols[1])||0; if(!kumbhId || !chakra) return; if(!grouped.has(kumbhId)) grouped.set(kumbhId,{id:kumbhId,rows:[]}); const target=grouped.get(kumbhId); if(!target.rows.some(r=>Number(r.chakra)===chakra)) target.rows.push({ chakra, y:(cols[2]==='-'?'':(Number(cols[2])||cols[2])), k:(cols[5]==='-'?'':(Number(cols[5])||cols[5])), cap: cols[8] && cols[8] !== '-' ? cols[8].split(' | ') : [], ret: cols[9] && cols[9] !== '-' ? cols[9].split(' | ') : [], np: cols[10] && cols[10] !== '-' ? cols[10].split(' | ') : [], ahuti:Number(cols[11])||0, axyapatra:Number(cols[12])||0 }); });
       state.granth=[...grouped.values()].sort((a,b)=>a.id-b.id); state.currentKumbhId=state.granth.at(-1)?.id||null; pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings();
     } else {
       const parsed=JSON.parse(text);
