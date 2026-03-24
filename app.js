@@ -13,8 +13,7 @@ const defaultSettings = {
   maxSteps: 30,
   reserve: 20000,
   capRule: 'on',
-  stopLossPerNumber: -100,
-  attackMode: 'classic'
+  stopLossPerNumber: -100
 };
 const titles = { sangram:'⚔ SANGRAM', vyuha:'🛡 VYUHA', granth:'📜 GRANTH', drishti:'👁 DRISHTI', sopana:'🪜 SOPANA', yantra:'⚙ YANTRA', medha:'🧠 MEDHA' };
 let deferredPrompt = null;
@@ -157,7 +156,7 @@ function showToast(title,text,kind=''){
   const layer=q('toastLayer'); const el=document.createElement('div'); el.className=`toast ${kind}`; el.innerHTML=`<div class="title">${title}</div><div>${text}</div>`; layer.appendChild(el); setTimeout(()=>el.remove(),3600);
 }
 function glowKey(el){ if(!el) return; el.classList.remove('key-glow'); void el.offsetWidth; el.classList.add('key-glow'); setTimeout(()=>el.classList.remove('key-glow'),220); }
-function statusCode(info){ if(!info) return '0'; if(info.pendingSecond && info.status==='I') return 'W2'; if(info.status==='A') return `S${Math.max(1, Number(info.step)||0)}`; if(info.status==='B') return 'B'; return info.status; }
+function statusCode(info){ if(!info) return '0'; if(info.status==='A') return `S${Math.max(1, Number(info.step)||0)}`; if(info.status==='B') return 'B'; return info.status; }
 function vijayDarshanaDisplay(info){ const bet=currentBetFor(info); const displayStep=Math.max(1,(Number(info.step)||1)-1); const displayNet=(bet*9)-(Number(info.prevLoss)||0); return { bet, displayStep, displayNet }; }
 
 function renderBoards(){
@@ -263,7 +262,7 @@ function renderGranth(){
 
 function renderDrishti(){ q('sumChakras').textContent=Math.max(0,state.currentChakra); q('sumAhuti').textContent=state.summary.totalAhuti; q('sumProfit').textContent=state.liveBankroll-state.settings.bankroll; q('sumExposure').textContent=state.summary.maxExposure; const tbody=q('drishtiTable').querySelector('tbody'); tbody.innerHTML=''; [...state.drishti].reverse().forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.side}</td><td>${r.number}</td><td>${r.activationChakra}</td><td>${r.winChakra}</td><td>${r.steps}</td><td>${r.prevLoss}</td><td>${r.winBet}</td><td>${r.net}</td><td>${r.status}</td>`; tbody.appendChild(tr); }); }
 function renderSopana(){ const tbody=q('ladderTable').querySelector('tbody'); tbody.innerHTML=''; state.ladder.forEach((row,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.step}</td><td><input class="ladder-bet-input" type="number" data-ladder-index="${idx}" inputmode="numeric" enterkeyhint="next" value="${row.bet}"></td><td>${row.winReturn}</td><td>${row.netProfit}</td><td>${row.ifLoseTotal}</td>`; tbody.appendChild(tr); }); const secondTable=q('secondLadderTable'); if(secondTable){ const tbody2=secondTable.querySelector('tbody'); tbody2.innerHTML=''; let prevLoss=0; for(let i=1;i<=Math.min(state.settings.maxSteps,15);i++){ const bet=secondLadderBet(i); const winReturn=bet*9; prevLoss += bet; const tr=document.createElement('tr'); tr.innerHTML=`<td>S${i}</td><td><input class="ladder-bet-input" type="number" data-second-ladder-index="${i-1}" inputmode="numeric" enterkeyhint="next" value="${bet}"></td><td>${winReturn}</td><td>${winReturn - prevLoss}</td><td>${-prevLoss}</td>`; tbody2.appendChild(tr); } } }
-function renderYantra(){ const s=state.settings; q('setBankroll').value=s.bankroll; q('setTargetDollar').value=s.targetDollar; q('setTargetPercent').value=s.targetPercent; q('setStopLoss').value=s.stopLoss; q('setMin').value=s.min; q('setMax').value=s.max; q('setCoin').value=s.coin; q('setTargetNum').value=s.targetNum; q('setDoubleLadder').value=s.doubleLadder||'on'; q('setKeypadMode').value=s.keypadMode; q('setMaxSteps').value=s.maxSteps; q('setReserve').value=s.reserve; q('setCapRule').value=s.capRule; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; if(q('setAttackMode')) q('setAttackMode').value=s.attackMode || 'classic'; }
+function renderYantra(){ const s=state.settings; q('setBankroll').value=s.bankroll; q('setTargetDollar').value=s.targetDollar; q('setTargetPercent').value=s.targetPercent; q('setStopLoss').value=s.stopLoss; q('setMin').value=s.min; q('setMax').value=s.max; q('setCoin').value=s.coin; q('setTargetNum').value=s.targetNum; q('setDoubleLadder').value=s.doubleLadder||'on'; q('setKeypadMode').value=s.keypadMode; q('setMaxSteps').value=s.maxSteps; q('setReserve').value=s.reserve; q('setCapRule').value=s.capRule; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; }
 function medhaCollect(){
   const out = { active:[], waiting:[], cap:[], locked:[], all:[] };
   ['Y','K'].forEach(side=>{
@@ -438,11 +437,7 @@ async function resolveNumber(side,num,notes,rowEvents){ const info=state.numbers
     info.status='B'; info.ladder=2; info.step=1; info.pendingSecond=false; if(rowEvents) rowEvents.ret.push(`${side}${num}`); notes.push({title:'CAP RETURNED',text:`${side}${num} back on track`,kind:'warn'}); return;
   }
   if(info.status==='I'){
-    if((state.settings.attackMode||'classic')==='thirdstrike' && !info.pendingSecond){
-      info.pendingSecond = true;
-      return;
-    }
-    info.status='A'; info.step=0; info.ladder=1; info.activeAt=state.currentChakra; info.prevLoss=0; info.pendingSecond=false; return;
+    info.status='A'; info.step=0; info.ladder=1; info.activeAt=state.currentChakra; info.prevLoss=0; return;
   }
   const bet=currentBetFor(info); const totalReturn=bet*9; const net=(bet*8)-info.prevLoss;
   state.liveBankroll += totalReturn;
@@ -562,16 +557,11 @@ function resolveNumberSilent(side,num,rowEvents,shouldReturnFromCap=false){
     return;
   }
   if(info.status==='I'){
-    if((state.settings.attackMode||'classic')==='thirdstrike' && !info.pendingSecond){
-      info.pendingSecond = true;
-      return;
-    }
     info.status='A';
     info.step=0;
     info.ladder=1;
     info.activeAt=state.currentChakra;
     info.prevLoss=0;
-    info.pendingSecond=false;
     return;
   }
   const bet=currentBetFor(info);
@@ -719,6 +709,94 @@ function exportDrishtiCsv(){ const header='Side,Number,ActivationChakra,WinChakr
 function exportDrishtiPdf(){ const html=`<html><head><title>Drishti</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #888;padding:6px;text-align:left}h1{font-size:20px}</style></head><body><h1>KUBERA WARHUNT V5Pro Final locked - DRISHTI</h1>${q('drishtiTable').outerHTML}</body></html>`; const w=window.open('','_blank'); if(!w) return; w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>w.print(), 250); }
 function importDrishtiCsv(e){ const file=e.target.files[0]; if(!file) return; file.text().then(text=>{ state.drishti=text.trim().split(/\r?\n/).slice(1).filter(Boolean).map(line=>{ const [side,number,activationChakra,winChakra,steps,prevLoss,winBet,net,status]=line.split(','); return {side,number,activationChakra,winChakra,steps,prevLoss,winBet,net,status}; }); renderAll(); showToast('DRISHTI LOADED','CSV imported'); }); e.target.value=''; }
 function escapeCsvValue(value){ const str=String(value ?? ""); return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str; }
+
+function xmlEscape(value){ return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
+function sheetNameSafe(name, fallback='Sheet1'){
+  const cleaned=String(name||fallback).replace(/[\\\/?*\[\]:]/g,' ').trim().slice(0,31);
+  return cleaned || fallback;
+}
+function xlsxCellRef(colIndex,rowIndex){
+  let col='';
+  let n=colIndex+1;
+  while(n>0){ const mod=(n-1)%26; col=String.fromCharCode(65+mod)+col; n=Math.floor((n-1)/26); }
+  return `${col}${rowIndex+1}`;
+}
+function buildSheetXml(rows){
+  const sheetRows=rows.map((row,rIdx)=>{
+    const cells=row.map((value,cIdx)=>{
+      if(value===null || value===undefined || value==='') return '';
+      const ref=xlsxCellRef(cIdx,rIdx);
+      if(typeof value==='number' && Number.isFinite(value)) return `<c r="${ref}"><v>${value}</v></c>`;
+      return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(value)}</t></is></c>`;
+    }).join('');
+    return `<row r="${rIdx+1}">${cells}</row>`;
+  }).join('');
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`;
+}
+function buildXlsxWorkbook(kumbhs){
+  const enc=new TextEncoder();
+  const files=[];
+  const add=(name,content)=>files.push({name,data:enc.encode(content)});
+  const sheetEntries=(kumbhs||[]).length ? kumbhs : [{name:'Kumbh_01', rows:[[ 'No data' ]]}];
+  const wbSheets=sheetEntries.map((s,i)=>`<sheet name="${xmlEscape(sheetNameSafe(s.name,`Sheet${i+1}`))}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('');
+  const wbRels=sheetEntries.map((s,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('');
+  const contentOverrides=sheetEntries.map((s,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('');
+  add('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>${contentOverrides}</Types>`);
+  add('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`);
+  const now=new Date().toISOString();
+  add('docProps/core.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:creator>Kubera Warhunt</dc:creator><cp:lastModifiedBy>Kubera Warhunt</cp:lastModifiedBy><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified></cp:coreProperties>`);
+  add('docProps/app.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>Kubera Warhunt</Application></Properties>`);
+  add('xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${wbSheets}</sheets></workbook>`);
+  add('xl/_rels/workbook.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${wbRels}<Relationship Id="rId${sheetEntries.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`);
+  add('xl/styles.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts><fills count="1"><fill><patternFill patternType="none"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs></styleSheet>`);
+  sheetEntries.forEach((sheet,idx)=>add(`xl/worksheets/sheet${idx+1}.xml`, buildSheetXml(sheet.rows)));
+  const crcTable=new Uint32Array(256);
+  for(let i=0;i<256;i++){
+    let c=i;
+    for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);
+    crcTable[i]=c>>>0;
+  }
+  const crc32=(data)=>{ let c=0xFFFFFFFF; for(let i=0;i<data.length;i++) c=crcTable[(c^data[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; };
+  const parts=[]; const central=[]; let offset=0;
+  const pushU16=(arr,n)=>arr.push(n&255,(n>>>8)&255); const pushU32=(arr,n)=>arr.push(n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255);
+  files.forEach(file=>{
+    const nameBytes=enc.encode(file.name); const crc=crc32(file.data); const local=[];
+    pushU32(local,0x04034b50); pushU16(local,20); pushU16(local,0); pushU16(local,0); pushU16(local,0); pushU16(local,0); pushU32(local,crc); pushU32(local,file.data.length); pushU32(local,file.data.length); pushU16(local,nameBytes.length); pushU16(local,0);
+    parts.push(Uint8Array.from(local), nameBytes, file.data);
+    const cent=[]; pushU32(cent,0x02014b50); pushU16(cent,20); pushU16(cent,20); pushU16(cent,0); pushU16(cent,0); pushU16(cent,0); pushU16(cent,0); pushU32(cent,crc); pushU32(cent,file.data.length); pushU32(cent,file.data.length); pushU16(cent,nameBytes.length); pushU16(cent,0); pushU16(cent,0); pushU16(cent,0); pushU16(cent,0); pushU32(cent,0); pushU32(cent,offset);
+    central.push(Uint8Array.from(cent), nameBytes);
+    offset += local.length + nameBytes.length + file.data.length;
+  });
+  const centralSize=central.reduce((n,a)=>n+a.length,0); const end=[]; pushU32(end,0x06054b50); pushU16(end,0); pushU16(end,0); pushU16(end,files.length); pushU16(end,files.length); pushU32(end,centralSize); pushU32(end,offset); pushU16(end,0);
+  return new Blob([...parts,...central,Uint8Array.from(end)], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+function granthWorkbookSheets(){
+  return (state.granth||[]).map(k=>{
+    const insight=kumbhInsights(k.rows||[]);
+    const rows=[];
+    rows.push([`Kumbh #${String(k.id).padStart(2,'0')}`]);
+    rows.push(['R','Y','K','YSel','YHit','KSel','KHit','Cap','Ret','Ah','Ax']);
+    (k.rows||[]).forEach(r=>{
+      const meta=insight.rowMeta.get(Number(r.chakra)||0) || { ySelCode:'-', yHitCode:'-', kSelCode:'-', kHitCode:'-', capped:[], returned:[] };
+      rows.push([Number(r.chakra)||0, r.y ?? '-', r.k ?? '-', meta.ySelCode, meta.yHitCode, meta.kSelCode, meta.kHitCode, formatRoundInfoEntries(meta.capped), formatRoundInfoEntries(meta.returned), Number(r.ahuti)||0, Number(r.axyapatra)||0]);
+    });
+    rows.push([]);
+    rows.push(['Travel Details']);
+    rows.push(['Side','Number','SelectedRound','HitRound','TravelSteps','SelectCode','HitCode']);
+    const details=[...insight.details.Y, ...insight.details.K].sort((a,b)=>a.hitRound-b.hitRound);
+    if(details.length) details.forEach(d=>rows.push([d.side,d.number,d.selectedRound,d.hitRound,d.travelSteps,d.selectCode,d.hitCode]));
+    else rows.push(['No completed travel yet']);
+    rows.push([]);
+    rows.push(['Y Hot', insight.yStats.hot.join(' | ') || '-']);
+    rows.push(['Y Cool', insight.yStats.cool.join(' | ') || '-']);
+    rows.push(['Y Rpt', Object.entries(insight.counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`${n}:${c}`).join(' | ') || '-']);
+    rows.push(['K Hot', insight.kStats.hot.join(' | ') || '-']);
+    rows.push(['K Cool', insight.kStats.cool.join(' | ') || '-']);
+    rows.push(['K Rpt', Object.entries(insight.counts.K).filter(([n])=>n!=='0').map(([n,c])=>`${n}:${c}`).join(' | ') || '-']);
+    return { name:`Kumbh_${String(k.id).padStart(2,'0')}`, rows };
+  });
+}
+
 function parseSimpleCsvLines(text){
   const lines=String(text||'').trim().split(/\r?\n/).filter(Boolean);
   return lines.slice(1).map(line=>{
@@ -759,10 +837,11 @@ function granthCsvContent(){
   });
   return header + rows.join('\n');
 }
-async function saveWithPicker(name,content,type){ if(window.showSaveFilePicker){ try{ const handle=await window.showSaveFilePicker({ suggestedName:name, types:[{ description:type.includes('json') ? 'JSON Files' : 'CSV Files', accept:{ [type]: [name.endsWith('.json') ? '.json' : '.csv'] } }] }); const writable=await handle.createWritable(); await writable.write(content); await writable.close(); return true; }catch(err){ if(err && err.name==='AbortError') return null; } } return false; }
+async function saveWithPicker(name,content,type){ if(window.showSaveFilePicker){ try{ const extension=name.toLowerCase().endsWith('.json') ? '.json' : (name.toLowerCase().endsWith('.xlsx') ? '.xlsx' : '.csv'); const description=type.includes('json') ? 'JSON Files' : (type.includes('sheet') ? 'Excel Files' : 'CSV Files'); const handle=await window.showSaveFilePicker({ suggestedName:name, types:[{ description, accept:{ [type]: [extension] } }] }); const writable=await handle.createWritable(); await writable.write(content); await writable.close(); return true; }catch(err){ if(err && err.name==='AbortError') return null; } } return false; }
 function exportPayload(){ return { app:'Kubera_V5Pro Final locked', version:'Kubera_V5Pro Final locked', exportedAt:new Date().toISOString(), state, pending, historyStack, redoStack }; }
 async function exportGranthJson(){ const content=JSON.stringify(exportPayload(),null,2); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.json',content,'application/json'); if(saved===null) return; if(!saved) downloadFile('Kubera_V5Pro_Final_locked.json',content,'application/json'); }
 async function exportGranthCsv(){ const content=granthCsvContent(); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.csv',content,'text/csv'); if(saved===null) return; if(!saved) downloadFile('Kubera_V5Pro_Final_locked.csv',content,'text/csv'); }
+async function exportGranthXlsx(){ const blob=buildXlsxWorkbook(granthWorkbookSheets()); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.xlsx',blob,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); if(saved===null) return; if(!saved) downloadBlob('Kubera_V5Pro_Final_locked.xlsx',blob); showToast('GRANTH EXPORTED','XLSX workbook saved'); }
 function importGranthJson(e){ const file=e.target.files[0]; if(!file) return; file.text().then(text=>{ const name=(file.name||'').toLowerCase(); const trimmed=text.trim(); if(name.endsWith('.csv') || trimmed.startsWith('KumbhId,')){
       const grouped=new Map(); parseSimpleCsvLines(text).forEach(cols=>{ const kumbhId=Number(cols[0])||0; const chakra=Number(cols[1])||0; if(!kumbhId || !chakra) return; if(!grouped.has(kumbhId)) grouped.set(kumbhId,{id:kumbhId,rows:[]}); const target=grouped.get(kumbhId); if(!target.rows.some(r=>Number(r.chakra)===chakra)) target.rows.push({ chakra, y:(cols[2]==='-'?'':(Number(cols[2])||cols[2])), k:(cols[5]==='-'?'':(Number(cols[5])||cols[5])), cap: cols[8] && cols[8] !== '-' ? cols[8].split(' | ') : [], ret: cols[9] && cols[9] !== '-' ? cols[9].split(' | ') : [], ahuti:Number(cols[10])||0, axyapatra:Number(cols[11])||0 }); });
       state.granth=[...grouped.values()].sort((a,b)=>a.id-b.id); state.currentKumbhId=state.granth.at(-1)?.id||null; pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings();
@@ -775,7 +854,8 @@ function importGranthJson(e){ const file=e.target.files[0]; if(!file) return; fi
     renderAll(); showToast('GRANTH LOADED','History imported'); }).finally(()=>{ e.target.value=''; }); }
 
 function importLadderCsv(e){ const file=e.target.files[0]; if(!file) return; file.text().then(text=>{ const lines=text.trim().split(/\r?\n/).slice(1).filter(Boolean); let cumulative1=0, cumulative2=0; lines.forEach(line=>{ const [ladder,stepLabel,betRaw]=line.split(','); const idx=Math.max(0, Number(String(stepLabel).replace(/\D/g,''))-1); const bet=Number(betRaw)||0; if(String(ladder).trim().toUpperCase()==='L2'){ cumulative2 += bet; } else { cumulative1 += bet; state.ladder[idx] = { step:`S${idx+1}`, bet, winReturn:bet*9, netProfit:(bet*9)-cumulative1, ifLoseTotal:-cumulative1 }; } }); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA LOADED','CSV ladder loaded'); }).finally(()=>{ e.target.value=''; }); }
-function downloadFile(name,content,type){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
+function downloadBlob(name,blob){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
+function downloadFile(name,content,type){ const blob=new Blob([content],{type}); downloadBlob(name,blob); }
 function setupInstall(){ window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; q('installBtn').classList.remove('hidden'); }); q('installBtn').addEventListener('click', async()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; q('installBtn').classList.add('hidden'); }); }
 function readYantraSettings(){
   const current = clone(state.settings);
@@ -793,6 +873,7 @@ function readYantraSettings(){
   current.maxSteps = Number(q('setMaxSteps').value)||30;
   current.reserve = Number(q('setReserve').value)||20000;
   current.capRule = q('setCapRule').value || 'on';
+  current.attackMode = q('setAttackMode')?.value || current.attackMode || 'classic';
   const stopLossPerNumberValue = Number(q('setStopLossPerNumber').value);
   current.stopLossPerNumber = Number.isFinite(stopLossPerNumberValue) ? stopLossPerNumberValue : -100;
   return current;
@@ -829,7 +910,7 @@ function setupControls(){
   document.addEventListener('keydown', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; if(e.key==='Enter'){ e.preventDefault(); const current=Number(el.dataset.ladderIndex); const next=document.querySelector(`[data-ladder-index="${current+1}"]`); if(next){ next.focus(); next.select(); } else { el.blur(); } } });
   document.addEventListener('focusin', e=>{ const el=e.target; if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(()=>el.select(),0); });
   q('exportCsvBtn').addEventListener('click', exportDrishtiCsv); if(q('exportPdfBtn')) q('exportPdfBtn').addEventListener('click', exportDrishtiPdf); q('loadCsvBtn').addEventListener('click', ()=>q('loadCsvFile').click()); q('loadCsvFile').addEventListener('change', importDrishtiCsv);
-  q('exportGranthBtn').addEventListener('click', ()=>{ const fmt=q('granthExportFormat')?.value || 'json'; if(fmt==='csv') exportGranthCsv(); else exportGranthJson(); }); q('importGranthBtn').addEventListener('click', ()=>q('importGranthFile').click()); q('importGranthFile').addEventListener('change', importGranthJson);
+  q('exportGranthBtn').addEventListener('click', ()=>{ const fmt=q('granthExportFormat')?.value || 'json'; if(fmt==='csv') exportGranthCsv(); else if(fmt==='xlsx') exportGranthXlsx(); else exportGranthJson(); }); q('importGranthBtn').addEventListener('click', ()=>q('importGranthFile').click()); q('importGranthFile').addEventListener('change', importGranthJson);
   q('deleteGranthBtn').addEventListener('click', async()=>{ const sel=q('deleteKumbhSelect'); const id=Number(sel?.value||0); if(id){ const ok=await askModal({ title:`Delete Kumbh #${String(id).padStart(2,'0')} ?`, text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=state.granth.filter(k=>k.id!==id).map((k,idx)=>({ ...k, id: idx+1 })); state.currentKumbhId=state.granth.at(-1)?.id||null; renderAll(); showToast('KUMBH DELETED','Selected Kumbh removed'); return; } const ok=await askModal({ title:'Delete all Kumbh history?', text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=[]; state.currentKumbhId=null; renderAll(); showToast('GRANTH PURGED','All Kumbh history removed'); });
   q('historyUndoBtn')?.addEventListener('click', undoLast);
   q('confirmCancelBtn').addEventListener('click', ()=>closeClearKumbh(false));
