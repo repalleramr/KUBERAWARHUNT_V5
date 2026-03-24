@@ -15,7 +15,8 @@ const defaultSettings = {
   capRule: 'on',
   stopLossPerNumber: -100,
   attackTiming: 'classic',
-  activeAttackTiming: 'classic'
+  activeAttackTiming: 'classic',
+  theme: 'ember'
 };
 const titles = { sangram:'⚔ SANGRAM', vyuha:'🛡 VYUHA', granth:'📜 GRANTH', drishti:'👁 DRISHTI', sopana:'🪜 SOPANA', yantra:'⚙ YANTRA', medha:'🧠 MEDHA' };
 let deferredPrompt = null;
@@ -30,6 +31,12 @@ let modalConfig = { title:'', text:'', okLabel:'OK', cancelLabel:'Cancel', okCla
 const fmtMoney = n => '₹ ' + Number(n || 0).toLocaleString('en-IN');
 const clone = obj => JSON.parse(JSON.stringify(obj));
 const parseSignedInt = (value, fallback=0) => { const cleaned = String(value ?? '').replace(/[^0-9-]/g,'').replace(/(?!^)-/g,''); const n = Number(cleaned); return Number.isFinite(n) ? n : fallback; };
+
+function applyTheme(theme){
+  const chosen = ['ember','royal','slate'].includes(theme) ? theme : 'ember';
+  document.documentElement.setAttribute('data-theme', chosen);
+}
+function formatCompactMoney(n){ return `₹${Number(n||0).toLocaleString('en-IN')}`; }
 
 function freshNumber(){ return { status:'I', step:0, ladder:1, activeAt:null, prevLoss:0, winningBet:0, lastNet:0, pendingSecond:false }; }
 
@@ -265,10 +272,70 @@ function renderGranth(){
 
 function renderDrishti(){ q('sumChakras').textContent=Math.max(0,state.currentChakra); q('sumAhuti').textContent=state.summary.totalAhuti; q('sumProfit').textContent=state.liveBankroll-state.settings.bankroll; q('sumExposure').textContent=state.summary.maxExposure; const tbody=q('drishtiTable').querySelector('tbody'); tbody.innerHTML=''; [...state.drishti].reverse().forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.side}</td><td>${r.number}</td><td>${r.activationChakra}</td><td>${r.winChakra}</td><td>${r.steps}</td><td>${r.prevLoss}</td><td>${r.winBet}</td><td>${r.net}</td><td>${r.status}</td>`; tbody.appendChild(tr); }); }
 function renderSopana(){ const tbody=q('ladderTable').querySelector('tbody'); tbody.innerHTML=''; state.ladder.forEach((row,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.step}</td><td><input class="ladder-bet-input" type="number" data-ladder-index="${idx}" inputmode="numeric" enterkeyhint="next" value="${row.bet}"></td><td>${row.winReturn}</td><td>${row.netProfit}</td><td>${row.ifLoseTotal}</td>`; tbody.appendChild(tr); }); const secondTable=q('secondLadderTable'); if(secondTable){ const tbody2=secondTable.querySelector('tbody'); tbody2.innerHTML=''; let prevLoss=0; for(let i=1;i<=Math.min(state.settings.maxSteps,15);i++){ const bet=secondLadderBet(i); const winReturn=bet*9; prevLoss += bet; const tr=document.createElement('tr'); tr.innerHTML=`<td>S${i}</td><td><input class="ladder-bet-input" type="number" data-second-ladder-index="${i-1}" inputmode="numeric" enterkeyhint="next" value="${bet}"></td><td>${winReturn}</td><td>${winReturn - prevLoss}</td><td>${-prevLoss}</td>`; tbody2.appendChild(tr); } } }
-function renderYantra(){ const s=state.settings; q('setBankroll').value=s.bankroll; q('setTargetDollar').value=s.targetDollar; q('setTargetPercent').value=s.targetPercent; q('setStopLoss').value=s.stopLoss; q('setMin').value=s.min; q('setMax').value=s.max; q('setCoin').value=s.coin; q('setTargetNum').value=s.targetNum; q('setDoubleLadder').value=s.doubleLadder||'on'; q('setKeypadMode').value=s.keypadMode; q('setMaxSteps').value=s.maxSteps; q('setReserve').value=s.reserve; q('setCapRule').value=s.capRule; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; if(q('setAttackTiming')) q('setAttackTiming').value=s.attackTiming || 'classic'; }
-function renderMedha(){ const active=[]; const cap=[]; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B') active.push(`${side}${n} ${info.ladder===2?'2S':'S'}${info.step}`); if(info.status==='C') cap.push(`${side}${n}`);} }); q('medhaPanel').innerHTML=`<div class="medha-item"><div class="label">Active Formation</div><div>${active.join(' | ') || 'None'}</div></div><div class="medha-item"><div class="label">CAP Numbers</div><div>${cap.join(' | ') || 'None'}</div></div>`; }
+function renderYantra(){ const s=state.settings; q('setBankroll').value=s.bankroll; q('setTargetDollar').value=s.targetDollar; q('setTargetPercent').value=s.targetPercent; q('setStopLoss').value=s.stopLoss; q('setMin').value=s.min; q('setMax').value=s.max; q('setCoin').value=s.coin; q('setTargetNum').value=s.targetNum; q('setDoubleLadder').value=s.doubleLadder||'on'; q('setKeypadMode').value=s.keypadMode; q('setMaxSteps').value=s.maxSteps; q('setReserve').value=s.reserve; q('setCapRule').value=s.capRule; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; if(q('setAttackTiming')) q('setAttackTiming').value=s.attackTiming || 'classic'; if(q('setTheme')) q('setTheme').value=s.theme || 'ember'; }
+function renderMedha(){
+  const formation = { active:[], waiting:[], cap:[], locked:[] };
+  const nextPreview = [];
+  const capReasons = [];
+  let activeCount = 0, waitingCount = 0, capCount = 0, lockedCount = 0;
+  ['Y','K'].forEach(side=>{
+    for(let n=1;n<=9;n++){
+      const info=state.numbers[side][n];
+      if(info.pendingSecond){ formation.waiting.push(`${side}${n} W2`); waitingCount += 1; }
+      if(info.status==='A' || info.status==='B'){
+        formation.active.push(`${side}${n} ${info.ladder===2?'2S':'S'}${info.step}`);
+        activeCount += 1;
+        const preview=previewNextAhutiFor(info);
+        if(preview) nextPreview.push(`${side}${n} ${preview.stepLabel} ${formatCompactMoney(preview.bet)}`);
+      }
+      if(info.status==='C'){
+        formation.cap.push(`${side}${n}`);
+        capCount += 1;
+        capReasons.push(`${side}${n} net ${soldierStepNetProfit(info)}`);
+      }
+      if(info.status==='L'){
+        formation.locked.push(`${side}${n}`);
+        lockedCount += 1;
+      }
+    }
+  });
+  const drawdown = state.settings.bankroll - state.liveBankroll;
+  const nextTotal = nextPreviewExposureTotal();
+  let risk='LOW';
+  if(nextTotal >= state.settings.bankroll*0.08 || activeCount >= 7 || drawdown >= state.settings.bankroll*0.25) risk='HIGH';
+  else if(nextTotal >= state.settings.bankroll*0.04 || activeCount >= 4 || drawdown >= state.settings.bankroll*0.12) risk='MEDIUM';
+  const mode = state.settings.activeAttackTiming || state.settings.attackTiming || 'classic';
+  const patternNotes=[];
+  if(activeCount >= 6) patternNotes.push('Many active attacks are running together.');
+  if(waitingCount >= 4) patternNotes.push('Several numbers are in W2 watch state.');
+  if(capCount > 0) patternNotes.push('CAP pressure is present.');
+  if(nextTotal >= state.settings.reserve) patternNotes.push('Next Ahuti is touching reserve pressure.');
+  if(!patternNotes.length) patternNotes.push('Current formation looks stable.');
+  const kumbh=currentKumbh();
+  const rows=kumbh?.rows||[];
+  const insight=kumbhInsights(rows);
+  const yHot=insight.yStats.hot.slice(0,3).join(' | ') || '-';
+  const kHot=insight.kStats.hot.slice(0,3).join(' | ') || '-';
+  const fastest=[...insight.details.Y, ...insight.details.K].sort((a,b)=>a.travelSteps-b.travelSteps)[0];
+  const slowest=[...insight.details.Y, ...insight.details.K].sort((a,b)=>b.travelSteps-a.travelSteps)[0];
+  const whyText = [
+    `Mode ${mode==='thirdstrike' ? 'ThirdStrike' : 'Classic'}`,
+    `Active ${activeCount}`,
+    `Waiting ${waitingCount}`,
+    `CAP ${capCount}`,
+    `Locked ${lockedCount}`
+  ].join(' · ');
+  q('medhaPanel').innerHTML=`
+    <div class="medha-item medha-hero"><div class="label">Current Kumbh Summary</div><div class="medha-big">${risk} RISK</div><div class="medha-grid-2"><div><span class="mini-label">Mode</span><strong>${mode==='thirdstrike'?'ThirdStrike':'Classic'}</strong></div><div><span class="mini-label">Chakra</span><strong>${state.currentChakra}</strong></div><div><span class="mini-label">Live Axyapatra</span><strong>${fmtMoney(state.liveBankroll)}</strong></div><div><span class="mini-label">Drawdown</span><strong>${formatCompactMoney(drawdown)}</strong></div></div></div>
+    <div class="medha-item"><div class="label">Why Panel</div><div>${whyText}</div><div class="medha-tags"><span class="tag">Active ${activeCount}</span><span class="tag">Waiting ${waitingCount}</span><span class="tag">CAP ${capCount}</span><span class="tag">Locked ${lockedCount}</span></div></div>
+    <div class="medha-item"><div class="label">Next Āhuti Explanation</div><div class="medha-big small">${formatCompactMoney(nextTotal)}</div><div>${nextPreview.join(' | ') || 'No next-round attacks'}</div></div>
+    <div class="medha-item"><div class="label">Formation View</div><div><span class="mini-label">Active</span><div>${formation.active.join(' | ') || 'None'}</div></div><div><span class="mini-label">Waiting</span><div>${formation.waiting.join(' | ') || 'None'}</div></div><div><span class="mini-label">CAP</span><div>${formation.cap.join(' | ') || 'None'}</div></div><div><span class="mini-label">Locked</span><div>${formation.locked.join(' | ') || 'None'}</div></div></div>
+    <div class="medha-item"><div class="label">CAP Monitor</div><div>${capReasons.join(' | ') || 'No CAP numbers now'}</div></div>
+    <div class="medha-item"><div class="label">Granth Insights</div><div><span class="mini-label">Y Hot</span> ${yHot}</div><div><span class="mini-label">K Hot</span> ${kHot}</div><div><span class="mini-label">Fastest Travel</span> ${fastest ? `${fastest.side}${fastest.number} in ${fastest.travelSteps}` : '-'}</div><div><span class="mini-label">Slowest Travel</span> ${slowest ? `${slowest.side}${slowest.number} in ${slowest.travelSteps}` : '-'}</div></div>
+    <div class="medha-item"><div class="label">Pattern Warnings</div><div>${patternNotes.join(' | ')}</div></div>`;
+}
 function renderActiveTab(){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===`screen-${state.activeTab}`)); document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.target===state.activeTab)); q('screenTitle').textContent=titles[state.activeTab]||titles.sangram; }
-function renderAll(){ renderActiveTab(); renderBoards(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderSopana(); renderYantra(); renderMedha(); saveState(); }
+function renderAll(){ renderActiveTab(); renderBoards(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderSopana(); renderYantra(); renderMedha(); applyTheme(state.settings.theme || 'ember'); saveState(); }
 
 function startPrayoga(){ if(state.currentChakra===0 && !(currentKumbh()?.rows?.length)){ state.liveBankroll = state.settings.bankroll; } else if(state.currentChakra!==0 || currentKumbh()?.rows?.length){ state.currentKumbhId=null; state.liveBankroll = state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; } state.settings.activeAttackTiming = state.settings.attackTiming || 'classic'; const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('SANGRAM AARAMBHA', `#${String(kumbh.id).padStart(2,'0')} Kumbh ready`); }
 async function clearCurrentSession(){ if(!(await askClearKumbh())) return; state.liveBankroll=state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; state.currentKumbhId=null; state.settings.activeAttackTiming = state.settings.attackTiming || 'classic'; const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('KUMBHA SHUDDHI',`#${String(kumbh.id).padStart(2,'0')} Kumbh ready`); }
@@ -752,6 +819,7 @@ function readYantraSettings(){
   current.stopLossPerNumber = Number.isFinite(stopLossPerNumberValue) ? stopLossPerNumberValue : -100;
   current.attackTiming = q('setAttackTiming')?.value || current.attackTiming || 'classic';
   current.activeAttackTiming = current.activeAttackTiming || current.attackTiming || 'classic';
+  current.theme = q('setTheme')?.value || current.theme || 'ember';
   return current;
 }
 async function applyYantraSettings(){
