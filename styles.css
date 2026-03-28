@@ -13,8 +13,6 @@
   --orange:#d9853a;
   --shadow:0 8px 24px rgba(0,0,0,.28);
 }
-:root[data-theme='royal']{--bg:#0d0b1b;--panel:#17142b;--panel-2:#211c3d;--gold:#d9c27a;--gold-soft:#b39a52;--text:#f2eeff;--muted:#b9b1d4;--red:#b44a6e;--green:#4dbb8f;--cyan:#58b9d4;--blue:#7087ff;--orange:#c98b4f;}
-:root[data-theme='slate']{--bg:#0d1116;--panel:#161d24;--panel-2:#1e2630;--gold:#8fd1ff;--gold-soft:#6ea9d1;--text:#eef5fb;--muted:#aab7c4;--red:#d46a6a;--green:#55b58a;--cyan:#5db8c6;--blue:#7aa2ff;--orange:#d39a62;}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:radial-gradient(circle at top, #2a1a0f 0%, var(--bg) 38%),linear-gradient(180deg,#120a05,#0d0704);color:var(--text)}
@@ -77,7 +75,7 @@ th{position:sticky;top:0;background:#22160d;color:var(--gold)}
 .settings-grid input,.settings-grid select,#ladderTable input,#secondLadderTable input{width:100%;background:#130c07;border:1px solid rgba(246,198,107,.2);color:var(--text);padding:10px 12px;border-radius:12px}
 #ladderTable input,#secondLadderTable input{width:7ch;min-width:7ch;max-width:8ch;padding:8px 8px;text-align:right;border-radius:10px}
 .save-wrap{margin-top:12px}
-.medha-panel{display:grid;gap:10px;margin-top:10px}.medha-item{padding:12px;border:1px solid rgba(246,198,107,.16);border-radius:14px;background:#1c120b}.medha-hero{background:linear-gradient(180deg,rgba(246,198,107,.12),rgba(28,18,11,.96));}.medha-big{font-size:24px;font-weight:800;color:var(--gold);margin:8px 0}.medha-big.small{font-size:20px}.medha-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mini-label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 2px}.medha-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.tag{padding:6px 10px;border-radius:999px;background:rgba(246,198,107,.1);border:1px solid rgba(246,198,107,.16);font-size:12px}
+.medha-panel{display:grid;gap:10px;margin-top:10px}.medha-item{padding:12px;border:1px solid rgba(246,198,107,.16);border-radius:14px;background:#1c120b}
 .bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(11,8,6,.15),rgba(11,8,6,.97) 30%,rgba(11,8,6,.99))}
 .bottom-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 4px;font-size:11px;background:#1d130c}
 .bottom-nav button.active{background:#2f1d11;color:var(--gold);border-color:rgba(246,198,107,.5);box-shadow:0 0 16px rgba(246,198,107,.12)}
