@@ -6,7 +6,7 @@
   <title>Kubera_V5Pro Final locked</title>
   <meta name="theme-color" content="#120a05">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=20260415">
+  <link rel="stylesheet" href="styles.css">
   
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=UnifrakturCook:wght@700&display=swap');
@@ -44,7 +44,7 @@
   </style>
 </head>
 <body>
-  <div id="toastLayer" class="toast-layer"></div>
+  <div id="toastLayer" class="toast-layer" aria-live="polite" aria-atomic="true"></div>
   <div id="app">
     <header class="fixed-shell">
       <div class="topbar">
@@ -61,6 +61,7 @@
     </header>
 
     <main class="content-pad">
+      <!-- SANGRAM SCREEN -->
       <section id="screen-sangram" class="screen active">
         <section class="boards-compact sangram-boards">
           <div class="board-block">
@@ -76,92 +77,4 @@
         <section class="action-strip compact-card">
           <button id="kumbhaBtn" class="warn strip-btn" type="button">Clear Kumbha</button>
           <button id="undoBtn" class="strip-btn" type="button">Undo</button>
-          <button id="redoBtn" class="strip-btn" type="button">Redo</button>
-          <button id="prayogaBtn" class="strip-btn" type="button">Prayoga</button>
-        </section>
-
-        <section class="card compact-card">
-          <div class="label">LAST RESULT</div>
-          <div id="lastResultValue" class="last-result">-</div>
-        </section>
-
-        <section class="card compact-card">
-          <div class="label">NEXT ĀHUTI</div>
-          <div id="nextY" class="ahuti-row">Y -</div>
-          <div id="nextK" class="ahuti-row">K -</div>
-          <div id="nextT" class="total">T 0</div>
-        </section>
-
-        <section class="card compact-card chakra-card">
-          <div class="chakra-line chakra-right">
-            <div class="chakra-copy">
-              <div class="label">CHAKRA</div>
-              <div id="chakraValue" class="chakra-value">Round : 0</div>
-            </div>
-          </div>
-        </section>
-      </section>
-
-      <!-- All other screens (vyuha, granth, drishti, sopana, yantra, medha) are kept exactly as before -->
-      <!-- (I kept them short here to save space — use the full version from my previous message if needed) -->
-
-    </main>
-
-    <nav class="bottom-nav">
-      <button class="nav active" data-target="sangram" type="button">⚔<span>Sangram</span></button>
-      <button class="nav" data-target="vyuha" type="button">🛡<span>Vyuha</span></button>
-      <button class="nav" data-target="granth" type="button">📜<span>Granth</span></button>
-      <button class="nav" data-target="drishti" type="button">👁<span>Drishti</span></button>
-      <button class="nav" data-target="sopana" type="button">🪜<span>Sopana</span></button>
-      <button class="nav" data-target="yantra" type="button">⚙<span>Yantra</span></button>
-      <button class="nav" data-target="medha" type="button">🧠<span>Medha</span></button>
-    </nav>
-  </div>
-
-  <div id="confirmOverlay" class="modal-overlay hidden">
-    <div class="modal-card">
-      <div id="confirmTitle" class="modal-title">KUMBHA CLEAR</div>
-      <div id="confirmText" class="modal-text">Clear current Kumbh?</div>
-      <div class="modal-actions">
-        <button id="confirmCancelBtn" type="button">Cancel</button>
-        <button id="confirmOkBtn" class="warn" type="button">OK</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="app.js?v=20260415"></script>
-
-  <!-- 🔥 SUPER STRONG DEBUG + FORCE INIT -->
-  <script>
-    console.log('%c🚀 Kubera Warhunt DEBUG MODE STARTED', 'color:#FFD700;font-size:18px;font-weight:bold');
-
-    function createSparkle() {
-      const s = document.createElement('div');
-      s.className = 'sparkle';
-      s.innerHTML = Math.random() > 0.5 ? '✨' : '💎';
-      s.style.left = Math.random() * 100 + 'vw';
-      s.style.top = Math.random() * 70 + 'vh';
-      document.body.appendChild(s);
-      setTimeout(() => s.remove(), 3000);
-    }
-
-    window.addEventListener('load', () => {
-      console.log('✅ PAGE LOADED - Running force init...');
-      for (let i = 0; i < 30; i++) setTimeout(createSparkle, i * 25);
-
-      setTimeout(() => {
-        console.log('Force calling setupTabs, setupBoards, setupControls, renderAll...');
-        if (typeof setupTabs === 'function') setupTabs();
-        if (typeof setupBoards === 'function') setupBoards();
-        if (typeof setupControls === 'function') setupControls();
-        if (typeof renderAll === 'function') renderAll();
-      }, 150);
-
-      setTimeout(() => {
-        if (typeof renderAll === 'function') renderAll();
-      }, 600);
-
-      setTimeout(() => {
-        if (typeof renderAll === 'function') renderAll();
-        console.log('✅ Final renderAll called');
-      }, 120
+          <
