@@ -1,7 +1,9 @@
 const STORAGE_KEY = 'kubera-warhunt-v5pro-final-locked';
 
-// 🔥 THE GAMING SYMBOLS (Only used for the shifting keypad decoy now)
+// 🔥 GAMING SYMBOLS
 const puzzleSymbols = ['💎', '🔥', '⚡', '🌟', '🔮', '🎲', '🌙', '☀️', '💠', '🔱', '🧿', '🧩'];
+// 🔥 ROMAN NUMERALS FOR DECOY RESULTS
+const romanMap = ['0', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 
 const defaultSettings = {
   bankroll: 30000,
@@ -270,7 +272,6 @@ function renderBoards(){
 
 function renderVyuha(){ ['Y','K'].forEach(side=>{ const host=q(side==='Y'?'vyuhaY':'vyuhaK'); if(!host) return; host.innerHTML=''; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const d=document.createElement('div'); d.className='state-cell'; d.innerHTML=`<div class="num" style="font-size:24px;">[ ${n} ]</div><div class="meta">${statusCode(info)}</div>`; host.appendChild(d);} }); }
 
-// 🔥 NEXT AHUTI CLEARLY SHOWS "+ 800 -> [ 2 ]" TO THE USER
 function formatNextAhuti(side){ 
     const groups=new Map(); 
     for(let n=1;n<=9;n++){ 
@@ -285,7 +286,7 @@ function formatNextAhuti(side){
     return `${side === 'Y' ? 'YAKSHA' : 'KINNARA'}: ${parts.join(' | ') || 'Idle'}`; 
 }
 
-// 🔥 LAST RESULT CLEARLY SHOWS "[ 2 ] | [ 6 ]"
+// 🔥 LAST RESULT CLEARLY SHOWS ROMAN NUMERALS "[ II ] | [ VI ]" TO HIDE NUMBERS
 function renderSangram(){ 
     if(q('bankValue')) q('bankValue').textContent=fmtMoney(state.liveBankroll); 
     if(q('chakraValue')) q('chakraValue').textContent=`Wave : ${state.currentChakra}`; 
@@ -294,8 +295,8 @@ function renderSangram(){
     if(q('nextT')) q('nextT').textContent=`Total Queue: + ${nextPreviewExposureTotal()}`; 
     
     const lastRow=currentKumbh()?.rows?.at(-1); 
-    const displayY = (lastRow && lastRow.y !== '-' && lastRow.y !== null && lastRow.y !== undefined) ? `[ ${lastRow.y} ]` : '➖';
-    const displayK = (lastRow && lastRow.k !== '-' && lastRow.k !== null && lastRow.k !== undefined) ? `[ ${lastRow.k} ]` : '➖';
+    const displayY = (lastRow && lastRow.y !== '-' && lastRow.y !== null && lastRow.y !== undefined) ? `[ ${romanMap[lastRow.y]} ]` : '➖';
+    const displayK = (lastRow && lastRow.k !== '-' && lastRow.k !== null && lastRow.k !== undefined) ? `[ ${romanMap[lastRow.k]} ]` : '➖';
     
     if(q('lastResultValue')) q('lastResultValue').textContent=`${displayY}  |  ${displayK}`; 
 }
