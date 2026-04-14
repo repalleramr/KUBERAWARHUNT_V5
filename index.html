@@ -8,17 +8,18 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
   
-  <!-- 🔥 MYTHOLOGY TREASURY WAR GAMING EFFECTS (transparent keyboard + Kubera background) -->
+  <!-- 🔥 MYTHOLOGY TREASURY WAR GAMING EFFECTS (transparent glass keyboard + Kubera background) -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=UnifrakturCook:wght@700&display=swap');
     
+    /* Kubera War-Hunt background */
     body {
       background: linear-gradient(rgba(26,15,10,0.88), rgba(26,15,10,0.96)), 
                   url('https://picsum.photos/id/1015/2000/1200') center/cover fixed !important;
       position: relative;
     }
     
-    /* Transparent glass keyboard */
+    /* Transparent glass upper keyboard */
     .boards-compact .board-block {
       background: rgba(43,31,15,0.65) !important;
       backdrop-filter: blur(14px);
@@ -247,7 +248,7 @@
 
   <script src="app.js"></script>
 
-  <!-- ✨ Gaming sparkles -->
+  <!-- ✨ Gaming sparkles + force setup for tabs & keyboard -->
   <script>
     function createSparkle() {
       const sparkle = document.createElement('div');
@@ -262,7 +263,11 @@
     setInterval(() => { if (Math.random() > 0.6) createSparkle(); }, 220);
     window.addEventListener('load', () => {
       for (let i = 0; i < 22; i++) setTimeout(createSparkle, i * 35);
+      // Force tabs & keyboard setup (in case of any timing issue)
+      if (typeof setupTabs === 'function') setupTabs();
+      if (typeof setupBoards === 'function') setupBoards();
+      if (typeof renderAll === 'function') renderAll();
     });
   </script>
 </body>
-</html>
+  </html>
