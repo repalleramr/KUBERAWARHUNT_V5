@@ -17,7 +17,7 @@
                   url('https://picsum.photos/id/1015/2000/1200') center/cover fixed !important;
     }
     
-    /* Transparent glass keyboard */
+    /* Transparent glass keypad */
     .boards-compact .board-block {
       background: rgba(43,31,15,0.65) !important;
       backdrop-filter: blur(14px);
@@ -246,7 +246,7 @@
 
   <script src="app.js"></script>
 
-  <!-- 🔥 STRONG FORCE INITIALIZATION FOR TABS + KEYPAD -->
+  <!-- 🔥 VERY STRONG FORCE INIT FOR KEYPAD + TABS -->
   <script>
     function createSparkle() {
       const sparkle = document.createElement('div');
@@ -263,16 +263,21 @@
     window.addEventListener('load', () => {
       for (let i = 0; i < 25; i++) setTimeout(createSparkle, i * 30);
       
-      // FORCE your app.js functions to run
-      if (typeof setupTabs === 'function') setupTabs();
-      if (typeof setupBoards === 'function') setupBoards();
-      if (typeof setupControls === 'function') setupControls();
-      if (typeof renderAll === 'function') renderAll();
-      
-      // Extra safety - re-run after 300ms
+      // Multiple attempts to force your app.js to initialise keypad + tabs
+      setTimeout(() => {
+        if (typeof setupTabs === 'function') setupTabs();
+        if (typeof setupBoards === 'function') setupBoards();
+        if (typeof setupControls === 'function') setupControls();
+        if (typeof renderAll === 'function') renderAll();
+      }, 100);
+
       setTimeout(() => {
         if (typeof renderAll === 'function') renderAll();
-      }, 300);
+      }, 500);
+
+      setTimeout(() => {
+        if (typeof renderAll === 'function') renderAll();
+      }, 1000);
     });
   </script>
 </body>
