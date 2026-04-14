@@ -60,10 +60,12 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 .board-block{min-width:0; padding: 6px !important;} 
 .board-title{font-weight:800;color:var(--gold);margin:0 0 4px 4px; font-size: 14px; text-shadow: 0 0 8px var(--gold);}
 
-/* Keep grids from collapsing */
-.treasure-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px; min-height: 160px;} 
+/* ⬆️ INCREASED: Grid height and spacing for larger buttons */
+.treasure-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px; min-height: 220px;} 
 .treasure-grid .zero{grid-column:2}
-.tile{position:relative;min-height:50px;border-radius:12px;border:1px solid var(--gold);background:linear-gradient(180deg,var(--tile-bg1),var(--tile-bg2));color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all 0.15s cubic-bezier(0.4, 0, 0.2, 1);}
+
+/* ⬆️ INCREASED: Tile min-height from 50px to 65px */
+.tile{position:relative;min-height:65px;border-radius:14px;border:1px solid var(--gold);background:linear-gradient(180deg,var(--tile-bg1),var(--tile-bg2));color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all 0.15s cubic-bezier(0.4, 0, 0.2, 1);}
 .tile .num{font-size:20px;font-weight:800} 
 .tile,.bottom-nav button,.controls button,.btn-row button,.save-wrap button,.install-btn{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 
@@ -83,7 +85,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 .warn{background:#5a1d24!important;border-color:rgba(207,76,60,.4)!important}
 .split-grid,.summary-grid{display:grid;grid-template-columns:1fr;gap:6px}
 .state-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:6px}
-.state-cell{min-height:50px;border-radius:12px;background:var(--state-cell-bg);border:1px solid var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.state-cell{min-height:65px;border-radius:14px;background:var(--state-cell-bg);border:1px solid var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .state-cell .num{font-size:20px;font-weight:800}
 .state-cell .meta{font-size:10px;color:var(--muted);font-weight:700}
 .toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
@@ -135,9 +137,7 @@ th{position:sticky;top:0;background:var(--panel-2);color:var(--gold)}
    🔥 THE KUBERA TREASURY VAULT (STEALTH MODE OVERRIDES)
    ======================================================================== */
 
-/* 1. Deep Golden Vault Background */
 body {
-  /* Rich, glowing dark gold/copper radial gradient, overlaid on an ancient abstract texture */
   background: radial-gradient(ellipse at 50% 20%, rgba(80, 55, 15, 0.95), rgba(15, 8, 2, 1)), 
               url('https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=2000&auto=format&fit=crop') center/cover fixed !important;
   background-blend-mode: multiply;
@@ -146,7 +146,6 @@ body::before {
   content: '';
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  /* A secondary vignette shadow to pull focus to the center */
   background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85) 120%);
   pointer-events: none;
   z-index: 1;
@@ -201,20 +200,20 @@ body::before {
   display: none !important; 
 }
 
-/* Make the tiny status meta tags (bottom right) even dimmer so they don't draw eyes */
+/* Dimmer status texts */
 .treasure-grid .tile .meta { 
   position: absolute; 
   bottom: 4px; 
   right: 6px; 
   font-size: 9px !important; 
-  opacity: 0.3; /* Very dim */
+  opacity: 0.3; 
   margin-top: 0;
 }
 
-/* The shuffling puzzle symbols */
+/* ⬆️ INCREASED: Shuffling puzzle symbols are now much larger */
 .decoy-symbol {
-  font-size: 24px;
-  margin-top: 2px;
+  font-size: 32px;
+  margin-top: 4px;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
   animation: shufflePop 0.3s ease-out;
 }
@@ -223,14 +222,14 @@ body::before {
   100% { transform: scale(1) rotate(0deg); opacity: 1; } 
 }
 
-/* The Locked Win Score */
+/* ⬆️ INCREASED: The Locked Win Score is larger and clearer */
 .decoy-score {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 900;
   color: #FFF;
   background: rgba(0,0,0,0.5);
-  padding: 3px 6px;
-  border-radius: 8px;
+  padding: 5px 8px;
+  border-radius: 10px;
   border: 1px solid var(--gold);
   text-shadow: 0 0 10px var(--gold);
   z-index: 5;
@@ -242,7 +241,7 @@ body::before {
   100% { transform: scale(1) rotate(0deg); } 
 }
 
-/* The 3D Tactile Game Buttons synced to Theme */
+/* The 3D Tactile Game Buttons */
 .treasure-grid .tile {
   background: linear-gradient(145deg, var(--gold-soft), var(--tile-bg2)) !important;
   border: 1px solid var(--gold) !important;
@@ -279,7 +278,7 @@ body::before {
   100% { transform: scale(1); background: linear-gradient(145deg, var(--panel-2), var(--bg)); }
 }
 
-/* Bottom Navigation Epic Glow synced to Theme */
+/* Bottom Navigation */
 .bottom-nav {
   position: fixed !important;
   bottom: 0 !important;
