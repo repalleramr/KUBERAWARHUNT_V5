@@ -1,4 +1,6 @@
 const STORAGE_KEY = 'kubera-warhunt-v5pro-final-locked';
+const puzzleSymbols = ['💎', '🔥', '⚡', '🌟', '🔮', '🎲', '🌙', '☀️', '💠', '🔱', '🧿', '🧩'];
+
 const defaultSettings = {
   bankroll: 30000,
   targetDollar: 500,
@@ -45,7 +47,9 @@ let keypadBusy = false;
 const q = id => document.getElementById(id);
 let modalResolver = null;
 let modalConfig = { title:'', text:'', okLabel:'OK', cancelLabel:'Cancel', okClass:'warn' };
-const fmtMoney = n => '₹ ' + Number(n || 0).toLocaleString('en-IN');
+
+// 🔥 NEW: Stealth Diamond Formatter
+const fmtMoney = n => '💎 ' + Number(n || 0).toLocaleString('en-IN');
 const clone = obj => JSON.parse(JSON.stringify(obj));
 const parseSignedInt = (value, fallback=0) => { const cleaned = String(value ?? '').replace(/[^0-9-]/g,'').replace(/(?!^)-/g,''); const n = Number(cleaned); return Number.isFinite(n) ? n : fallback; };
 
@@ -196,6 +200,7 @@ function glowKey(el){ if(!el) return; el.classList.remove('key-glow'); void el.o
 function statusCode(info){ if(!info) return '0'; if(info.status==='W') return waitingCodeForInfo(info); if(info.status==='A') return `S${Math.max(1, Number(info.step)||1)}`; if(info.status==='B') return 'B'; return info.status; }
 function vijayDarshanaDisplay(info){ const bet=currentBetFor(info); const displayStep=Math.max(1,(Number(info.step)||1)-1); const displayNet=(bet*8)-(Number(info.prevLoss)||0); return { bet, displayStep, displayNet }; }
 
+// 🔥 NEW: Shuffling Puzzle Array Function
 function renderBoards(){
   ['Y','K'].forEach(side=>{
     const host=q(side==='Y'?'boardY':'boardK'); host.innerHTML='';
@@ -203,11 +208,23 @@ function renderBoards(){
       const n=i===10?0:i; const info=n===0?null:state.numbers[side][n];
       const btn=document.createElement('button'); const code=n===0?'0':statusCode(info); const metaClass=info?.step?`step${Math.min(info.step,6)}`:'';
       btn.type='button'; btn.className=`tile ${n===0?'zero':''} ${info?'state-'+info.status:''}`.trim(); btn.dataset.side=side; btn.dataset.num=String(n);
-      btn.innerHTML=`<div class="num">${n}</div><div class="meta ${metaClass}">${code}</div>`;
+      
+      let decoyContent = '';
+      if (info && info.status === 'L') {
+        decoyContent = `<div class="decoy-score">🔒 +${info.lastNet}</div>`;
+      } else if (n !== 0) {
+        const randSym = puzzleSymbols[Math.floor(Math.random() * puzzleSymbols.length)];
+        decoyContent = `<div class="decoy-symbol">${randSym}</div>`;
+      } else {
+        decoyContent = `<div class="decoy-symbol">🌀</div>`; 
+      }
+
+      btn.innerHTML=`<div class="num">${n}</div>${decoyContent}<div class="meta ${metaClass}">${code}</div>`;
       host.appendChild(btn);
     }
   });
 }
+
 function renderVyuha(){ ['Y','K'].forEach(side=>{ const host=q(side==='Y'?'vyuhaY':'vyuhaK'); host.innerHTML=''; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const d=document.createElement('div'); d.className='state-cell'; d.innerHTML=`<div class="num">${n}</div><div class="meta">${statusCode(info)}</div>`; host.appendChild(d);} }); }
 function formatNextAhuti(side){ const groups=new Map(); for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const preview=previewNextAhutiFor(info); if(preview){ if(!groups.has(preview.bet)) groups.set(preview.bet,[]); groups.get(preview.bet).push(`${n}(${preview.stepLabel})`); } } const parts=[...groups.entries()].sort((a,b)=>b[0]-a[0]).map(([bet,arr])=>`${bet} on ${arr.join(' ')}`); return `${side} ${parts.join(' | ') || '-'}`; }
 function renderSangram(){ q('bankValue').textContent=fmtMoney(state.liveBankroll); q('chakraValue').textContent=`Round : ${state.currentChakra}`; q('nextY').textContent=formatNextAhuti('Y'); q('nextK').textContent=formatNextAhuti('K'); q('nextT').textContent=`T ${nextPreviewExposureTotal()}`; const lastRow=currentKumbh()?.rows?.at(-1); const last = lastRow ? `${lastRow.y ?? '-'} | ${lastRow.k ?? '-'}` : '-'; if(q('lastResultValue')) q('lastResultValue').textContent=last; }
@@ -351,8 +368,8 @@ async function advanceAfterLoss(side,notes,rowEvents,winningNum=null){ for(let n
   } }
 async function processCombined(){ if(pending.Y===null || pending.K===null) return; recordSnapshot(); state.currentChakra += 1; ensureKumbh(); const y=pending.Y, k=pending.K; pending={Y:null,K:null}; let exposure=nextExposureTotal(); state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const notes=[]; const rowEvents={cap:[],ret:[],np:[]}; if(y===0) await advanceAfterLoss('Y',notes,rowEvents); else { await advanceAfterLoss('Y',[],rowEvents,y); await resolveNumber('Y',y,notes,rowEvents); } if(k===0) await advanceAfterLoss('K',notes,rowEvents); else { await advanceAfterLoss('K',[],rowEvents,k); await resolveNumber('K',k,notes,rowEvents); }
   currentKumbh()?.rows.push({ chakra:state.currentChakra, y, k, cap:rowEvents.cap, ret:rowEvents.ret, np:rowEvents.np, ahuti:exposure, axyapatra:state.liveBankroll });
-  if(state.liveBankroll <= state.settings.bankroll - state.settings.stopLoss) notes.push({title:'TREASURY WARNING',text:'Axyapatra approaching Raksha Rekha',kind:'warn'});
-  if(state.liveBankroll < state.settings.reserve) notes.push({title:'TREASURY WARNING',text:'Axyapatra below Raksha Nidhi',kind:'warn'});
+  if(state.liveBankroll <= state.settings.bankroll - state.settings.stopLoss) notes.push({title:'TREASURY WARNING',text:'Diamond Stash approaching critical',kind:'warn'});
+  if(state.liveBankroll < state.settings.reserve) notes.push({title:'TREASURY WARNING',text:'Diamond Stash below safe level',kind:'warn'});
   renderAll(); notes.forEach(n=>showToast(n.title,n.text,n.kind||'')); }
 async function processIndividual(side,num){ recordSnapshot(); state.currentChakra += 1; ensureKumbh(); let exposure=0; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B') exposure += currentBetFor(info); }
   state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const notes=[]; const rowEvents={cap:[],ret:[],np:[]}; if(num===0) await advanceAfterLoss(side,notes,rowEvents); else { await advanceAfterLoss(side,[],rowEvents,num); await resolveNumber(side,num,notes,rowEvents); }
@@ -766,78 +783,4 @@ function importGranthJson(e){ const file=e.target.files[0]; if(!file) return; fi
     } else {
       const parsed=JSON.parse(text);
       if(parsed && parsed.state){ restoreSnapshot(parsed); }
-      else if(parsed && parsed.granth){ state = reviveState({ ...freshState(), granth: parsed.granth, currentKumbhId: parsed.granth.at(-1)?.id||null, settings: parsed.settings || state.settings }); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings(); }
-      else { state = reviveState(parsed); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; }
-    }
-    renderAll(); showToast('GRANTH LOADED','History imported'); }).finally(()=>{ e.target.value=''; }); }
-
-function importLadderCsv(e){ const file=e.target.files[0]; if(!file) return; file.text().then(text=>{ const lines=text.trim().split(/\r?\n/).slice(1).filter(Boolean); let cumulative1=0, cumulative2=0; lines.forEach(line=>{ const [ladder,stepLabel,betRaw]=line.split(','); const idx=Math.max(0, Number(String(stepLabel).replace(/\D/g,''))-1); const bet=Number(betRaw)||0; if(String(ladder).trim().toUpperCase()==='L2'){ cumulative2 += bet; } else { cumulative1 += bet; state.ladder[idx] = { step:`S${idx+1}`, bet, winReturn:bet*9, netProfit:(bet*9)-cumulative1, ifLoseTotal:-cumulative1 }; } }); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA LOADED','CSV ladder loaded'); }).finally(()=>{ e.target.value=''; }); }
-function downloadFile(name,content,type){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
-function downloadBlob(name,blob){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
-function setupInstall(){ window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; q('installBtn').classList.remove('hidden'); }); q('installBtn').addEventListener('click', async()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; q('installBtn').classList.add('hidden'); }); }
-function readYantraSettings(){
-  const current = clone(state.settings);
-  const bankrollRaw = Number(q('setBankroll').value);
-  current.bankroll = Number.isFinite(bankrollRaw) && bankrollRaw > 0 ? bankrollRaw : defaultSettings.bankroll;
-  current.targetDollar = Number(q('setTargetDollar').value)||500;
-  current.targetPercent = Number(q('setTargetPercent').value)||1.67;
-  current.stopLoss = Number(q('setStopLoss').value)||50000;
-  current.min = Number(q('setMin').value)||100;
-  current.max = Number(q('setMax').value)||3000;
-  current.coin = Number(q('setCoin').value)||100;
-  current.targetNum = Number(q('setTargetNum').value)||500;
-  current.doubleLadder = q('setDoubleLadder').value || 'on';
-  current.keypadMode = q('setKeypadMode').value || 'combined';
-  current.maxSteps = Number(q('setMaxSteps').value)||30;
-  current.reserve = Number(q('setReserve').value)||20000;
-  current.capRule = q('setCapRule').value || 'on';
-  if(q('setAttackMode')) current.attackMode = q('setAttackMode').value || 'classic';
-  current.theme = q('setTheme')?.value || 'warhunt';
-  const stopLossPerNumberValue = Number(q('setStopLossPerNumber').value);
-  current.stopLossPerNumber = Number.isFinite(stopLossPerNumberValue) ? stopLossPerNumberValue : -100;
-  return current;
-}
-async function applyYantraSettings(){
-  if(!(await askApplyYantra())) return;
-  state.settings = readYantraSettings();
-  applyTheme(state.settings.theme || 'warhunt');
-  state.ladder = buildLadder(state.settings);
-  const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length);
-  if(hasRecordedRows){
-    replayAllKumbhsWithCurrentSettings();
-  } else {
-    state.liveBankroll = state.settings.bankroll;
-  }
-  renderAll();
-  showToast('YANTRA APPLIED','Settings updated');
-}
-
-function setupControls(){
-  q('prayogaBtn').addEventListener('click', startPrayoga);
-  q('kumbhaBtn').addEventListener('click', clearCurrentSession);
-  q('undoBtn').addEventListener('click', undoLast);
-  q('redoBtn')?.addEventListener('click', redoLast);
-  q('setTargetDollar').addEventListener('input', ()=>recalcTargetLink('dollar'));
-  q('setTargetPercent').addEventListener('input', ()=>recalcTargetLink('percent'));
-  q('setBankroll').addEventListener('input', ()=>recalcTargetLink('dollar'));
-  q('applyYantraBtn').addEventListener('click', applyYantraSettings);
-  q('saveLadderBtn').addEventListener('click', ()=>{ document.querySelectorAll('[data-ladder-index]').forEach(inp=>{ inp.value=normalizeLadderBet(inp.value); }); syncFirstLadderFromInputs(); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA SAVED','Editable ladder updated'); });
-  if(q('exportLadderBtn')) q('exportLadderBtn').addEventListener('click', ()=>{ exportLadderCsv(); });
-  if(q('loadLadderBtn')) q('loadLadderBtn').addEventListener('click', ()=>q('loadLadderFile').click());
-  if(q('loadLadderFile')) q('loadLadderFile').addEventListener('change', importLadderCsv);
-  q('resetLadderBtn').addEventListener('click', ()=>{ state.ladder=buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA RESET','Default ladder restored'); });
-  document.addEventListener('input', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; refreshLinkedLadderCalculations(); });
-  document.addEventListener('keydown', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; if(e.key==='Enter'){ e.preventDefault(); const current=Number(el.dataset.ladderIndex); const next=document.querySelector(`[data-ladder-index="${current+1}"]`); if(next){ next.focus(); next.select(); } else { el.blur(); } } });
-  document.addEventListener('focusin', e=>{ const el=e.target; if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(()=>el.select(),0); });
-  q('exportCsvBtn').addEventListener('click', exportDrishtiCsv); if(q('exportPdfBtn')) q('exportPdfBtn').addEventListener('click', exportDrishtiPdf); q('loadCsvBtn').addEventListener('click', ()=>q('loadCsvFile').click()); q('loadCsvFile').addEventListener('change', importDrishtiCsv);
-  q('exportGranthBtn').addEventListener('click', ()=>{ const fmt=q('granthExportFormat')?.value || 'json'; if(fmt==='csv') exportGranthCsv(); else if(fmt==='xlsx') exportGranthXlsx(); else exportGranthJson(); }); q('importGranthBtn').addEventListener('click', ()=>q('importGranthFile').click()); q('importGranthFile').addEventListener('change', importGranthJson);
-  q('deleteGranthBtn').addEventListener('click', async()=>{ const sel=q('deleteKumbhSelect'); const id=Number(sel?.value||0); if(id){ const ok=await askModal({ title:`Delete Kumbh #${String(id).padStart(2,'0')} ?`, text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=state.granth.filter(k=>k.id!==id).map((k,idx)=>({ ...k, id: idx+1 })); state.currentKumbhId=state.granth.at(-1)?.id||null; renderAll(); showToast('KUMBH DELETED','Selected Kumbh removed'); return; } const ok=await askModal({ title:'Delete all Kumbh history?', text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=[]; state.currentKumbhId=null; renderAll(); showToast('GRANTH PURGED','All Kumbh history removed'); });
-  q('historyUndoBtn')?.addEventListener('click', undoLast);
-  q('confirmCancelBtn').addEventListener('click', ()=>closeClearKumbh(false));
-  q('confirmOkBtn').addEventListener('click', ()=>closeClearKumbh(true));
-  q('confirmOverlay').addEventListener('click', e=>{ if(e.target===q('confirmOverlay')) closeClearKumbh(false); });
-  document.addEventListener('keydown', e=>{ if(q('confirmOverlay').classList.contains('hidden')) return; if(e.key==='Escape') closeClearKumbh(false); });
-}
-
-if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); }
-setupTabs(); setupBoards(); setupControls(); setupInstall(); renderAll();
+      else if(parsed && parsed.granth){ state = reviveState({ ...freshState(), granth: parsed.granth, currentKumbhId:
