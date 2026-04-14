@@ -167,8 +167,8 @@ function ensureKumbh(){ if(currentKumbh()) return currentKumbh(); const id=(stat
 function secondLadderBet(step){ const start=roundUpToCoin(state.settings.max/4,state.settings.coin); if(step<=5) return start; if(step<=10) return Math.min(state.settings.max,start*2); if(step<=15) return Math.min(state.settings.max,start*3); return state.settings.max; }
 function currentBetFor(info){ return info.ladder===2 ? secondLadderBet(info.step||1) : (state.ladder[Math.max(0,(info.step||1)-1)]?.bet || state.settings.max); }
 function soldierStepNetProfit(info){ const bet=currentBetFor(info); return (bet*8) - (Number(info?.prevLoss) || 0); }
-async function askCapDecision(side,num,info){ const stopLossPerNumber=Number(state.settings.stopLossPerNumber); if(state.settings.capRule!=='on' || info.ladder!==1 || !Number.isFinite(stopLossPerNumber)) return false; const stepNetProfit=soldierStepNetProfit(info); if(stepNetProfit>stopLossPerNumber) return false; const capNow=await askModal({ title:'CAP DECISION', text:`\( {side} \){num} step net profit ${stepNetProfit}. Stop Loss / Number ${stopLossPerNumber}. CAP now?`, okLabel:'Now', cancelLabel:'Next', okClass:'warn' }); return !!capNow; }
-async function askCapReturnDecision(side,num){ return !!(await askModal({ title:'CAP RETURN DECISION', text:`\( {side} \){num} came back on track. Return this number to betting?`, okLabel:'Return', cancelLabel:'Stay CAP', okClass:'warn' })); }
+async function askCapDecision(side,num,info){ const stopLossPerNumber=Number(state.settings.stopLossPerNumber); if(state.settings.capRule!=='on' || info.ladder!==1 || !Number.isFinite(stopLossPerNumber)) return false; const stepNetProfit=soldierStepNetProfit(info); if(stepNetProfit>stopLossPerNumber) return false; const capNow=await askModal({ title:'CAP DECISION', text:`(${side})${num} step net profit ${stepNetProfit}. Stop Loss / Number ${stopLossPerNumber}. CAP now?`, okLabel:'Now', cancelLabel:'Next', okClass:'warn' }); return !!capNow; }
+async function askCapReturnDecision(side,num){ return !!(await askModal({ title:'CAP RETURN DECISION', text:`(${side})${num} came back on track. Return this number to betting?`, okLabel:'Return', cancelLabel:'Stay CAP', okClass:'warn' })); }
 function nextExposureTotal(){ let total=0; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A' || info.status==='B') total += currentBetFor(info); }}); return total; }
 function previewNextAhutiFor(info){
   if(!info || (info.status!=='A' && info.status!=='B')) return null;
@@ -190,7 +190,7 @@ function nextPreviewExposureTotal(){
 }
 
 function showToast(title,text,kind=''){
-  const layer=q('toastLayer'); const el=document.createElement('div'); el.className=`toast \( {kind}`; el.innerHTML=`<div class="title"> \){title}</div><div>${text}</div>`; layer.appendChild(el); setTimeout(()=>el.remove(),3600);
+  const layer=q('toastLayer'); const el=document.createElement('div'); el.className=`toast ${kind}`; el.innerHTML=`<div class="title">${title}</div><div>${text}</div>`; layer.appendChild(el); setTimeout(()=>el.remove(),3600);
 }
 function glowKey(el){ if(!el) return; el.classList.remove('key-glow'); void el.offsetWidth; el.classList.add('key-glow'); setTimeout(()=>el.classList.remove('key-glow'),220); }
 function statusCode(info){ if(!info) return '0'; if(info.status==='W') return waitingCodeForInfo(info); if(info.status==='A') return `S${Math.max(1, Number(info.step)||1)}`; if(info.status==='B') return 'B'; return info.status; }
@@ -203,19 +203,19 @@ function renderBoards(){
       const n=i===10?0:i; const info=n===0?null:state.numbers[side][n];
       const btn=document.createElement('button'); const code=n===0?'0':statusCode(info); const metaClass=info?.step?`step${Math.min(info.step,6)}`:'';
       btn.type='button'; btn.className=`tile ${n===0?'zero':''} ${info?'state-'+info.status:''}`.trim(); btn.dataset.side=side; btn.dataset.num=String(n);
-      btn.innerHTML=`<div class="num">${n}</div><div class="meta \( {metaClass}"> \){code}</div>`;
+      btn.innerHTML=`<div class="num">${n}</div><div class="meta ${metaClass}">${code}</div>`;
       host.appendChild(btn);
     }
   });
 }
-function renderVyuha(){ ['Y','K'].forEach(side=>{ const host=q(side==='Y'?'vyuhaY':'vyuhaK'); host.innerHTML=''; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const d=document.createElement('div'); d.className='state-cell'; d.innerHTML=`<div class="num">\( {n}</div><div class="meta"> \){statusCode(info)}</div>`; host.appendChild(d);} }); }
-function formatNextAhuti(side){ const groups=new Map(); for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const preview=previewNextAhutiFor(info); if(preview){ if(!groups.has(preview.bet)) groups.set(preview.bet,[]); groups.get(preview.bet).push(`\( {n}( \){preview.stepLabel})`); } } const parts=[...groups.entries()].sort((a,b)=>b[0]-a[0]).map(([bet,arr])=>`${bet} on \( {arr.join(' ')}`); return ` \){side} ${parts.join(' | ') || '-'}`; }
-function renderSangram(){ q('bankValue').textContent=fmtMoney(state.liveBankroll); q('chakraValue').textContent=`Round : ${state.currentChakra}`; q('nextY').textContent=formatNextAhuti('Y'); q('nextK').textContent=formatNextAhuti('K'); q('nextT').textContent=`T \( {nextPreviewExposureTotal()}`; const lastRow=currentKumbh()?.rows?.at(-1); const last = lastRow ? ` \){lastRow.y ?? '-'} | ${lastRow.k ?? '-'}` : '-'; if(q('lastResultValue')) q('lastResultValue').textContent=last; }
+function renderVyuha(){ ['Y','K'].forEach(side=>{ const host=q(side==='Y'?'vyuhaY':'vyuhaK'); host.innerHTML=''; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const d=document.createElement('div'); d.className='state-cell'; d.innerHTML=`<div class="num">${n}</div><div class="meta">${statusCode(info)}</div>`; host.appendChild(d);} }); }
+function formatNextAhuti(side){ const groups=new Map(); for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const preview=previewNextAhutiFor(info); if(preview){ if(!groups.has(preview.bet)) groups.set(preview.bet,[]); groups.get(preview.bet).push(`${n}(${preview.stepLabel})`); } } const parts=[...groups.entries()].sort((a,b)=>b[0]-a[0]).map(([bet,arr])=>`${bet} on ${arr.join(' ')}`); return `${side} ${parts.join(' | ') || '-'}`; }
+function renderSangram(){ q('bankValue').textContent=fmtMoney(state.liveBankroll); q('chakraValue').textContent=`Round : ${state.currentChakra}`; q('nextY').textContent=formatNextAhuti('Y'); q('nextK').textContent=formatNextAhuti('K'); q('nextT').textContent=`T ${nextPreviewExposureTotal()}`; const lastRow=currentKumbh()?.rows?.at(-1); const last = lastRow ? `${lastRow.y ?? '-'} | ${lastRow.k ?? '-'}` : '-'; if(q('lastResultValue')) q('lastResultValue').textContent=last; }
 function sideStatsSummary(counts){
   const entries = Object.entries(counts).filter(([n])=>n!=='0');
   return {
-    hot: entries.filter(([,v])=>v>=4).map(([n,v])=> `\( {n}( \){v})`),
-    cool: entries.filter(([,v])=>v<4).map(([n,v])=> `\( {n}( \){v})`)
+    hot: entries.filter(([,v])=>v>=4).map(([n,v])=> `${n}(${v})`),
+    cool: entries.filter(([,v])=>v<4).map(([n,v])=> `${n}(${v})`)
   };
 }
 function formatRoundInfoEntries(entries){ return entries.length ? entries.join(' | ') : '-'; }
@@ -241,11 +241,11 @@ function kumbhInsights(rows){
     const life = lifecycle[side][String(num)];
     if(life.selectedRound === null){
       life.selectedRound = chakra;
-      meta[`\( {key}SelCode`] = `S \){num}S1`;
+      meta[`${key}SelCode`] = `S${num}S1`;
     } else if(life.hitRound === null){
       const travel = chakra - life.selectedRound;
       life.hitRound = chakra;
-      meta[`\( {key}HitCode`] = `H \){num}S${travel}`;
+      meta[`${key}HitCode`] = `H${num}S${travel}`;
       details[side].push({
         side,
         number: num,
@@ -253,7 +253,7 @@ function kumbhInsights(rows){
         hitRound: chakra,
         travelSteps: travel,
         selectCode: `S${num}S1`,
-        hitCode: `H\( {num}S \){travel}`
+        hitCode: `H${num}S${travel}`
       });
     }
   }
@@ -287,20 +287,20 @@ function renderGranth(){
     const insight=kumbhInsights(k.rows||[]);
     const rows=[...(k.rows||[])].reverse().map(r=>{
       const meta=insight.rowMeta.get(Number(r.chakra)) || { ySelCode:'-', yHitCode:'-', kSelCode:'-', kHitCode:'-', capped:[], returned:[] };
-      return `<tr><td>\( {r.chakra}</td><td> \){r.y ?? '-'}</td><td>\( {r.k ?? '-'}</td><td> \){meta.ySelCode}</td><td>\( {meta.yHitCode}</td><td> \){meta.kSelCode}</td><td>\( {meta.kHitCode}</td><td> \){formatRoundInfoEntries(meta.capped)}</td><td>\( {formatRoundInfoEntries(meta.returned)}</td><td> \){formatRoundInfoEntries(Array.isArray(r.np)?r.np:(r.np?[r.np]:[]))}</td><td>${r.axyapatra ?? '-'}</td></tr>`;
+      return `<tr><td>${r.chakra}</td><td>${r.y ?? '-'}</td><td>${r.k ?? '-'}</td><td>${meta.ySelCode}</td><td>${meta.yHitCode}</td><td>${meta.kSelCode}</td><td>${meta.kHitCode}</td><td>${formatRoundInfoEntries(meta.capped)}</td><td>${formatRoundInfoEntries(meta.returned)}</td><td>${formatRoundInfoEntries(Array.isArray(r.np)?r.np:(r.np?[r.np]:[]))}</td><td>${r.axyapatra ?? '-'}</td></tr>`;
     }).join('');
-    const yRpt=Object.entries(insight.counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`<span class="repeat-pill">\( {n}: \){c}</span>`).join('');
-    const kRpt=Object.entries(insight.counts.K).filter(([n])=>n!=='0').map(([n,c])=>`<span class="repeat-pill">\( {n}: \){c}</span>`).join('');
-    const travelRows = [...insight.details.Y, ...insight.details.K].sort((a,b)=>a.hitRound-b.hitRound).map(d=>`<tr><td>\( {d.side}</td><td> \){d.number}</td><td>\( {d.selectedRound}</td><td> \){d.hitRound}</td><td>${d.travelSteps}</td></tr>`).join('') || '<tr><td colspan="5">No completed travel yet.</td></tr>';
-    wrap.innerHTML=`<div class="label">#\( {String(k.id).padStart(2,'0')} Kumbh</div><div class="table-wrap compact-table"><table><thead><tr><th>R</th><th>Y</th><th>K</th><th>YSel</th><th>YHit</th><th>KSel</th><th>KHit</th><th>Cap</th><th>Ret</th><th>NP</th><th>Ax</th></tr></thead><tbody> \){rows}</tbody></table></div><div class="granth-summary"><div class="summary-row"><span class="summary-label">Y Hot</span><span>\( {insight.yStats.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">Y Cool</span><span> \){insight.yStats.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">Y Rpt</span><div class="repeat-grid">\( {yRpt}</div></div><div class="summary-row"><span class="summary-label">K Hot</span><span> \){insight.kStats.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">K Cool</span><span>\( {insight.kStats.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">K Rpt</span><div class="repeat-grid"> \){kRpt}</div></div></div><div class="table-wrap compact-table"><table><thead><tr><th>Side</th><th>Number</th><th>SelectedRound</th><th>HitRound</th><th>TravelSteps</th></tr></thead><tbody>${travelRows}</tbody></table></div>`;
+    const yRpt=Object.entries(insight.counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`<span class="repeat-pill">${n}:${c}</span>`).join('');
+    const kRpt=Object.entries(insight.counts.K).filter(([n])=>n!=='0').map(([n,c])=>`<span class="repeat-pill">${n}:${c}</span>`).join('');
+    const travelRows = [...insight.details.Y, ...insight.details.K].sort((a,b)=>a.hitRound-b.hitRound).map(d=>`<tr><td>${d.side}</td><td>${d.number}</td><td>${d.selectedRound}</td><td>${d.hitRound}</td><td>${d.travelSteps}</td></tr>`).join('') || '<tr><td colspan="5">No completed travel yet.</td></tr>';
+    wrap.innerHTML=`<div class="label">#${String(k.id).padStart(2,'0')} Kumbh</div><div class="table-wrap compact-table"><table><thead><tr><th>R</th><th>Y</th><th>K</th><th>YSel</th><th>YHit</th><th>KSel</th><th>KHit</th><th>Cap</th><th>Ret</th><th>NP</th><th>Ax</th></tr></thead><tbody>${rows}</tbody></table></div><div class="granth-summary"><div class="summary-row"><span class="summary-label">Y Hot</span><span>${insight.yStats.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">Y Cool</span><span>${insight.yStats.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">Y Rpt</span><div class="repeat-grid">${yRpt}</div></div><div class="summary-row"><span class="summary-label">K Hot</span><span>${insight.kStats.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">K Cool</span><span>${insight.kStats.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">K Rpt</span><div class="repeat-grid">${kRpt}</div></div></div><div class="table-wrap compact-table"><table><thead><tr><th>Side</th><th>Number</th><th>SelectedRound</th><th>HitRound</th><th>TravelSteps</th></tr></thead><tbody>${travelRows}</tbody></table></div>`;
     host.appendChild(wrap);
   });
 }
 
-function renderDrishti(){ q('sumChakras').textContent=Math.max(0,state.currentChakra); q('sumAhuti').textContent=state.summary.totalAhuti; q('sumProfit').textContent=state.liveBankroll-state.settings.bankroll; q('sumExposure').textContent=state.summary.maxExposure; const tbody=q('drishtiTable').querySelector('tbody'); tbody.innerHTML=''; [...state.drishti].reverse().forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>\( {r.side}</td><td> \){r.number}</td><td>\( {r.activationChakra}</td><td> \){r.winChakra}</td><td>\( {r.steps}</td><td> \){r.prevLoss}</td><td>\( {r.winBet}</td><td> \){r.net}</td><td>${r.status}</td>`; tbody.appendChild(tr); }); }
-function renderSopana(){ const tbody=q('ladderTable').querySelector('tbody'); tbody.innerHTML=''; state.ladder.forEach((row,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>\( {row.step}</td><td><input class="ladder-bet-input" type="number" data-ladder-index=" \){idx}" inputmode="numeric" enterkeyhint="next" value="\( {row.bet}"></td><td> \){row.winReturn}</td><td>\( {row.netProfit}</td><td> \){row.ifLoseTotal}</td>`; tbody.appendChild(tr); }); const secondTable=q('secondLadderTable'); if(secondTable){ const tbody2=secondTable.querySelector('tbody'); tbody2.innerHTML=''; let prevLoss=0; for(let i=1;i<=Math.min(state.settings.maxSteps,15);i++){ const bet=secondLadderBet(i); const winReturn=bet*9; prevLoss += bet; const tr=document.createElement('tr'); tr.innerHTML=`<td>S\( {i}</td><td><input class="ladder-bet-input" type="number" data-second-ladder-index=" \){i-1}" inputmode="numeric" enterkeyhint="next" value="\( {bet}"></td><td> \){winReturn}</td><td>\( {winReturn - prevLoss}</td><td> \){-prevLoss}</td>`; tbody2.appendChild(tr); } } }
+function renderDrishti(){ q('sumChakras').textContent=Math.max(0,state.currentChakra); q('sumAhuti').textContent=state.summary.totalAhuti; q('sumProfit').textContent=state.liveBankroll-state.settings.bankroll; q('sumExposure').textContent=state.summary.maxExposure; const tbody=q('drishtiTable').querySelector('tbody'); tbody.innerHTML=''; [...state.drishti].reverse().forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.side}</td><td>${r.number}</td><td>${r.activationChakra}</td><td>${r.winChakra}</td><td>${r.steps}</td><td>${r.prevLoss}</td><td>${r.winBet}</td><td>${r.net}</td><td>${r.status}</td>`; tbody.appendChild(tr); }); }
+function renderSopana(){ const tbody=q('ladderTable').querySelector('tbody'); tbody.innerHTML=''; state.ladder.forEach((row,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.step}</td><td><input class="ladder-bet-input" type="number" data-ladder-index="${idx}" inputmode="numeric" enterkeyhint="next" value="${row.bet}"></td><td>${row.winReturn}</td><td>${row.netProfit}</td><td>${row.ifLoseTotal}</td>`; tbody.appendChild(tr); }); const secondTable=q('secondLadderTable'); if(secondTable){ const tbody2=secondTable.querySelector('tbody'); tbody2.innerHTML=''; let prevLoss=0; for(let i=1;i<=Math.min(state.settings.maxSteps,15);i++){ const bet=secondLadderBet(i); const winReturn=bet*9; prevLoss += bet; const tr=document.createElement('tr'); tr.innerHTML=`<td>S${i}</td><td><input class="ladder-bet-input" type="number" data-second-ladder-index="${i-1}" inputmode="numeric" enterkeyhint="next" value="${bet}"></td><td>${winReturn}</td><td>${winReturn - prevLoss}</td><td>${-prevLoss}</td>`; tbody2.appendChild(tr); } } }
 function renderYantra(){ const s=state.settings; q('setBankroll').value=s.bankroll; q('setTargetDollar').value=s.targetDollar; q('setTargetPercent').value=s.targetPercent; q('setStopLoss').value=s.stopLoss; q('setMin').value=s.min; q('setMax').value=s.max; q('setCoin').value=s.coin; q('setTargetNum').value=s.targetNum; q('setDoubleLadder').value=s.doubleLadder||'on'; q('setKeypadMode').value=s.keypadMode; q('setMaxSteps').value=s.maxSteps; q('setReserve').value=s.reserve; q('setCapRule').value=s.capRule; if(q('setAttackMode')) q('setAttackMode').value=s.attackMode || 'classic'; if(q('setTheme')) q('setTheme').value=s.theme || 'warhunt'; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; }
-function renderMedha(){ const active=[]; const cap=[]; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B') active.push(`\( {side} \){n} \( {info.ladder===2?'2S':'S'} \){info.step}`); if(info.status==='C') cap.push(`\( {side} \){n}`);} }); q('medhaPanel').innerHTML=`<div class="medha-item"><div class="label">Active Formation</div><div>\( {active.join(' | ') || 'None'}</div></div><div class="medha-item"><div class="label">CAP Numbers</div><div> \){cap.join(' | ') || 'None'}</div></div>`; }
+function renderMedha(){ const active=[]; const cap=[]; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B') active.push(`${side}${n} ${info.ladder===2?'2S':'S'}${info.step}`); if(info.status==='C') cap.push(`${side}${n}`);} }); q('medhaPanel').innerHTML=`<div class="medha-item"><div class="label">Active Formation</div><div>${active.join(' | ') || 'None'}</div></div><div class="medha-item"><div class="label">CAP Numbers</div><div>${cap.join(' | ') || 'None'}</div></div>`; }
 function renderActiveTab(){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===`screen-${state.activeTab}`)); document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.target===state.activeTab)); q('screenTitle').textContent=titles[state.activeTab]||titles.sangram; }
 function renderAll(){ applyTheme(state.settings.theme || 'warhunt'); renderActiveTab(); renderBoards(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderSopana(); renderYantra(); renderMedha(); saveState(); }
 
@@ -315,7 +315,7 @@ async function resolveNumber(side,num,notes,rowEvents){ const info=state.numbers
   if(info.status==='C'){
     const shouldReturn = await askCapReturnDecision(side,num);
     if(!shouldReturn) return;
-    info.status='B'; info.ladder=2; info.step=1; info.pendingSecond=false; if(rowEvents) rowEvents.ret.push(`\( {side} \){num}`); notes.push({title:'CAP RETURNED',text:`\( {side} \){num} back on track`,kind:'warn'}); return;
+    info.status='B'; info.ladder=2; info.step=1; info.pendingSecond=false; if(rowEvents) rowEvents.ret.push(`${side}${num}`); notes.push({title:'CAP RETURNED',text:`${side}${num} back on track`,kind:'warn'}); return;
   }
   const mode = getAttackMode();
   const threshold = attackThresholdForMode(mode);
@@ -342,10 +342,10 @@ async function resolveNumber(side,num,notes,rowEvents){ const info=state.numbers
   const bet=currentBetFor(info); const totalReturn=bet*9; const net=(bet*8)-info.prevLoss;
   state.liveBankroll += totalReturn;
   info.winningBet=bet; info.lastNet=net; pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'WIN' });
-  if(rowEvents) rowEvents.np.push(`\( {side} \){num} \( {net >= 0 ? '+' : ''} \){net}`);
+  if(rowEvents) rowEvents.np.push(`${side}${num} ${net >= 0 ? '+' : ''}${net}`);
   const vd=vijayDarshanaDisplay(info);
-  info.status='L'; notes.push({title:'VIJAY DARSHANA', text:`\( {side} \){num} \( {info.ladder===2?'2S':'S'} \){vd.displayStep} Āhuti \( {vd.bet} Net + \){vd.displayNet}`}); }
-async function advanceAfterLoss(side,notes,rowEvents,winningNum=null){ for(let n=1;n<=9;n++){ if(winningNum!==null && Number(winningNum)===n) continue; const info=state.numbers[side][n]; if(info.status!=='A' && info.status!=='B') continue; const bet=currentBetFor(info); info.prevLoss += bet; info.step += 1; if(info.ladder===1){ if(await askCapDecision(side,n,info)){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:info.step, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'CAP' }); if(rowEvents){ rowEvents.cap.push(`\( {side} \){n}`); rowEvents.np.push(`\( {side} \){n} \( {soldierStepNetProfit(info) >= 0 ? '+' : ''} \){soldierStepNetProfit(info)}`); } notes.push({title:'REKHA BANDHA', text:`\( {side} \){n} reached CAP`, kind:'warn'}); } else if(info.step>state.settings.maxSteps){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:state.settings.maxSteps, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'CAP' }); if(rowEvents){ rowEvents.cap.push(`\( {side} \){n}`); rowEvents.np.push(`\( {side} \){n} \( {soldierStepNetProfit(info) >= 0 ? '+' : ''} \){soldierStepNetProfit(info)}`); } notes.push({title:'REKHA BANDHA', text:`\( {side} \){n} reached CAP`, kind:'warn'}); }
+  info.status='L'; notes.push({title:'VIJAY DARSHANA', text:`${side}${num} ${info.ladder===2?'2S':'S'}${vd.displayStep} Āhuti ${vd.bet} Net +${vd.displayNet}`}); }
+async function advanceAfterLoss(side,notes,rowEvents,winningNum=null){ for(let n=1;n<=9;n++){ if(winningNum!==null && Number(winningNum)===n) continue; const info=state.numbers[side][n]; if(info.status!=='A' && info.status!=='B') continue; const bet=currentBetFor(info); info.prevLoss += bet; info.step += 1; if(info.ladder===1){ if(await askCapDecision(side,n,info)){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:info.step, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'CAP' }); if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); } notes.push({title:'REKHA BANDHA', text:`${side}${n} reached CAP`, kind:'warn'}); } else if(info.step>state.settings.maxSteps){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:state.settings.maxSteps, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'CAP' }); if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); } notes.push({title:'REKHA BANDHA', text:`${side}${n} reached CAP`, kind:'warn'}); }
       else info.status='A';
     } else { if(info.step>15) info.step=15; info.status='B'; }
   } }
@@ -453,7 +453,7 @@ function resolveNumberSilent(side,num,rowEvents,shouldReturnFromCap=false){
     info.ladder=2;
     info.step=1;
     info.pendingSecond=false;
-    if(rowEvents) rowEvents.ret.push(`\( {side} \){num}`);
+    if(rowEvents) rowEvents.ret.push(`${side}${num}`);
     return;
   }
   const mode = getAttackMode();
@@ -485,7 +485,7 @@ function resolveNumberSilent(side,num,rowEvents,shouldReturnFromCap=false){
   info.winningBet=bet;
   info.lastNet=net;
   pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'WIN' });
-  if(rowEvents) rowEvents.np.push(`\( {side} \){num} \( {net >= 0 ? '+' : ''} \){net}`);
+  if(rowEvents) rowEvents.np.push(`${side}${num} ${net >= 0 ? '+' : ''}${net}`);
   info.status='L';
 }
 function advanceAfterLossSilent(side,rowEvents,winningNum=null){
@@ -500,7 +500,7 @@ function advanceAfterLossSilent(side,rowEvents,winningNum=null){
       if(shouldCapNowSilent(side,n,info)){
         const cappedAt = info.step>state.settings.maxSteps ? state.settings.maxSteps : info.step;
         info.status='C';
-        pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:cappedAt, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'CAP' }); if(rowEvents){ rowEvents.cap.push(`\( {side} \){n}`); rowEvents.np.push(`\( {side} \){n} \( {soldierStepNetProfit(info) >= 0 ? '+' : ''} \){soldierStepNetProfit(info)}`); }
+        pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:cappedAt, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'CAP' }); if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); }
       } else {
         info.status='A';
       }
@@ -621,7 +621,7 @@ function replayAllKumbhsWithCurrentSettings(){
     state.summary = { totalAhuti: 0, maxExposure: 0 };
   }
 }
-function ladderCsvContent(){ return ['ladder,step,bet', ...state.ladder.map((row,idx)=>`L1,S\( {idx+1}, \){row.bet}`)].join('\n'); }
+function ladderCsvContent(){ return ['ladder,step,bet', ...state.ladder.map((row,idx)=>`L1,S${idx+1},${row.bet}`)].join('\n'); }
 async function exportLadderCsv(){ syncFirstLadderFromInputs(); const content=ladderCsvContent(); if(window.showSaveFilePicker){ try{ const handle=await window.showSaveFilePicker({ suggestedName:'sopana-ladder.csv', types:[{ description:'CSV Files', accept:{ 'text/csv':['.csv'] } }] }); const writable=await handle.createWritable(); await writable.write(content); await writable.close(); showToast('SOPANA EXPORTED','Ladder CSV saved'); return; }catch(err){ if(err && err.name==='AbortError') return; } } downloadFile('sopana-ladder.csv',content,'text/csv'); showToast('SOPANA EXPORTED','Ladder CSV downloaded'); }
 function exportDrishtiCsv(){ const header='Side,Number,ActivationChakra,WinChakra,StepsToWin,PreviousLoss,WinningBet,NetProfitLoss,Status\n'; const rows=state.drishti.map(r=>[r.side,r.number,r.activationChakra,r.winChakra,r.steps,r.prevLoss,r.winBet,r.net,r.status].join(',')).join('\n'); downloadFile('drishti.csv',header+rows,'text/csv'); }
 function exportDrishtiPdf(){ const html=`<html><head><title>Drishti</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #888;padding:6px;text-align:left}h1{font-size:20px}</style></head><body><h1>KUBERA WARHUNT V5Pro Final locked - DRISHTI</h1>${q('drishtiTable').outerHTML}</body></html>`; const w=window.open('','_blank'); if(!w) return; w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>w.print(), 250); }
@@ -637,17 +637,17 @@ function xlsxCellRef(colIndex,rowIndex){
   let col='';
   let n=colIndex+1;
   while(n>0){ const mod=(n-1)%26; col=String.fromCharCode(65+mod)+col; n=Math.floor((n-1)/26); }
-  return `\( {col} \){rowIndex+1}`;
+  return `${col}${rowIndex+1}`;
 }
 function buildSheetXml(rows){
   const sheetRows=rows.map((row,rIdx)=>{
     const cells=row.map((value,cIdx)=>{
       if(value===null || value===undefined || value==='') return '';
       const ref=xlsxCellRef(cIdx,rIdx);
-      if(typeof value==='number' && Number.isFinite(value)) return `<c r="\( {ref}"><v> \){value}</v></c>`;
-      return `<c r="\( {ref}" t="inlineStr"><is><t xml:space="preserve"> \){xmlEscape(value)}</t></is></c>`;
+      if(typeof value==='number' && Number.isFinite(value)) return `<c r="${ref}"><v>${value}</v></c>`;
+      return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(value)}</t></is></c>`;
     }).join('');
-    return `<row r="\( {rIdx+1}"> \){cells}</row>`;
+    return `<row r="${rIdx+1}">${cells}</row>`;
   }).join('');
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`;
 }
@@ -656,16 +656,16 @@ function buildXlsxWorkbook(kumbhs){
   const files=[];
   const add=(name,content)=>files.push({name,data:enc.encode(content)});
   const sheetEntries=(kumbhs||[]).length ? kumbhs : [{name:'Kumbh_01', rows:[[ 'No data' ]]}];
-  const wbSheets=sheetEntries.map((s,i)=>`<sheet name="\( {xmlEscape(sheetNameSafe(s.name,`Sheet \){i+1}`))}" sheetId="\( {i+1}" r:id="rId \){i+1}"/>`).join('');
-  const wbRels=sheetEntries.map((s,i)=>`<Relationship Id="rId\( {i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet \){i+1}.xml"/>`).join('');
+  const wbSheets=sheetEntries.map((s,i)=>`<sheet name="${xmlEscape(sheetNameSafe(s.name,`Sheet${i+1}`))}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('');
+  const wbRels=sheetEntries.map((s,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('');
   const contentOverrides=sheetEntries.map((s,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('');
   add('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>${contentOverrides}</Types>`);
   add('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`);
   const now=new Date().toISOString();
-  add('docProps/core.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:creator>Kubera Warhunt</dc:creator><cp:lastModifiedBy>Kubera Warhunt</cp:lastModifiedBy><dcterms:created xsi:type="dcterms:W3CDTF">\( {now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF"> \){now}</dcterms:modified></cp:coreProperties>`);
+  add('docProps/core.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:creator>Kubera Warhunt</dc:creator><cp:lastModifiedBy>Kubera Warhunt</cp:lastModifiedBy><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified></cp:coreProperties>`);
   add('docProps/app.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>Kubera Warhunt</Application></Properties>`);
   add('xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${wbSheets}</sheets></workbook>`);
-  add('xl/_rels/workbook.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\( {wbRels}<Relationship Id="rId \){sheetEntries.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`);
+  add('xl/_rels/workbook.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${wbRels}<Relationship Id="rId${sheetEntries.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`);
   add('xl/styles.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts><fills count="1"><fill><patternFill patternType="none"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs></styleSheet>`);
   sheetEntries.forEach((sheet,idx)=>add(`xl/worksheets/sheet${idx+1}.xml`, buildSheetXml(sheet.rows)));
   const crcTable=new Uint32Array(256);
@@ -707,10 +707,10 @@ function granthWorkbookSheets(){
     rows.push([]);
     rows.push(['Y Hot', insight.yStats.hot.join(' | ') || '-']);
     rows.push(['Y Cool', insight.yStats.cool.join(' | ') || '-']);
-    rows.push(['Y Rpt', Object.entries(insight.counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`\( {n}: \){c}`).join(' | ') || '-']);
+    rows.push(['Y Rpt', Object.entries(insight.counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`${n}:${c}`).join(' | ') || '-']);
     rows.push(['K Hot', insight.kStats.hot.join(' | ') || '-']);
     rows.push(['K Cool', insight.kStats.cool.join(' | ') || '-']);
-    rows.push(['K Rpt', Object.entries(insight.counts.K).filter(([n])=>n!=='0').map(([n,c])=>`\( {n}: \){c}`).join(' | ') || '-']);
+    rows.push(['K Rpt', Object.entries(insight.counts.K).filter(([n])=>n!=='0').map(([n,c])=>`${n}:${c}`).join(' | ') || '-']);
     return { name:`Kumbh_${String(k.id).padStart(2,'0')}`, rows };
   });
 }
@@ -738,14 +738,14 @@ function granthCsvContent(){
     const insight=kumbhInsights(k.rows||[]);
     const detailMap=new Map();
     [...insight.details.Y, ...insight.details.K].forEach(d=>{
-      const key=`\( {d.side}- \){d.hitRound}`;
+      const key=`${d.side}-${d.hitRound}`;
       if(!detailMap.has(key)) detailMap.set(key, []);
       detailMap.get(key).push(d);
     });
     (k.rows||[]).forEach(r=>{
       const chakra=Number(r.chakra)||0;
       const meta=insight.rowMeta.get(chakra) || { ySelCode:'-', yHitCode:'-', kSelCode:'-', kHitCode:'-', capped:[], returned:[] };
-      const details=[...(detailMap.get(`Y-\( {chakra}`)||[]), ...(detailMap.get(`K- \){chakra}`)||[])];
+      const details=[...(detailMap.get(`Y-${chakra}`)||[]), ...(detailMap.get(`K-${chakra}`)||[])];
       if(details.length){
         details.forEach(d=>rows.push([k.id,r.chakra,r.y ?? '-',meta.ySelCode,meta.yHitCode,r.k ?? '-',meta.kSelCode,meta.kHitCode,formatRoundInfoEntries(meta.capped),formatRoundInfoEntries(meta.returned),formatRoundInfoEntries(Array.isArray(r.np)?r.np:(r.np?[r.np]:[])),r.ahuti ?? 0,r.axyapatra ?? 0,d.side,d.number,d.selectedRound,d.hitRound,d.travelSteps,d.selectCode,d.hitCode].map(escapeCsvValue).join(',')));
       } else {
@@ -841,20 +841,3 @@ function setupControls(){
 
 if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); }
 setupTabs(); setupBoards(); setupControls(); setupInstall(); renderAll();
-
-// 🔥 FORCE INITIALIZATION - This fixes keypad & tabs
-window.addEventListener('load', () => {
-  console.log('%c✅ Mythology Treasury War - Force init running', 'color:#FFD700;font-weight:bold');
-  setTimeout(() => {
-    if (typeof setupTabs === 'function') setupTabs();
-    if (typeof setupBoards === 'function') setupBoards();
-    if (typeof setupControls === 'function') setupControls();
-    if (typeof renderAll === 'function') renderAll();
-  }, 100);
-  setTimeout(() => {
-    if (typeof renderAll === 'function') renderAll();
-  }, 500);
-  setTimeout(() => {
-    if (typeof renderAll === 'function') renderAll();
-  }, 1000);
-});
