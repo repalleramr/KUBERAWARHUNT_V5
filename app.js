@@ -48,7 +48,6 @@ const q = id => document.getElementById(id);
 let modalResolver = null;
 let modalConfig = { title:'', text:'', okLabel:'OK', cancelLabel:'Cancel', okClass:'warn' };
 
-// 🔥 NEW: Stealth Diamond Formatter
 const fmtMoney = n => '💎 ' + Number(n || 0).toLocaleString('en-IN');
 const clone = obj => JSON.parse(JSON.stringify(obj));
 const parseSignedInt = (value, fallback=0) => { const cleaned = String(value ?? '').replace(/[^0-9-]/g,'').replace(/(?!^)-/g,''); const n = Number(cleaned); return Number.isFinite(n) ? n : fallback; };
@@ -75,14 +74,18 @@ function askModal({ title, text, okLabel='OK', cancelLabel='Cancel', okClass='wa
   return new Promise(resolve=>{
     modalResolver = resolve;
     modalConfig = { title, text, okLabel, cancelLabel, okClass };
-    q('confirmTitle').textContent = title;
-    q('confirmText').textContent = text;
-    q('confirmCancelBtn').textContent = cancelLabel;
-    q('confirmOkBtn').textContent = okLabel;
-    q('confirmOkBtn').classList.toggle('warn', okClass === 'warn');
-    q('confirmOverlay').classList.remove('hidden');
-    q('confirmOverlay').setAttribute('aria-hidden','false');
-    q('confirmOkBtn').focus();
+    if(q('confirmTitle')) q('confirmTitle').textContent = title;
+    if(q('confirmText')) q('confirmText').textContent = text;
+    if(q('confirmCancelBtn')) q('confirmCancelBtn').textContent = cancelLabel;
+    if(q('confirmOkBtn')) {
+      q('confirmOkBtn').textContent = okLabel;
+      q('confirmOkBtn').classList.toggle('warn', okClass === 'warn');
+    }
+    if(q('confirmOverlay')) {
+      q('confirmOverlay').classList.remove('hidden');
+      q('confirmOverlay').setAttribute('aria-hidden','false');
+    }
+    if(q('confirmOkBtn')) q('confirmOkBtn').focus();
   });
 }
 function askClearKumbh(){
@@ -92,8 +95,10 @@ function askApplyYantra(){
   return askModal({ title:'APPLY YANTRA', text:'Apply current Yantra settings?', okLabel:'Yes', cancelLabel:'No', okClass:'' });
 }
 function closeClearKumbh(answer){
-  q('confirmOverlay').classList.add('hidden');
-  q('confirmOverlay').setAttribute('aria-hidden','true');
+  if(q('confirmOverlay')) {
+    q('confirmOverlay').classList.add('hidden');
+    q('confirmOverlay').setAttribute('aria-hidden','true');
+  }
   if(modalResolver){
     const resolve = modalResolver;
     modalResolver = null;
@@ -156,15 +161,42 @@ function freshState(){
     activeTab: 'sangram'
   };
 }
+
+// 🔥 FALLBACK VALIDATION: Heals broken caches
+function validateState(st) {
+    if (!st || !st.numbers || !st.numbers.Y || !st.numbers.K) return false;
+    if (!st.numbers.Y[1] || typeof st.numbers.Y[1] !== 'object') return false;
+    return true;
+}
+
 function reviveState(raw){ const base = freshState(); const settings={...base.settings,...(raw.settings||{})}; if(!Number.isFinite(Number(settings.stopLoss)) || Number(settings.stopLoss)<=0) settings.stopLoss = base.settings.stopLoss; if(!Number.isFinite(Number(settings.stopLossPerNumber))) settings.stopLossPerNumber = base.settings.stopLossPerNumber; if(!settings.doubleLadder) settings.doubleLadder = 'on'; if(!settings.theme || !themePalette[settings.theme]) settings.theme = base.settings.theme; return {...base,...raw,settings,numbers:raw.numbers||base.numbers,summary:{...base.summary,...(raw.summary||{})},ladder:Array.isArray(raw.ladder)&&raw.ladder.length?raw.ladder:buildLadder(settings),activeTab:raw.activeTab||'sangram'}; }
 function coreSnapshot(){ return { state: clone(state), pending: clone(pending) }; }
 function historySnapshot(){ return JSON.stringify(coreSnapshot()); }
 function persistedSnapshot(){ return JSON.stringify(coreSnapshot()); }
 function restoreSnapshot(payload){ const snap = typeof payload==='string' ? JSON.parse(payload) : payload; state = reviveState(snap.state || snap); pending = snap.pending || {Y:null,K:null}; if(!Array.isArray(historyStack)) historyStack = []; if(!Array.isArray(redoStack)) redoStack = []; }
-function loadState(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return freshState(); const parsed = JSON.parse(raw); restoreSnapshot(parsed); historyStack = []; redoStack = []; return state; }catch{ historyStack = []; redoStack = []; return freshState(); } }
+
+function loadState(){ 
+    try { 
+        const raw = localStorage.getItem(STORAGE_KEY); 
+        if(!raw) {
+            state = freshState();
+            return;
+        }
+        const parsed = JSON.parse(raw); 
+        restoreSnapshot(parsed); 
+        if (!validateState(state)) state = freshState(); // Safety catch
+        historyStack = []; redoStack = []; 
+    } catch(err) { 
+        console.error("Cache load failed, resetting.", err);
+        state = freshState();
+        historyStack = []; redoStack = []; 
+    } 
+}
+
 let state = freshState();
 loadState();
 applyTheme(state.settings.theme || 'warhunt');
+
 function saveState(){ try{ localStorage.setItem(STORAGE_KEY, persistedSnapshot()); } catch(err){ console.warn('State save skipped', err); } }
 function currentKumbh(){ return state.granth.find(k => k.id === state.currentKumbhId) || null; }
 function ensureKumbh(){ if(currentKumbh()) return currentKumbh(); const id=(state.granth.at(-1)?.id||0)+1; const k={id,rows:[]}; state.granth.push(k); state.currentKumbhId=id; return k; }
@@ -194,24 +226,35 @@ function nextPreviewExposureTotal(){
 }
 
 function showToast(title,text,kind=''){
-  const layer=q('toastLayer'); const el=document.createElement('div'); el.className=`toast ${kind}`; el.innerHTML=`<div class="title">${title}</div><div>${text}</div>`; layer.appendChild(el); setTimeout(()=>el.remove(),3600);
+  const layer=q('toastLayer'); 
+  if(!layer) return;
+  const el=document.createElement('div'); el.className=`toast ${kind}`; el.innerHTML=`<div class="title">${title}</div><div>${text}</div>`; layer.appendChild(el); setTimeout(()=>el.remove(),3600);
 }
 function glowKey(el){ if(!el) return; el.classList.remove('key-glow'); void el.offsetWidth; el.classList.add('key-glow'); setTimeout(()=>el.classList.remove('key-glow'),220); }
 function statusCode(info){ if(!info) return '0'; if(info.status==='W') return waitingCodeForInfo(info); if(info.status==='A') return `S${Math.max(1, Number(info.step)||1)}`; if(info.status==='B') return 'B'; return info.status; }
 function vijayDarshanaDisplay(info){ const bet=currentBetFor(info); const displayStep=Math.max(1,(Number(info.step)||1)-1); const displayNet=(bet*8)-(Number(info.prevLoss)||0); return { bet, displayStep, displayNet }; }
 
-// 🔥 NEW: Shuffling Puzzle Array Function
+// 🔥 BULLETPROOF RENDER BOARDS
 function renderBoards(){
   ['Y','K'].forEach(side=>{
-    const host=q(side==='Y'?'boardY':'boardK'); host.innerHTML='';
+    const host=q(side==='Y'?'boardY':'boardK'); 
+    if(!host) return; // Prevents crash if HTML isn't painted yet
+    host.innerHTML='';
     for(let i=1;i<=10;i++){
-      const n=i===10?0:i; const info=n===0?null:state.numbers[side][n];
-      const btn=document.createElement('button'); const code=n===0?'0':statusCode(info); const metaClass=info?.step?`step${Math.min(info.step,6)}`:'';
-      btn.type='button'; btn.className=`tile ${n===0?'zero':''} ${info?'state-'+info.status:''}`.trim(); btn.dataset.side=side; btn.dataset.num=String(n);
+      const n=i===10?0:i; 
+      const info=n===0?null:(state?.numbers?.[side]?.[n] || freshNumber());
+      const btn=document.createElement('button'); 
+      const code=n===0?'0':statusCode(info); 
+      const metaClass=info?.step?`step${Math.min(info.step,6)}`:'';
+      
+      btn.type='button'; 
+      btn.className=`tile ${n===0?'zero':''} ${info?'state-'+info.status:''}`.trim(); 
+      btn.dataset.side=side; 
+      btn.dataset.num=String(n);
       
       let decoyContent = '';
       if (info && info.status === 'L') {
-        decoyContent = `<div class="decoy-score">🔒 +${info.lastNet}</div>`;
+        decoyContent = `<div class="decoy-score">🔒 +${info.lastNet || 0}</div>`;
       } else if (n !== 0) {
         const randSym = puzzleSymbols[Math.floor(Math.random() * puzzleSymbols.length)];
         decoyContent = `<div class="decoy-symbol">${randSym}</div>`;
@@ -225,9 +268,9 @@ function renderBoards(){
   });
 }
 
-function renderVyuha(){ ['Y','K'].forEach(side=>{ const host=q(side==='Y'?'vyuhaY':'vyuhaK'); host.innerHTML=''; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const d=document.createElement('div'); d.className='state-cell'; d.innerHTML=`<div class="num">${n}</div><div class="meta">${statusCode(info)}</div>`; host.appendChild(d);} }); }
+function renderVyuha(){ ['Y','K'].forEach(side=>{ const host=q(side==='Y'?'vyuhaY':'vyuhaK'); if(!host) return; host.innerHTML=''; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const d=document.createElement('div'); d.className='state-cell'; d.innerHTML=`<div class="num">${n}</div><div class="meta">${statusCode(info)}</div>`; host.appendChild(d);} }); }
 function formatNextAhuti(side){ const groups=new Map(); for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const preview=previewNextAhutiFor(info); if(preview){ if(!groups.has(preview.bet)) groups.set(preview.bet,[]); groups.get(preview.bet).push(`${n}(${preview.stepLabel})`); } } const parts=[...groups.entries()].sort((a,b)=>b[0]-a[0]).map(([bet,arr])=>`${bet} on ${arr.join(' ')}`); return `${side} ${parts.join(' | ') || '-'}`; }
-function renderSangram(){ q('bankValue').textContent=fmtMoney(state.liveBankroll); q('chakraValue').textContent=`Round : ${state.currentChakra}`; q('nextY').textContent=formatNextAhuti('Y'); q('nextK').textContent=formatNextAhuti('K'); q('nextT').textContent=`T ${nextPreviewExposureTotal()}`; const lastRow=currentKumbh()?.rows?.at(-1); const last = lastRow ? `${lastRow.y ?? '-'} | ${lastRow.k ?? '-'}` : '-'; if(q('lastResultValue')) q('lastResultValue').textContent=last; }
+function renderSangram(){ if(q('bankValue')) q('bankValue').textContent=fmtMoney(state.liveBankroll); if(q('chakraValue')) q('chakraValue').textContent=`Round : ${state.currentChakra}`; if(q('nextY')) q('nextY').textContent=formatNextAhuti('Y'); if(q('nextK')) q('nextK').textContent=formatNextAhuti('K'); if(q('nextT')) q('nextT').textContent=`T ${nextPreviewExposureTotal()}`; const lastRow=currentKumbh()?.rows?.at(-1); const last = lastRow ? `${lastRow.y ?? '-'} | ${lastRow.k ?? '-'}` : '-'; if(q('lastResultValue')) q('lastResultValue').textContent=last; }
 function sideStatsSummary(counts){
   const entries = Object.entries(counts).filter(([n])=>n!=='0');
   return {
@@ -291,7 +334,7 @@ function kumbhInsights(rows){
   return { rowMeta, counts, details, yStats: sideStatsSummary(counts.Y), kStats: sideStatsSummary(counts.K) };
 }
 function renderGranth(){
-  const host=q('granthList'); host.innerHTML='';
+  const host=q('granthList'); if(!host) return; host.innerHTML='';
   const sel=q('deleteKumbhSelect');
   if(sel){
     sel.innerHTML='<option value=>Select Kumbh</option>';
@@ -314,11 +357,11 @@ function renderGranth(){
   });
 }
 
-function renderDrishti(){ q('sumChakras').textContent=Math.max(0,state.currentChakra); q('sumAhuti').textContent=state.summary.totalAhuti; q('sumProfit').textContent=state.liveBankroll-state.settings.bankroll; q('sumExposure').textContent=state.summary.maxExposure; const tbody=q('drishtiTable').querySelector('tbody'); tbody.innerHTML=''; [...state.drishti].reverse().forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.side}</td><td>${r.number}</td><td>${r.activationChakra}</td><td>${r.winChakra}</td><td>${r.steps}</td><td>${r.prevLoss}</td><td>${r.winBet}</td><td>${r.net}</td><td>${r.status}</td>`; tbody.appendChild(tr); }); }
-function renderSopana(){ const tbody=q('ladderTable').querySelector('tbody'); tbody.innerHTML=''; state.ladder.forEach((row,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.step}</td><td><input class="ladder-bet-input" type="number" data-ladder-index="${idx}" inputmode="numeric" enterkeyhint="next" value="${row.bet}"></td><td>${row.winReturn}</td><td>${row.netProfit}</td><td>${row.ifLoseTotal}</td>`; tbody.appendChild(tr); }); const secondTable=q('secondLadderTable'); if(secondTable){ const tbody2=secondTable.querySelector('tbody'); tbody2.innerHTML=''; let prevLoss=0; for(let i=1;i<=Math.min(state.settings.maxSteps,15);i++){ const bet=secondLadderBet(i); const winReturn=bet*9; prevLoss += bet; const tr=document.createElement('tr'); tr.innerHTML=`<td>S${i}</td><td><input class="ladder-bet-input" type="number" data-second-ladder-index="${i-1}" inputmode="numeric" enterkeyhint="next" value="${bet}"></td><td>${winReturn}</td><td>${winReturn - prevLoss}</td><td>${-prevLoss}</td>`; tbody2.appendChild(tr); } } }
-function renderYantra(){ const s=state.settings; q('setBankroll').value=s.bankroll; q('setTargetDollar').value=s.targetDollar; q('setTargetPercent').value=s.targetPercent; q('setStopLoss').value=s.stopLoss; q('setMin').value=s.min; q('setMax').value=s.max; q('setCoin').value=s.coin; q('setTargetNum').value=s.targetNum; q('setDoubleLadder').value=s.doubleLadder||'on'; q('setKeypadMode').value=s.keypadMode; q('setMaxSteps').value=s.maxSteps; q('setReserve').value=s.reserve; q('setCapRule').value=s.capRule; if(q('setAttackMode')) q('setAttackMode').value=s.attackMode || 'classic'; if(q('setTheme')) q('setTheme').value=s.theme || 'warhunt'; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; }
-function renderMedha(){ const active=[]; const cap=[]; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B') active.push(`${side}${n} ${info.ladder===2?'2S':'S'}${info.step}`); if(info.status==='C') cap.push(`${side}${n}`);} }); q('medhaPanel').innerHTML=`<div class="medha-item"><div class="label">Active Formation</div><div>${active.join(' | ') || 'None'}</div></div><div class="medha-item"><div class="label">CAP Numbers</div><div>${cap.join(' | ') || 'None'}</div></div>`; }
-function renderActiveTab(){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===`screen-${state.activeTab}`)); document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.target===state.activeTab)); q('screenTitle').textContent=titles[state.activeTab]||titles.sangram; }
+function renderDrishti(){ if(q('sumChakras')) q('sumChakras').textContent=Math.max(0,state.currentChakra); if(q('sumAhuti')) q('sumAhuti').textContent=state.summary.totalAhuti; if(q('sumProfit')) q('sumProfit').textContent=state.liveBankroll-state.settings.bankroll; if(q('sumExposure')) q('sumExposure').textContent=state.summary.maxExposure; const dt=q('drishtiTable'); if(!dt) return; const tbody=dt.querySelector('tbody'); if(!tbody) return; tbody.innerHTML=''; [...state.drishti].reverse().forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.side}</td><td>${r.number}</td><td>${r.activationChakra}</td><td>${r.winChakra}</td><td>${r.steps}</td><td>${r.prevLoss}</td><td>${r.winBet}</td><td>${r.net}</td><td>${r.status}</td>`; tbody.appendChild(tr); }); }
+function renderSopana(){ const lt=q('ladderTable'); if(!lt) return; const tbody=lt.querySelector('tbody'); if(!tbody) return; tbody.innerHTML=''; state.ladder.forEach((row,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.step}</td><td><input class="ladder-bet-input" type="number" data-ladder-index="${idx}" inputmode="numeric" enterkeyhint="next" value="${row.bet}"></td><td>${row.winReturn}</td><td>${row.netProfit}</td><td>${row.ifLoseTotal}</td>`; tbody.appendChild(tr); }); const secondTable=q('secondLadderTable'); if(secondTable){ const tbody2=secondTable.querySelector('tbody'); if(tbody2) { tbody2.innerHTML=''; let prevLoss=0; for(let i=1;i<=Math.min(state.settings.maxSteps,15);i++){ const bet=secondLadderBet(i); const winReturn=bet*9; prevLoss += bet; const tr=document.createElement('tr'); tr.innerHTML=`<td>S${i}</td><td><input class="ladder-bet-input" type="number" data-second-ladder-index="${i-1}" inputmode="numeric" enterkeyhint="next" value="${bet}"></td><td>${winReturn}</td><td>${winReturn - prevLoss}</td><td>${-prevLoss}</td>`; tbody2.appendChild(tr); } } } }
+function renderYantra(){ const s=state.settings; if(q('setBankroll')) q('setBankroll').value=s.bankroll; if(q('setTargetDollar')) q('setTargetDollar').value=s.targetDollar; if(q('setTargetPercent')) q('setTargetPercent').value=s.targetPercent; if(q('setStopLoss')) q('setStopLoss').value=s.stopLoss; if(q('setMin')) q('setMin').value=s.min; if(q('setMax')) q('setMax').value=s.max; if(q('setCoin')) q('setCoin').value=s.coin; if(q('setTargetNum')) q('setTargetNum').value=s.targetNum; if(q('setDoubleLadder')) q('setDoubleLadder').value=s.doubleLadder||'on'; if(q('setKeypadMode')) q('setKeypadMode').value=s.keypadMode; if(q('setMaxSteps')) q('setMaxSteps').value=s.maxSteps; if(q('setReserve')) q('setReserve').value=s.reserve; if(q('setCapRule')) q('setCapRule').value=s.capRule; if(q('setAttackMode')) q('setAttackMode').value=s.attackMode || 'classic'; if(q('setTheme')) q('setTheme').value=s.theme || 'warhunt'; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; }
+function renderMedha(){ const active=[]; const cap=[]; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B') active.push(`${side}${n} ${info.ladder===2?'2S':'S'}${info.step}`); if(info.status==='C') cap.push(`${side}${n}`);} }); if(q('medhaPanel')) q('medhaPanel').innerHTML=`<div class="medha-item"><div class="label">Active Formation</div><div>${active.join(' | ') || 'None'}</div></div><div class="medha-item"><div class="label">CAP Numbers</div><div>${cap.join(' | ') || 'None'}</div></div>`; }
+function renderActiveTab(){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===`screen-${state.activeTab}`)); document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.target===state.activeTab)); if(q('screenTitle')) q('screenTitle').textContent=titles[state.activeTab]||titles.sangram; }
 function renderAll(){ applyTheme(state.settings.theme || 'warhunt'); renderActiveTab(); renderBoards(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderSopana(); renderYantra(); renderMedha(); saveState(); }
 
 function startPrayoga(){ if(state.currentChakra===0 && !(currentKumbh()?.rows?.length)){ state.liveBankroll = state.settings.bankroll; } else if(state.currentChakra!==0 || currentKumbh()?.rows?.length){ state.currentKumbhId=null; state.liveBankroll = state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; } const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('SANGRAM AARAMBHA', `#${String(kumbh.id).padStart(2,'0')} Kumbh ready`); }
@@ -401,8 +444,20 @@ async function handleTap(side,num,el){
   }
 }
 
-function switchTab(target){ state.activeTab=target; renderActiveTab(); saveState(); }
-function setupTabs(){ document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.target))); }
+function switchTab(target){ 
+    if(!target) return;
+    state.activeTab=target; 
+    renderActiveTab(); 
+    saveState(); 
+}
+function setupTabs(){ 
+    document.querySelectorAll('.nav').forEach(btn=>{
+        btn.addEventListener('click',(e)=>{
+            e.preventDefault();
+            switchTab(btn.dataset.target);
+        });
+    }); 
+}
 function setupBoards(){
   ['boardY','boardK'].forEach(id=>{
     const host=q(id);
@@ -417,7 +472,7 @@ function setupBoards(){
     });
   });
 }
-function recalcTargetLink(source){ const bankroll=Number(q('setBankroll').value)||defaultSettings.bankroll; if(source==='dollar') q('setTargetPercent').value=((Number(q('setTargetDollar').value||0)/bankroll)*100).toFixed(2); if(source==='percent') q('setTargetDollar').value=Math.round((bankroll*Number(q('setTargetPercent').value||0))/100); }
+function recalcTargetLink(source){ const bankroll=Number(q('setBankroll').value)||defaultSettings.bankroll; if(source==='dollar') if(q('setTargetPercent')) q('setTargetPercent').value=((Number(q('setTargetDollar').value||0)/bankroll)*100).toFixed(2); if(source==='percent') if(q('setTargetDollar')) q('setTargetDollar').value=Math.round((bankroll*Number(q('setTargetPercent').value||0))/100); }
 function normalizeLadderBet(value){ return Math.max(state.settings.coin, Number(value)||0); }
 function syncFirstLadderFromInputs(){
   let cumulative=0;
@@ -783,4 +838,99 @@ function importGranthJson(e){ const file=e.target.files[0]; if(!file) return; fi
     } else {
       const parsed=JSON.parse(text);
       if(parsed && parsed.state){ restoreSnapshot(parsed); }
-      else if(parsed && parsed.granth){ state = reviveState({ ...freshState(), granth: parsed.granth, currentKumbhId:
+      else if(parsed && parsed.granth){ state = reviveState({ ...freshState(), granth: parsed.granth, currentKumbhId: parsed.granth.at(-1)?.id||null, settings: parsed.settings || state.settings }); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings(); }
+      else { state = reviveState(parsed); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; }
+    }
+    renderAll(); showToast('GRANTH LOADED','History imported'); }).finally(()=>{ e.target.value=''; }); }
+
+function importLadderCsv(e){ const file=e.target.files[0]; if(!file) return; file.text().then(text=>{ const lines=text.trim().split(/\r?\n/).slice(1).filter(Boolean); let cumulative1=0, cumulative2=0; lines.forEach(line=>{ const [ladder,stepLabel,betRaw]=line.split(','); const idx=Math.max(0, Number(String(stepLabel).replace(/\D/g,''))-1); const bet=Number(betRaw)||0; if(String(ladder).trim().toUpperCase()==='L2'){ cumulative2 += bet; } else { cumulative1 += bet; state.ladder[idx] = { step:`S${idx+1}`, bet, winReturn:bet*9, netProfit:(bet*9)-cumulative1, ifLoseTotal:-cumulative1 }; } }); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA LOADED','CSV ladder loaded'); }).finally(()=>{ e.target.value=''; }); }
+function downloadFile(name,content,type){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
+function downloadBlob(name,blob){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
+function setupInstall(){ window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(q('installBtn')) q('installBtn').classList.remove('hidden'); }); if(q('installBtn')) q('installBtn').addEventListener('click', async()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; if(q('installBtn')) q('installBtn').classList.add('hidden'); }); }
+function readYantraSettings(){
+  const current = clone(state.settings);
+  const bankrollRaw = Number(q('setBankroll')?.value);
+  current.bankroll = Number.isFinite(bankrollRaw) && bankrollRaw > 0 ? bankrollRaw : defaultSettings.bankroll;
+  current.targetDollar = Number(q('setTargetDollar')?.value)||500;
+  current.targetPercent = Number(q('setTargetPercent')?.value)||1.67;
+  current.stopLoss = Number(q('setStopLoss')?.value)||50000;
+  current.min = Number(q('setMin')?.value)||100;
+  current.max = Number(q('setMax')?.value)||3000;
+  current.coin = Number(q('setCoin')?.value)||100;
+  current.targetNum = Number(q('setTargetNum')?.value)||500;
+  current.doubleLadder = q('setDoubleLadder')?.value || 'on';
+  current.keypadMode = q('setKeypadMode')?.value || 'combined';
+  current.maxSteps = Number(q('setMaxSteps')?.value)||30;
+  current.reserve = Number(q('setReserve')?.value)||20000;
+  current.capRule = q('setCapRule')?.value || 'on';
+  if(q('setAttackMode')) current.attackMode = q('setAttackMode').value || 'classic';
+  current.theme = q('setTheme')?.value || 'warhunt';
+  const stopLossPerNumberValue = Number(q('setStopLossPerNumber')?.value);
+  current.stopLossPerNumber = Number.isFinite(stopLossPerNumberValue) ? stopLossPerNumberValue : -100;
+  return current;
+}
+async function applyYantraSettings(){
+  if(!(await askApplyYantra())) return;
+  state.settings = readYantraSettings();
+  applyTheme(state.settings.theme || 'warhunt');
+  state.ladder = buildLadder(state.settings);
+  const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length);
+  if(hasRecordedRows){
+    replayAllKumbhsWithCurrentSettings();
+  } else {
+    state.liveBankroll = state.settings.bankroll;
+  }
+  renderAll();
+  showToast('YANTRA APPLIED','Settings updated');
+}
+
+function setupControls(){
+  if(q('prayogaBtn')) q('prayogaBtn').addEventListener('click', startPrayoga);
+  if(q('kumbhaBtn')) q('kumbhaBtn').addEventListener('click', clearCurrentSession);
+  if(q('undoBtn')) q('undoBtn').addEventListener('click', undoLast);
+  if(q('redoBtn')) q('redoBtn').addEventListener('click', redoLast);
+  if(q('setTargetDollar')) q('setTargetDollar').addEventListener('input', ()=>recalcTargetLink('dollar'));
+  if(q('setTargetPercent')) q('setTargetPercent').addEventListener('input', ()=>recalcTargetLink('percent'));
+  if(q('setBankroll')) q('setBankroll').addEventListener('input', ()=>recalcTargetLink('dollar'));
+  if(q('applyYantraBtn')) q('applyYantraBtn').addEventListener('click', applyYantraSettings);
+  if(q('saveLadderBtn')) q('saveLadderBtn').addEventListener('click', ()=>{ document.querySelectorAll('[data-ladder-index]').forEach(inp=>{ inp.value=normalizeLadderBet(inp.value); }); syncFirstLadderFromInputs(); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA SAVED','Editable ladder updated'); });
+  if(q('exportLadderBtn')) q('exportLadderBtn').addEventListener('click', ()=>{ exportLadderCsv(); });
+  if(q('loadLadderBtn')) q('loadLadderBtn').addEventListener('click', ()=>q('loadLadderFile').click());
+  if(q('loadLadderFile')) q('loadLadderFile').addEventListener('change', importLadderCsv);
+  if(q('resetLadderBtn')) q('resetLadderBtn').addEventListener('click', ()=>{ state.ladder=buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA RESET','Default ladder restored'); });
+  document.addEventListener('input', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; refreshLinkedLadderCalculations(); });
+  document.addEventListener('keydown', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; if(e.key==='Enter'){ e.preventDefault(); const current=Number(el.dataset.ladderIndex); const next=document.querySelector(`[data-ladder-index="${current+1}"]`); if(next){ next.focus(); next.select(); } else { el.blur(); } } });
+  document.addEventListener('focusin', e=>{ const el=e.target; if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(()=>el.select(),0); });
+  if(q('exportCsvBtn')) q('exportCsvBtn').addEventListener('click', exportDrishtiCsv); 
+  if(q('exportPdfBtn')) q('exportPdfBtn').addEventListener('click', exportDrishtiPdf); 
+  if(q('loadCsvBtn')) q('loadCsvBtn').addEventListener('click', ()=>q('loadCsvFile').click()); 
+  if(q('loadCsvFile')) q('loadCsvFile').addEventListener('change', importDrishtiCsv);
+  if(q('exportGranthBtn')) q('exportGranthBtn').addEventListener('click', ()=>{ const fmt=q('granthExportFormat')?.value || 'json'; if(fmt==='csv') exportGranthCsv(); else if(fmt==='xlsx') exportGranthXlsx(); else exportGranthJson(); }); 
+  if(q('importGranthBtn')) q('importGranthBtn').addEventListener('click', ()=>q('importGranthFile').click()); 
+  if(q('importGranthFile')) q('importGranthFile').addEventListener('change', importGranthJson);
+  if(q('deleteGranthBtn')) q('deleteGranthBtn').addEventListener('click', async()=>{ const sel=q('deleteKumbhSelect'); const id=Number(sel?.value||0); if(id){ const ok=await askModal({ title:`Delete Kumbh #${String(id).padStart(2,'0')} ?`, text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=state.granth.filter(k=>k.id!==id).map((k,idx)=>({ ...k, id: idx+1 })); state.currentKumbhId=state.granth.at(-1)?.id||null; renderAll(); showToast('KUMBH DELETED','Selected Kumbh removed'); return; } const ok=await askModal({ title:'Delete all Kumbh history?', text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=[]; state.currentKumbhId=null; renderAll(); showToast('GRANTH PURGED','All Kumbh history removed'); });
+  if(q('historyUndoBtn')) q('historyUndoBtn').addEventListener('click', undoLast);
+  if(q('confirmCancelBtn')) q('confirmCancelBtn').addEventListener('click', ()=>closeClearKumbh(false));
+  if(q('confirmOkBtn')) q('confirmOkBtn').addEventListener('click', ()=>closeClearKumbh(true));
+  if(q('confirmOverlay')) q('confirmOverlay').addEventListener('click', e=>{ if(e.target===q('confirmOverlay')) closeClearKumbh(false); });
+  document.addEventListener('keydown', e=>{ if(q('confirmOverlay') && q('confirmOverlay').classList.contains('hidden')) return; if(e.key==='Escape') closeClearKumbh(false); });
+}
+
+// 🔥 IRON-CLAD INIT WRAPPER
+function initApp() {
+    try { setupTabs(); } catch(e) { console.error('setupTabs failed:', e); }
+    try { setupBoards(); } catch(e) { console.error('setupBoards failed:', e); }
+    try { setupControls(); } catch(e) { console.error('setupControls failed:', e); }
+    try { setupInstall(); } catch(e) { console.error('setupInstall failed:', e); }
+    try { renderAll(); } catch(e) { console.error('renderAll failed:', e); }
+}
+
+if('serviceWorker' in navigator){ 
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); 
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
