@@ -437,7 +437,6 @@ function refreshLinkedLadderCalculations(){
   saveState();
 }
 
-
 function shouldCapNowSilent(side,num,info){
   const stopLossPerNumber = Number(state.settings.stopLossPerNumber);
   if(state.settings.capRule==='on' && info.ladder===1 && Number.isFinite(stopLossPerNumber)){
@@ -843,22 +842,18 @@ function setupControls(){
 if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); }
 setupTabs(); setupBoards(); setupControls(); setupInstall(); renderAll();
 
-// 🔥 FORCE INITIALIZATION - This fixes keypad & tabs not working
+// 🔥 FORCE INITIALIZATION - This fixes keypad & tabs
 window.addEventListener('load', () => {
   console.log('%c✅ Mythology Treasury War - Force init running', 'color:#FFD700;font-weight:bold');
-  
-  // Run all setup functions multiple times with delays
   setTimeout(() => {
     if (typeof setupTabs === 'function') setupTabs();
     if (typeof setupBoards === 'function') setupBoards();
     if (typeof setupControls === 'function') setupControls();
     if (typeof renderAll === 'function') renderAll();
   }, 100);
-
   setTimeout(() => {
     if (typeof renderAll === 'function') renderAll();
   }, 500);
-
   setTimeout(() => {
     if (typeof renderAll === 'function') renderAll();
   }, 1000);
