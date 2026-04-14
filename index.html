@@ -11,13 +11,10 @@
   <!-- 🔥 MYTHOLOGY TREASURY WAR GAMING EFFECTS -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=UnifrakturCook:wght@700&display=swap');
-    
     body {
       background: linear-gradient(rgba(26,15,10,0.88), rgba(26,15,10,0.96)), 
                   url('https://picsum.photos/id/1015/2000/1200') center/cover fixed !important;
     }
-    
-    /* Transparent glass keypad */
     .boards-compact .board-block {
       background: rgba(43,31,15,0.65) !important;
       backdrop-filter: blur(14px);
@@ -25,8 +22,6 @@
       border-radius: 22px !important;
       box-shadow: 0 0 30px rgba(255,215,0,0.5);
     }
-    
-    /* Gaming tile press */
     .treasure-grid.compact > div {
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
       box-shadow: 0 4px 15px rgba(0,0,0,0.4) !important;
@@ -35,8 +30,6 @@
       transform: scale(0.94) !important;
       box-shadow: 0 0 25px #FFD700 !important;
     }
-    
-    /* Sparkles */
     .sparkle {
       position: fixed;
       font-size: 1.7rem;
@@ -246,7 +239,7 @@
 
   <script src="app.js"></script>
 
-  <!-- 🔥 VERY STRONG FORCE INIT FOR KEYPAD + TABS -->
+  <!-- 🔥 STRONG FORCE INITIALIZATION -->
   <script>
     function createSparkle() {
       const sparkle = document.createElement('div');
@@ -263,21 +256,14 @@
     window.addEventListener('load', () => {
       for (let i = 0; i < 25; i++) setTimeout(createSparkle, i * 30);
       
-      // Multiple attempts to force your app.js to initialise keypad + tabs
-      setTimeout(() => {
-        if (typeof setupTabs === 'function') setupTabs();
-        if (typeof setupBoards === 'function') setupBoards();
-        if (typeof setupControls === 'function') setupControls();
-        if (typeof renderAll === 'function') renderAll();
-      }, 100);
-
-      setTimeout(() => {
-        if (typeof renderAll === 'function') renderAll();
-      }, 500);
-
-      setTimeout(() => {
-        if (typeof renderAll === 'function') renderAll();
-      }, 1000);
+      // Force all setup functions
+      if (typeof setupTabs === 'function') setupTabs();
+      if (typeof setupBoards === 'function') setupBoards();
+      if (typeof setupControls === 'function') setupControls();
+      if (typeof renderAll === 'function') renderAll();
+      
+      setTimeout(() => { if (typeof renderAll === 'function') renderAll(); }, 300);
+      setTimeout(() => { if (typeof renderAll === 'function') renderAll(); }, 800);
     });
   </script>
 </body>
