@@ -8,18 +8,16 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
   
-  <!-- 🔥 MYTHOLOGY TREASURY WAR GAMING EFFECTS (transparent glass keyboard + Kubera background) -->
+  <!-- 🔥 MYTHOLOGY TREASURY WAR GAMING EFFECTS -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=UnifrakturCook:wght@700&display=swap');
     
-    /* Kubera War-Hunt background */
     body {
       background: linear-gradient(rgba(26,15,10,0.88), rgba(26,15,10,0.96)), 
                   url('https://picsum.photos/id/1015/2000/1200') center/cover fixed !important;
-      position: relative;
     }
     
-    /* Transparent glass upper keyboard */
+    /* Transparent glass keyboard */
     .boards-compact .board-block {
       background: rgba(43,31,15,0.65) !important;
       backdrop-filter: blur(14px);
@@ -28,7 +26,7 @@
       box-shadow: 0 0 30px rgba(255,215,0,0.5);
     }
     
-    /* Gaming tile press effect */
+    /* Gaming tile press */
     .treasure-grid.compact > div {
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
       box-shadow: 0 4px 15px rgba(0,0,0,0.4) !important;
@@ -248,7 +246,7 @@
 
   <script src="app.js"></script>
 
-  <!-- ✨ Gaming sparkles + force setup for tabs & keyboard -->
+  <!-- 🔥 FORCE TABS + KEYPAD TO WORK (this fixes the issue) -->
   <script>
     function createSparkle() {
       const sparkle = document.createElement('div');
@@ -261,13 +259,16 @@
       setTimeout(() => sparkle.remove(), 3000);
     }
     setInterval(() => { if (Math.random() > 0.6) createSparkle(); }, 220);
+    
     window.addEventListener('load', () => {
       for (let i = 0; i < 22; i++) setTimeout(createSparkle, i * 35);
-      // Force tabs & keyboard setup (in case of any timing issue)
+      
+      // FORCE your app.js setup functions to run
       if (typeof setupTabs === 'function') setupTabs();
       if (typeof setupBoards === 'function') setupBoards();
+      if (typeof setupControls === 'function') setupControls();
       if (typeof renderAll === 'function') renderAll();
     });
   </script>
 </body>
-  </html>
+</html>
