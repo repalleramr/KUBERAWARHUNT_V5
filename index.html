@@ -3,93 +3,53 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Mythology Treasury War | Kubera_V5Pro Final locked</title>
-  <meta name="theme-color" content="#8B0000">
+  <title>Kubera_V5Pro Final locked</title>
+  <meta name="theme-color" content="#120a05">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
   
-  <!-- 🔥 MYTHOLOGY TREASURY WAR EPIC UI (only visuals - keypad & tabs fully restored) -->
+  <!-- 🔥 MYTHOLOGY TREASURY WAR GAMING EFFECTS (transparent keyboard + Kubera war-hunt background) -->
+  <!-- Original text, headings, colors, and layout are 100% preserved -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=UnifrakturCook:wght@700&display=swap');
     
+    /* Epic Kubera War-Hunt background - ancient golden treasury battlefield */
     body {
-      background: linear-gradient(rgba(26,15,10,0.92), rgba(26,15,10,0.97)), 
+      background: linear-gradient(rgba(26,15,10,0.88), rgba(26,15,10,0.96)), 
                   url('https://picsum.photos/id/1015/2000/1200') center/cover fixed !important;
       position: relative;
     }
     
-    /* Fixed header + bankroll exactly like your screenshot */
-    .fixed-shell .topbar {
-      background: linear-gradient(90deg, #8B0000, #FFD700, #8B0000) !important;
-      border-bottom: 6px solid #FFD700;
-      box-shadow: 0 0 30px rgba(255,215,0,0.9);
-    }
-    .brand { font-family: 'UnifrakturCook', cursive; font-size: 1.45rem; text-shadow: 0 0 15px #FFD700; }
-    #screenTitle { font-size: 1.65rem !important; text-shadow: 0 0 20px #FFD700; }
-    
-    /* Golden ancient frames on every card */
-    .card, .compact-card, .chakra-card, .yantra-card {
-      border: 12px solid transparent !important;
-      border-image: linear-gradient(#FFD700, #8B0000) 1 !important;
-      border-radius: 22px !important;
-      box-shadow: 0 0 35px rgba(255,215,0,0.7), inset 0 0 40px rgba(139,0,0,0.5) !important;
-    }
-    
-    /* Y & K boards - exact keypad layout from your screenshot */
+    /* Transparent glass upper keyboard (Y & K boards) */
     .boards-compact .board-block {
-      border: 10px solid #FFD700 !important;
+      background: rgba(43,31,15,0.65) !important;
+      backdrop-filter: blur(14px);
+      border: 8px solid rgba(255,215,0,0.65) !important;
       border-radius: 22px !important;
-      background: rgba(43,31,15,0.95) !important;
-      box-shadow: 0 0 30px #FFD700;
+      box-shadow: 0 0 30px rgba(255,215,0,0.5);
     }
-    .board-title {
-      background: linear-gradient(#8B0000, #FFD700) !important;
-      color: #110000 !important;
-      font-family: 'UnifrakturCook', cursive;
-      font-size: 2.4rem !important;
-    }
-    .treasure-grid.compact {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr) !important;
-      gap: 8px !important;
-      padding: 12px;
-    }
+    
+    /* Subtle gaming tile press + glow */
     .treasure-grid.compact > div {
-      background: linear-gradient(#d4a017, #8B5A00) !important;
-      border-radius: 18px !important;
-      aspect-ratio: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      font-size: 1.8rem;
-      font-weight: bold;
-      color: #110000;
-      box-shadow: 0 6px 0 #5c3a00, inset 0 0 20px rgba(255,255,255,0.4);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4) !important;
+    }
+    .treasure-grid.compact > div:active {
+      transform: scale(0.94) !important;
+      box-shadow: 0 0 25px #FFD700 !important;
     }
     
-    /* Action buttons & bottom nav exactly like screenshot */
-    .bottom-nav {
-      background: #110000 !important;
-      border-top: 8px solid #FFD700 !important;
-      box-shadow: 0 -10px 30px rgba(255,215,0,0.8) !important;
-    }
-    .bottom-nav button.active {
-      background: linear-gradient(#FFD700, #8B0000) !important;
-      color: #110000 !important;
-    }
-    
-    /* Sparkles for real gaming feel */
+    /* Sparkle particles for premium gaming feel */
     .sparkle {
       position: fixed;
-      font-size: 1.8rem;
+      font-size: 1.7rem;
       pointer-events: none;
       z-index: 9999;
       animation: sparkleAnim 2.8s forwards;
     }
     @keyframes sparkleAnim {
-      0% { opacity: 0; transform: scale(0.3) rotate(0deg); }
-      50% { opacity: 1; }
+      0%   { opacity: 0; transform: scale(0.3) rotate(0deg); }
+      50%  { opacity: 1; }
       100% { opacity: 0; transform: scale(1.6) rotate(360deg); }
     }
   </style>
@@ -112,7 +72,6 @@
     </header>
 
     <main class="content-pad">
-      <!-- ALL YOUR ORIGINAL SCREENS (unchanged) -->
       <section id="screen-sangram" class="screen active">
         <section class="boards-compact sangram-boards">
           <div class="board-block">
@@ -154,16 +113,118 @@
         </section>
       </section>
 
-      <!-- All other screens exactly as you had them -->
-      <section id="screen-vyuha" class="screen">… (your original code) …</section>
-      <section id="screen-granth" class="screen">… (your original code) …</section>
-      <section id="screen-drishti" class="screen">… (your original code) …</section>
-      <section id="screen-sopana" class="screen">… (your original code) …</section>
-      <section id="screen-yantra" class="screen">… (your original code) …</section>
-      <section id="screen-medha" class="screen">… (your original code) …</section>
+      <section id="screen-vyuha" class="screen">
+        <div class="split-grid">
+          <section class="card"><div class="label">YAKSHA</div><div id="vyuhaY" class="state-grid"></div></section>
+          <section class="card"><div class="label">KINNARA</div><div id="vyuhaK" class="state-grid"></div></section>
+        </div>
+      </section>
+
+      <section id="screen-granth" class="screen">
+        <section class="card">
+          <div class="toolbar">
+            <div class="label">GRANTH</div>
+            <div class="btn-row">
+              <select id="granthExportFormat" class="toolbar-select"><option value="json">JSON</option><option value="csv">CSV</option><option value="xlsx">XLSX</option></select>
+              <button id="exportGranthBtn" type="button">Export</button>
+              <button id="importGranthBtn" type="button">Load</button>
+              <select id="deleteKumbhSelect" class="toolbar-select"><option value="">Select Kumbh</option></select>
+              <button id="deleteGranthBtn" class="warn" type="button">Delete</button>
+              <input id="importGranthFile" type="file" accept="application/json,.csv,text/csv" hidden>
+            </div>
+          </div>
+          <div id="granthList" class="granth-list"></div>
+        </section>
+      </section>
+
+      <section id="screen-drishti" class="screen">
+        <section class="summary-grid">
+          <div class="card stat"><div class="label">Chakras Played</div><div id="sumChakras" class="stat-value">0</div></div>
+          <div class="card stat"><div class="label">Total Āhuti</div><div id="sumAhuti" class="stat-value">0</div></div>
+          <div class="card stat"><div class="label">Net Profit</div><div id="sumProfit" class="stat-value">0</div></div>
+          <div class="card stat"><div class="label">Max Exposure</div><div id="sumExposure" class="stat-value">0</div></div>
+        </section>
+        <section class="card">
+          <div class="toolbar">
+            <div class="label">NUMBER PERFORMANCE</div>
+            <div class="btn-row">
+              <button id="exportCsvBtn" type="button">Export CSV</button>
+              <button id="exportPdfBtn" type="button">Save PDF</button>
+              <button id="loadCsvBtn" type="button">Load CSV</button>
+              <input id="loadCsvFile" type="file" accept=".csv,text/csv" hidden>
+            </div>
+          </div>
+          <div class="table-wrap compact-table"><table id="drishtiTable"><thead><tr><th>Side</th><th>No</th><th>Act</th><th>Win</th><th>Steps</th><th>Prev Loss</th><th>Win Bet</th><th>Net P/L</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+        </section>
+      </section>
+
+      <section id="screen-sopana" class="screen">
+        <section class="card compact-sopana-card">
+          <div class="toolbar">
+            <div class="label">SOPANA - 1ST LADDER</div>
+            <div class="btn-row">
+              <button id="saveLadderBtn" type="button">Save</button>
+              <button id="exportLadderBtn" type="button">Export CSV</button>
+              <button id="loadLadderBtn" type="button">Load CSV</button>
+              <button id="resetLadderBtn" type="button">Reset</button>
+              <input id="loadLadderFile" type="file" accept=".csv,text/csv" hidden>
+            </div>
+          </div>
+          <div class="table-wrap compact-table"><table id="ladderTable"><thead><tr><th>Step</th><th>Bet</th><th>Win Return</th><th>Net Profit</th><th>If Lose Total</th></tr></thead><tbody></tbody></table></div>
+        </section>
+        <section class="card compact-card compact-sopana-card">
+          <div class="toolbar">
+            <div class="label">SOPANA - 2ND LADDER</div>
+            <div class="label subtle-note">Compact editable table</div>
+          </div>
+          <div class="table-wrap compact-table"><table id="secondLadderTable"><thead><tr><th>Step</th><th>Bet</th><th>Win Return</th><th>Net Profit</th><th>If Lose Total</th></tr></thead><tbody></tbody></table></div>
+        </section>
+      </section>
+
+      <section id="screen-yantra" class="screen">
+        <section class="card yantra-card">
+          <div class="label">YANTRA</div>
+          <div class="settings-grid">
+            <label><span>Axyapatra</span><input id="setBankroll" type="number"></label>
+            <label><span>Target $</span><input id="setTargetDollar" type="number"></label>
+            <label><span>Target %</span><input id="setTargetPercent" type="number" step="0.01"></label>
+            <label><span>Stop Loss</span><input id="setStopLoss" type="number"></label>
+            <label><span>Min</span><input id="setMin" type="number"></label>
+            <label><span>Max</span><input id="setMax" type="number"></label>
+            <label><span>Coin Size</span><select id="setCoin"><option>100</option><option>500</option><option>1000</option><option>5000</option><option>10000</option></select></label>
+            <label><span>Target / Number</span><input id="setTargetNum" type="number"></label>
+            <label><span>Double Ladder</span><select id="setDoubleLadder"><option value="off">OFF</option><option value="on">ON</option></select></label>
+            <label><span>Keypad Mode</span><select id="setKeypadMode"><option value="combined">Combined</option><option value="individual">Individual</option></select></label>
+            <label><span>Max Steps</span><input id="setMaxSteps" type="number"></label>
+            <label><span>Safety Reserve</span><input id="setReserve" type="number"></label>
+            <label><span>CAP Rule</span><select id="setCapRule"><option value="on">ON</option><option value="off">OFF</option></select></label>
+            <label><span>Attack Timing</span><select id="setAttackMode"><option value="classic">Classic</option><option value="thirdstrike">3rd Strike</option><option value="fourthstrike">4th Strike</option></select></label>
+            <label><span>Theme</span><select id="setTheme">
+              <option value="warhunt">Warhunt Gold</option>
+              <option value="temple">Temple Ember</option>
+              <option value="vault">Treasure Vault</option>
+              <option value="oracle">Midnight Oracle</option>
+              <option value="crimson">Crimson Empire</option>
+              <option value="onyx">Onyx Sanctum</option>
+              <option value="sapphire">Sapphire Shrine</option>
+              <option value="emerald">Emerald Relic</option>
+              <option value="moon">Moon Ashram</option>
+              <option value="thunder">Thunder Relic</option>
+            </select></label>
+            <label><span>Stop Loss / Number</span><input id="setStopLossPerNumber" type="text" inputmode="numeric" placeholder="-100"></label>
+          </div>
+          <div class="save-wrap"><button id="applyYantraBtn" type="button">APPLY YANTRA</button></div>
+        </section>
+      </section>
+
+      <section id="screen-medha" class="screen">
+        <section class="card">
+          <div class="label">MEDHA</div>
+          <div id="medhaPanel" class="medha-panel"></div>
+        </section>
+      </section>
     </main>
 
-    <!-- FULL 7-TAB BOTTOM NAV - exactly as in your original file -->
     <nav class="bottom-nav">
       <button class="nav active" data-target="sangram" type="button">⚔<span>Sangram</span></button>
       <button class="nav" data-target="vyuha" type="button">🛡<span>Vyuha</span></button>
@@ -175,7 +236,6 @@
     </nav>
   </div>
 
-  <!-- Your original modal -->
   <div id="confirmOverlay" class="modal-overlay hidden" aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmText">
       <div id="confirmTitle" class="modal-title">KUMBHA CLEAR</div>
@@ -189,20 +249,22 @@
 
   <script src="app.js"></script>
 
-  <!-- Golden sparkles -->
+  <!-- ✨ Subtle golden sparkles for gaming atmosphere -->
   <script>
     function createSparkle() {
-      const s = document.createElement('div');
-      s.className = 'sparkle';
-      s.innerHTML = Math.random() > 0.5 ? '✨' : '💎';
-      s.style.left = Math.random() * 100 + 'vw';
-      s.style.top = Math.random() * 70 + 'vh';
-      s.style.color = '#FFD700';
-      document.body.appendChild(s);
-      setTimeout(() => s.remove(), 3000);
+      const sparkle = document.createElement('div');
+      sparkle.className = 'sparkle';
+      sparkle.innerHTML = Math.random() > 0.5 ? '✨' : '💎';
+      sparkle.style.left = Math.random() * 100 + 'vw';
+      sparkle.style.top = Math.random() * 65 + 'vh';
+      sparkle.style.color = '#FFD700';
+      document.body.appendChild(sparkle);
+      setTimeout(() => sparkle.remove(), 3000);
     }
-    setInterval(() => { if(Math.random() > 0.55) createSparkle(); }, 180);
-    window.addEventListener('load', () => { for(let i=0; i<22; i++) setTimeout(createSparkle, i*35); });
+    setInterval(() => { if (Math.random() > 0.6) createSparkle(); }, 220);
+    window.addEventListener('load', () => {
+      for (let i = 0; i < 22; i++) setTimeout(createSparkle, i * 35);
+    });
   </script>
 </body>
 </html>
