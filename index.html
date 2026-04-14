@@ -239,7 +239,7 @@
 
   <script src="app.js"></script>
 
-  <!-- 🔥 STRONG FORCE INITIALIZATION (this is the key fix) -->
+  <!-- 🔥 VERY STRONG FORCE INITIALIZATION -->
   <script>
     function createSparkle() {
       const sparkle = document.createElement('div');
@@ -256,7 +256,6 @@
     window.addEventListener('load', () => {
       for (let i = 0; i < 25; i++) setTimeout(createSparkle, i * 30);
       
-      // Multiple attempts to force your app.js functions
       setTimeout(() => {
         if (typeof setupTabs === 'function') setupTabs();
         if (typeof setupBoards === 'function') setupBoards();
