@@ -8,41 +8,6 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="styles.css">
-  
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=UnifrakturCook:wght@700&display=swap');
-    body {
-      background: linear-gradient(rgba(26,15,10,0.88), rgba(26,15,10,0.96)), 
-                  url('https://picsum.photos/id/1015/2000/1200') center/cover fixed !important;
-    }
-    .boards-compact .board-block {
-      background: rgba(43,31,15,0.65) !important;
-      backdrop-filter: blur(14px);
-      border: 8px solid rgba(255,215,0,0.65) !important;
-      border-radius: 22px !important;
-      box-shadow: 0 0 30px rgba(255,215,0,0.5);
-    }
-    .treasure-grid.compact > div {
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.4) !important;
-    }
-    .treasure-grid.compact > div:active {
-      transform: scale(0.94) !important;
-      box-shadow: 0 0 25px #FFD700 !important;
-    }
-    .sparkle {
-      position: fixed;
-      font-size: 1.7rem;
-      pointer-events: none;
-      z-index: 9999;
-      animation: sparkleAnim 2.8s forwards;
-    }
-    @keyframes sparkleAnim {
-      0% { opacity: 0; transform: scale(0.3) rotate(0deg); }
-      50% { opacity: 1; }
-      100% { opacity: 0; transform: scale(1.6) rotate(360deg); }
-    }
-  </style>
 </head>
 <body>
   <div id="toastLayer" class="toast-layer"></div>
@@ -50,10 +15,10 @@
     <header class="fixed-shell">
       <div class="topbar">
         <div>
-          <div class="brand">Kubera_V5Pro Final locked</div>
+          <div class="brand">Mythology Treasury War</div>
           <div id="screenTitle" class="screen-title">⚔ SANGRAM</div>
         </div>
-        <button id="installBtn" class="install-btn hidden">Install PWA</button>
+        <button id="installBtn" class="install-btn hidden">Install App</button>
       </div>
       <section class="card glow bankroll-card">
         <div class="label">DIAMOND STASH</div>
@@ -65,39 +30,39 @@
       <section id="screen-sangram" class="screen active">
         <section class="boards-compact sangram-boards">
           <div class="board-block">
-            <div class="board-title">Y</div>
+            <div class="board-title">YAKSHA</div>
             <div id="boardY" class="treasure-grid compact"></div>
           </div>
           <div class="board-block">
-            <div class="board-title">K</div>
+            <div class="board-title">KINNARA</div>
             <div id="boardK" class="treasure-grid compact"></div>
           </div>
         </section>
 
         <section class="action-strip compact-card">
-          <button id="kumbhaBtn" class="warn strip-btn">Clear Kumbha</button>
+          <button id="kumbhaBtn" class="warn strip-btn">End Raid</button>
           <button id="undoBtn" class="strip-btn">Undo</button>
           <button id="redoBtn" class="strip-btn">Redo</button>
-          <button id="prayogaBtn" class="strip-btn">Prayoga</button>
+          <button id="prayogaBtn" class="strip-btn">Start Raid</button>
         </section>
 
         <section class="card compact-card">
-          <div class="label">LAST RESULT</div>
-          <div id="lastResultValue" class="last-result">-</div>
+          <div class="label">PREVIOUS ENCOUNTER</div>
+          <div id="lastResultValue" class="last-result" style="font-size: 20px; margin-top: 4px;">-</div>
         </section>
 
         <section class="card compact-card">
-          <div class="label">NEXT ĀHUTI</div>
-          <div id="nextY" class="ahuti-row">Y -</div>
-          <div id="nextK" class="ahuti-row">K -</div>
-          <div id="nextT" class="total">T 0</div>
+          <div class="label">QUEUED SPELLS</div>
+          <div id="nextY" class="ahuti-row">YAKSHA -</div>
+          <div id="nextK" class="ahuti-row">KINNARA -</div>
+          <div id="nextT" class="total">Total MP: 0</div>
         </section>
 
         <section class="card compact-card chakra-card">
           <div class="chakra-line chakra-right">
             <div class="chakra-copy">
-              <div class="label">CHAKRA</div>
-              <div id="chakraValue" class="chakra-value">Round : 0</div>
+              <div class="label">CURRENT WAVE</div>
+              <div id="chakraValue" class="chakra-value">Wave : 0</div>
             </div>
           </div>
         </section>
@@ -105,20 +70,20 @@
 
       <section id="screen-vyuha" class="screen">
         <div class="split-grid">
-          <section class="card"><div class="label">YAKSHA</div><div id="vyuhaY" class="state-grid"></div></section>
-          <section class="card"><div class="label">KINNARA</div><div id="vyuhaK" class="state-grid"></div></section>
+          <section class="card"><div class="label">YAKSHA SUMMONS</div><div id="vyuhaY" class="state-grid"></div></section>
+          <section class="card"><div class="label">KINNARA SUMMONS</div><div id="vyuhaK" class="state-grid"></div></section>
         </div>
       </section>
 
       <section id="screen-granth" class="screen">
         <section class="card">
           <div class="toolbar">
-            <div class="label">GRANTH</div>
+            <div class="label">RAID HISTORY (GRANTH)</div>
             <div class="btn-row">
               <select id="granthExportFormat" class="toolbar-select"><option value="json">JSON</option><option value="csv">CSV</option><option value="xlsx">XLSX</option></select>
               <button id="exportGranthBtn">Export</button>
               <button id="importGranthBtn">Load</button>
-              <select id="deleteKumbhSelect"><option value="">Select Kumbh</option></select>
+              <select id="deleteKumbhSelect"><option value="">Select Raid</option></select>
               <button id="deleteGranthBtn" class="warn">Delete</button>
               <input id="importGranthFile" type="file" accept="application/json,.csv,text/csv" hidden>
             </div>
@@ -129,14 +94,14 @@
 
       <section id="screen-drishti" class="screen">
         <section class="summary-grid">
-          <div class="card stat"><div class="label">Chakras Played</div><div id="sumChakras" class="stat-value">0</div></div>
-          <div class="card stat"><div class="label">Total Āhuti</div><div id="sumAhuti" class="stat-value">0</div></div>
-          <div class="card stat"><div class="label">Net Profit</div><div id="sumProfit" class="stat-value">0</div></div>
-          <div class="card stat"><div class="label">Max Exposure</div><div id="sumExposure" class="stat-value">0</div></div>
+          <div class="card stat"><div class="label">Waves Cleared</div><div id="sumChakras" class="stat-value">0</div></div>
+          <div class="card stat"><div class="label">Total MP Used</div><div id="sumAhuti" class="stat-value">0</div></div>
+          <div class="card stat"><div class="label">Net Loot Gained</div><div id="sumProfit" class="stat-value">0</div></div>
+          <div class="card stat"><div class="label">Max Mana Drain</div><div id="sumExposure" class="stat-value">0</div></div>
         </section>
         <section class="card">
           <div class="toolbar">
-            <div class="label">NUMBER PERFORMANCE</div>
+            <div class="label">SUMMON PERFORMANCE</div>
             <div class="btn-row">
               <button id="exportCsvBtn">Export CSV</button>
               <button id="exportPdfBtn">Save PDF</button>
@@ -144,14 +109,14 @@
               <input id="loadCsvFile" type="file" accept=".csv,text/csv" hidden>
             </div>
           </div>
-          <div class="table-wrap compact-table"><table id="drishtiTable"><thead><tr><th>Side</th><th>No</th><th>Act</th><th>Win</th><th>Steps</th><th>Prev Loss</th><th>Win Bet</th><th>Net P/L</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+          <div class="table-wrap compact-table"><table id="drishtiTable"><thead><tr><th>Faction</th><th>Summon</th><th>Act. Wave</th><th>Loot Wave</th><th>Tiers</th><th>Mana Drain</th><th>Power Cast</th><th>Net XP</th><th>Status</th></tr></thead><tbody></tbody></table></div>
         </section>
       </section>
 
       <section id="screen-sopana" class="screen">
         <section class="card compact-sopana-card">
           <div class="toolbar">
-            <div class="label">SOPANA - 1ST LADDER</div>
+            <div class="label">SPELL TIERS - 1ST LADDER</div>
             <div class="btn-row">
               <button id="saveLadderBtn">Save</button>
               <button id="exportLadderBtn">Export CSV</button>
@@ -160,35 +125,35 @@
               <input id="loadLadderFile" type="file" accept=".csv,text/csv" hidden>
             </div>
           </div>
-          <div class="table-wrap compact-table"><table id="ladderTable"><thead><tr><th>Step</th><th>Bet</th><th>Win Return</th><th>Net Profit</th><th>If Lose Total</th></tr></thead><tbody></tbody></table></div>
+          <div class="table-wrap compact-table"><table id="ladderTable"><thead><tr><th>Tier</th><th>MP Cost</th><th>Loot Return</th><th>Net XP</th><th>If Failed Drain</th></tr></thead><tbody></tbody></table></div>
         </section>
         <section class="card compact-card compact-sopana-card">
           <div class="toolbar">
-            <div class="label">SOPANA - 2ND LADDER</div>
+            <div class="label">SPELL TIERS - 2ND LADDER</div>
           </div>
-          <div class="table-wrap compact-table"><table id="secondLadderTable"><thead><tr><th>Step</th><th>Bet</th><th>Win Return</th><th>Net Profit</th><th>If Lose Total</th></tr></thead><tbody></tbody></table></div>
+          <div class="table-wrap compact-table"><table id="secondLadderTable"><thead><tr><th>Tier</th><th>MP Cost</th><th>Loot Return</th><th>Net XP</th><th>If Failed Drain</th></tr></thead><tbody></tbody></table></div>
         </section>
       </section>
 
       <section id="screen-yantra" class="screen">
         <section class="card yantra-card">
-          <div class="label">YANTRA</div>
+          <div class="label">GAME SETTINGS (YANTRA)</div>
           <div class="settings-grid">
-            <label><span>Diamond Stash</span><input id="setBankroll" type="number"></label>
-            <label><span>Target $</span><input id="setTargetDollar" type="number"></label>
+            <label><span>Diamond Stash Base</span><input id="setBankroll" type="number"></label>
+            <label><span>Target Loot</span><input id="setTargetDollar" type="number"></label>
             <label><span>Target %</span><input id="setTargetPercent" type="number" step="0.01"></label>
-            <label><span>Stop Loss</span><input id="setStopLoss" type="number"></label>
-            <label><span>Min</span><input id="setMin" type="number"></label>
-            <label><span>Max</span><input id="setMax" type="number"></label>
-            <label><span>Coin Size</span><select id="setCoin"><option>100</option><option>500</option><option>1000</option><option>5000</option><option>10000</option></select></label>
-            <label><span>Target / Number</span><input id="setTargetNum" type="number"></label>
-            <label><span>Double Ladder</span><select id="setDoubleLadder"><option value="off">OFF</option><option value="on">ON</option></select></label>
-            <label><span>Keypad Mode</span><select id="setKeypadMode"><option value="combined">Combined</option><option value="individual">Individual</option></select></label>
-            <label><span>Max Steps</span><input id="setMaxSteps" type="number"></label>
-            <label><span>Safety Reserve</span><input id="setReserve" type="number"></label>
-            <label><span>CAP Rule</span><select id="setCapRule"><option value="on">ON</option><option value="off">OFF</option></select></label>
+            <label><span>Mana Depletion Limit</span><input id="setStopLoss" type="number"></label>
+            <label><span>Min Power</span><input id="setMin" type="number"></label>
+            <label><span>Max Power</span><input id="setMax" type="number"></label>
+            <label><span>Orb Multiplier</span><select id="setCoin"><option>100</option><option>500</option><option>1000</option><option>5000</option><option>10000</option></select></label>
+            <label><span>Loot / Summon</span><input id="setTargetNum" type="number"></label>
+            <label><span>Double Cast Magic</span><select id="setDoubleLadder"><option value="off">OFF</option><option value="on">ON</option></select></label>
+            <label><span>Casting Mode</span><select id="setKeypadMode"><option value="combined">Combined</option><option value="individual">Individual</option></select></label>
+            <label><span>Max Tiers</span><input id="setMaxSteps" type="number"></label>
+            <label><span>Safe Zone Shield</span><input id="setReserve" type="number"></label>
+            <label><span>Stun Rule (CAP)</span><select id="setCapRule"><option value="on">ON</option><option value="off">OFF</option></select></label>
             <label><span>Attack Timing</span><select id="setAttackMode"><option value="classic">Classic</option><option value="thirdstrike">3rd Strike</option><option value="fourthstrike">4th Strike</option></select></label>
-            <label><span>Theme</span><select id="setTheme">
+            <label><span>Game Theme</span><select id="setTheme">
               <option value="warhunt">Warhunt Gold</option>
               <option value="temple">Temple Ember</option>
               <option value="vault">Treasure Vault</option>
@@ -200,15 +165,15 @@
               <option value="moon">Moon Ashram</option>
               <option value="thunder">Thunder Relic</option>
             </select></label>
-            <label><span>Stop Loss / Number</span><input id="setStopLossPerNumber" type="text" inputmode="numeric" placeholder="-100"></label>
+            <label><span>Stun Limit / Summon</span><input id="setStopLossPerNumber" type="text" inputmode="numeric" placeholder="-100"></label>
           </div>
-          <div class="save-wrap"><button id="applyYantraBtn">APPLY YANTRA</button></div>
+          <div class="save-wrap"><button id="applyYantraBtn">APPLY SETTINGS</button></div>
         </section>
       </section>
 
       <section id="screen-medha" class="screen">
         <section class="card">
-          <div class="label">MEDHA</div>
+          <div class="label">BATTLE LOGIC (MEDHA)</div>
           <div id="medhaPanel" class="medha-panel"></div>
         </section>
       </section>
@@ -227,8 +192,8 @@
 
   <div id="confirmOverlay" class="modal-overlay hidden">
     <div class="modal-card">
-      <div id="confirmTitle" class="modal-title">KUMBHA CLEAR</div>
-      <div id="confirmText" class="modal-text">Clear current Kumbh?</div>
+      <div id="confirmTitle" class="modal-title">ABANDON RAID</div>
+      <div id="confirmText" class="modal-text">End current raid wave?</div>
       <div class="modal-actions">
         <button id="confirmCancelBtn">Cancel</button>
         <button id="confirmOkBtn" class="warn">OK</button>
