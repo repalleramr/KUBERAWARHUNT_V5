@@ -8,19 +8,17 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
   
-  <!-- 🔥 MYTHOLOGY TREASURY WAR GAMING EFFECTS (transparent keyboard + Kubera war-hunt background) -->
-  <!-- Original text, headings, colors, and layout are 100% preserved -->
+  <!-- 🔥 MYTHOLOGY TREASURY WAR GAMING EFFECTS (transparent keyboard + Kubera background) -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=UnifrakturCook:wght@700&display=swap');
     
-    /* Epic Kubera War-Hunt background - ancient golden treasury battlefield */
     body {
       background: linear-gradient(rgba(26,15,10,0.88), rgba(26,15,10,0.96)), 
                   url('https://picsum.photos/id/1015/2000/1200') center/cover fixed !important;
       position: relative;
     }
     
-    /* Transparent glass upper keyboard (Y & K boards) */
+    /* Transparent glass keyboard */
     .boards-compact .board-block {
       background: rgba(43,31,15,0.65) !important;
       backdrop-filter: blur(14px);
@@ -29,7 +27,7 @@
       box-shadow: 0 0 30px rgba(255,215,0,0.5);
     }
     
-    /* Subtle gaming tile press + glow */
+    /* Gaming tile press effect */
     .treasure-grid.compact > div {
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
       box-shadow: 0 4px 15px rgba(0,0,0,0.4) !important;
@@ -39,7 +37,7 @@
       box-shadow: 0 0 25px #FFD700 !important;
     }
     
-    /* Sparkle particles for premium gaming feel */
+    /* Sparkles */
     .sparkle {
       position: fixed;
       font-size: 1.7rem;
@@ -48,8 +46,8 @@
       animation: sparkleAnim 2.8s forwards;
     }
     @keyframes sparkleAnim {
-      0%   { opacity: 0; transform: scale(0.3) rotate(0deg); }
-      50%  { opacity: 1; }
+      0% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+      50% { opacity: 1; }
       100% { opacity: 0; transform: scale(1.6) rotate(360deg); }
     }
   </style>
@@ -249,7 +247,7 @@
 
   <script src="app.js"></script>
 
-  <!-- ✨ Subtle golden sparkles for gaming atmosphere -->
+  <!-- ✨ Gaming sparkles -->
   <script>
     function createSparkle() {
       const sparkle = document.createElement('div');
