@@ -44,7 +44,7 @@
   </style>
 </head>
 <body>
-  <div id="toastLayer" class="toast-layer" aria-live="polite" aria-atomic="true"></div>
+  <div id="toastLayer" class="toast-layer"></div>
   <div id="app">
     <header class="fixed-shell">
       <div class="topbar">
@@ -52,7 +52,6 @@
           <div class="brand">Kubera_V5Pro Final locked</div>
           <div id="screenTitle" class="screen-title">⚔ SANGRAM</div>
         </div>
-        <button id="installBtn" class="install-btn hidden" type="button">Install</button>
       </div>
       <section class="card glow bankroll-card">
         <div class="label">AXYAPATRA</div>
@@ -61,7 +60,7 @@
     </header>
 
     <main class="content-pad">
-      <!-- SANGRAM SCREEN -->
+      <!-- SANGRAM -->
       <section id="screen-sangram" class="screen active">
         <section class="boards-compact sangram-boards">
           <div class="board-block">
@@ -75,6 +74,219 @@
         </section>
 
         <section class="action-strip compact-card">
-          <button id="kumbhaBtn" class="warn strip-btn" type="button">Clear Kumbha</button>
-          <button id="undoBtn" class="strip-btn" type="button">Undo</button>
-          <
+          <button id="kumbhaBtn" class="warn strip-btn">Clear Kumbha</button>
+          <button id="undoBtn" class="strip-btn">Undo</button>
+          <button id="redoBtn" class="strip-btn">Redo</button>
+          <button id="prayogaBtn" class="strip-btn">Prayoga</button>
+        </section>
+
+        <section class="card compact-card">
+          <div class="label">LAST RESULT</div>
+          <div id="lastResultValue" class="last-result">-</div>
+        </section>
+
+        <section class="card compact-card">
+          <div class="label">NEXT ĀHUTI</div>
+          <div id="nextY" class="ahuti-row">Y -</div>
+          <div id="nextK" class="ahuti-row">K -</div>
+          <div id="nextT" class="total">T 0</div>
+        </section>
+
+        <section class="card compact-card chakra-card">
+          <div class="chakra-line chakra-right">
+            <div class="chakra-copy">
+              <div class="label">CHAKRA</div>
+              <div id="chakraValue" class="chakra-value">Round : 0</div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <!-- VYUHA -->
+      <section id="screen-vyuha" class="screen">
+        <div class="split-grid">
+          <section class="card"><div class="label">YAKSHA</div><div id="vyuhaY" class="state-grid"></div></section>
+          <section class="card"><div class="label">KINNARA</div><div id="vyuhaK" class="state-grid"></div></section>
+        </div>
+      </section>
+
+      <!-- GRANTH -->
+      <section id="screen-granth" class="screen">
+        <section class="card">
+          <div class="toolbar">
+            <div class="label">GRANTH</div>
+            <div class="btn-row">
+              <select id="granthExportFormat" class="toolbar-select"><option value="json">JSON</option><option value="csv">CSV</option><option value="xlsx">XLSX</option></select>
+              <button id="exportGranthBtn">Export</button>
+              <button id="importGranthBtn">Load</button>
+              <select id="deleteKumbhSelect"><option value="">Select Kumbh</option></select>
+              <button id="deleteGranthBtn" class="warn">Delete</button>
+              <input id="importGranthFile" type="file" accept="application/json,.csv,text/csv" hidden>
+            </div>
+          </div>
+          <div id="granthList" class="granth-list"></div>
+        </section>
+      </section>
+
+      <!-- DRISHTI, SOPANA, YANTRA, MEDHA (kept full for tabs to work) -->
+      <section id="screen-drishti" class="screen">
+        <section class="summary-grid">
+          <div class="card stat"><div class="label">Chakras Played</div><div id="sumChakras" class="stat-value">0</div></div>
+          <div class="card stat"><div class="label">Total Āhuti</div><div id="sumAhuti" class="stat-value">0</div></div>
+          <div class="card stat"><div class="label">Net Profit</div><div id="sumProfit" class="stat-value">0</div></div>
+          <div class="card stat"><div class="label">Max Exposure</div><div id="sumExposure" class="stat-value">0</div></div>
+        </section>
+        <section class="card">
+          <div class="toolbar">
+            <div class="label">NUMBER PERFORMANCE</div>
+            <div class="btn-row">
+              <button id="exportCsvBtn">Export CSV</button>
+              <button id="exportPdfBtn">Save PDF</button>
+              <button id="loadCsvBtn">Load CSV</button>
+              <input id="loadCsvFile" type="file" accept=".csv,text/csv" hidden>
+            </div>
+          </div>
+          <div class="table-wrap compact-table"><table id="drishtiTable"><thead><tr><th>Side</th><th>No</th><th>Act</th><th>Win</th><th>Steps</th><th>Prev Loss</th><th>Win Bet</th><th>Net P/L</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+        </section>
+      </section>
+
+      <section id="screen-sopana" class="screen">
+        <section class="card compact-sopana-card">
+          <div class="toolbar">
+            <div class="label">SOPANA - 1ST LADDER</div>
+            <div class="btn-row">
+              <button id="saveLadderBtn">Save</button>
+              <button id="exportLadderBtn">Export CSV</button>
+              <button id="loadLadderBtn">Load CSV</button>
+              <button id="resetLadderBtn">Reset</button>
+              <input id="loadLadderFile" type="file" accept=".csv,text/csv" hidden>
+            </div>
+          </div>
+          <div class="table-wrap compact-table"><table id="ladderTable"><thead><tr><th>Step</th><th>Bet</th><th>Win Return</th><th>Net Profit</th><th>If Lose Total</th></tr></thead><tbody></tbody></table></div>
+        </section>
+        <section class="card compact-card compact-sopana-card">
+          <div class="toolbar">
+            <div class="label">SOPANA - 2ND LADDER</div>
+          </div>
+          <div class="table-wrap compact-table"><table id="secondLadderTable"><thead><tr><th>Step</th><th>Bet</th><th>Win Return</th><th>Net Profit</th><th>If Lose Total</th></tr></thead><tbody></tbody></table></div>
+        </section>
+      </section>
+
+      <section id="screen-yantra" class="screen">
+        <section class="card yantra-card">
+          <div class="label">YANTRA</div>
+          <div class="settings-grid">
+            <label><span>Axyapatra</span><input id="setBankroll" type="number"></label>
+            <label><span>Target $</span><input id="setTargetDollar" type="number"></label>
+            <label><span>Target %</span><input id="setTargetPercent" type="number" step="0.01"></label>
+            <label><span>Stop Loss</span><input id="setStopLoss" type="number"></label>
+            <label><span>Min</span><input id="setMin" type="number"></label>
+            <label><span>Max</span><input id="setMax" type="number"></label>
+            <label><span>Coin Size</span><select id="setCoin"><option>100</option><option>500</option><option>1000</option><option>5000</option><option>10000</option></select></label>
+            <label><span>Target / Number</span><input id="setTargetNum" type="number"></label>
+            <label><span>Double Ladder</span><select id="setDoubleLadder"><option value="off">OFF</option><option value="on">ON</option></select></label>
+            <label><span>Keypad Mode</span><select id="setKeypadMode"><option value="combined">Combined</option><option value="individual">Individual</option></select></label>
+            <label><span>Max Steps</span><input id="setMaxSteps" type="number"></label>
+            <label><span>Safety Reserve</span><input id="setReserve" type="number"></label>
+            <label><span>CAP Rule</span><select id="setCapRule"><option value="on">ON</option><option value="off">OFF</option></select></label>
+            <label><span>Attack Timing</span><select id="setAttackMode"><option value="classic">Classic</option><option value="thirdstrike">3rd Strike</option><option value="fourthstrike">4th Strike</option></select></label>
+            <label><span>Theme</span><select id="setTheme">
+              <option value="warhunt">Warhunt Gold</option>
+              <option value="temple">Temple Ember</option>
+              <option value="vault">Treasure Vault</option>
+              <option value="oracle">Midnight Oracle</option>
+              <option value="crimson">Crimson Empire</option>
+              <option value="onyx">Onyx Sanctum</option>
+              <option value="sapphire">Sapphire Shrine</option>
+              <option value="emerald">Emerald Relic</option>
+              <option value="moon">Moon Ashram</option>
+              <option value="thunder">Thunder Relic</option>
+            </select></label>
+            <label><span>Stop Loss / Number</span><input id="setStopLossPerNumber" type="text" inputmode="numeric" placeholder="-100"></label>
+          </div>
+          <div class="save-wrap"><button id="applyYantraBtn">APPLY YANTRA</button></div>
+        </section>
+      </section>
+
+      <section id="screen-medha" class="screen">
+        <section class="card">
+          <div class="label">MEDHA</div>
+          <div id="medhaPanel" class="medha-panel"></div>
+        </section>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav active" data-target="sangram">⚔<span>Sangram</span></button>
+      <button class="nav" data-target="vyuha">🛡<span>Vyuha</span></button>
+      <button class="nav" data-target="granth">📜<span>Granth</span></button>
+      <button class="nav" data-target="drishti">👁<span>Drishti</span></button>
+      <button class="nav" data-target="sopana">🪜<span>Sopana</span></button>
+      <button class="nav" data-target="yantra">⚙<span>Yantra</span></button>
+      <button class="nav" data-target="medha">🧠<span>Medha</span></button>
+    </nav>
+  </div>
+
+  <div id="confirmOverlay" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div id="confirmTitle" class="modal-title">KUMBHA CLEAR</div>
+      <div id="confirmText" class="modal-text">Clear current Kumbh?</div>
+      <div class="modal-actions">
+        <button id="confirmCancelBtn">Cancel</button>
+        <button id="confirmOkBtn" class="warn">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+
+  <!-- 🔥 FINAL DEBUG + FORCE RENDER -->
+  <script>
+    function createSparkle() {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'sparkle';
+      sparkle.innerHTML = Math.random() > 0.5 ? '✨' : '💎';
+      sparkle.style.left = Math.random() * 100 + 'vw';
+      sparkle.style.top = Math.random() * 65 + 'vh';
+      sparkle.style.color = '#FFD700';
+      document.body.appendChild(sparkle);
+      setTimeout(() => sparkle.remove(), 3000);
+    }
+
+    function forcePopulateBoards() {
+      console.log('🔥 Force populating Y & K boards');
+      ['Y','K'].forEach(side => {
+        const host = document.getElementById(side === 'Y' ? 'boardY' : 'boardK');
+        if (!host) return;
+        host.innerHTML = '';
+        for (let i = 1; i <= 10; i++) {
+          const n = i === 10 ? 0 : i;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `tile ${n === 0 ? 'zero' : ''}`;
+          btn.dataset.side = side;
+          btn.dataset.num = String(n);
+          btn.innerHTML = `<div class="num">${n}</div><div class="meta">0</div>`;
+          host.appendChild(btn);
+        }
+      });
+    }
+
+    window.addEventListener('load', () => {
+      console.log('%c✅ FINAL FORCE INIT RUNNING', 'color:#FFD700;font-weight:bold');
+      for (let i = 0; i < 30; i++) setTimeout(createSparkle, i * 25);
+
+      setTimeout(() => {
+        if (typeof setupTabs === 'function') setupTabs();
+        if (typeof setupBoards === 'function') setupBoards();
+        if (typeof setupControls === 'function') setupControls();
+        if (typeof renderAll === 'function') renderAll();
+        else forcePopulateBoards();   // fallback if renderAll fails
+      }, 150);
+
+      setTimeout(() => { if (typeof renderAll === 'function') renderAll(); }, 600);
+      setTimeout(() => { if (typeof renderAll === 'function') renderAll(); }, 1200);
+    });
+  </script>
+</body>
+</html>
