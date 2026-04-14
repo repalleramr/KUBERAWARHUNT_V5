@@ -165,3 +165,71 @@ th{position:sticky;top:0;background:#22160d;color:var(--gold)}
 #granthList th,#granthList td{text-overflow:clip;overflow:visible}
 .action-strip{display:flex;gap:8px;flex-wrap:wrap}
 .strip-btn{flex:1 1 0;min-width:0}
+
+/* 🔥 MYTHOLOGY TREASURY WAR - EPIC GAMING UI OVERRIDES (only visuals added) */
+body {
+  background: linear-gradient(rgba(26,15,10,0.92), rgba(26,15,10,0.97)), 
+              url('https://picsum.photos/id/1015/2000/1200') center/cover fixed !important;
+}
+
+.card, .compact-card, .chakra-card, .yantra-card, .modal-card {
+  border: 12px solid transparent !important;
+  border-image: linear-gradient(#FFD700, #8B0000) 1 !important;
+  border-radius: 22px !important;
+  box-shadow: 0 0 35px rgba(255,215,0,0.7),
+              inset 0 0 40px rgba(139,0,0,0.5) !important;
+  position: relative;
+}
+.card::before, .compact-card::before {
+  content: '🏺';
+  position: absolute;
+  top: -14px; right: -14px;
+  font-size: 2.4rem;
+  filter: drop-shadow(0 0 15px #FFD700);
+  z-index: 10;
+  animation: treasureGlow 2s ease-in-out infinite;
+}
+
+@keyframes treasureGlow { 0%,100% { opacity: 0.8; } 50% { opacity: 1; transform: scale(1.2); } }
+
+.board-block {
+  border: 10px solid #FFD700 !important;
+  border-radius: 22px !important;
+  background: rgba(43,31,15,0.95) !important;
+  box-shadow: 0 0 30px #FFD700;
+  padding: 12px;
+}
+
+.treasure-grid .tile {
+  background: linear-gradient(#d4a017, #8B5A00) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 6px 0 #5c3a00, inset 0 0 20px rgba(255,255,255,0.4) !important;
+  color: #110000;
+  font-weight: bold;
+}
+.treasure-grid .tile .num { font-size: 1.8rem; }
+.treasure-grid .tile .meta { font-size: 0.95rem; }
+
+.bottom-nav {
+  border-top: 8px solid #FFD700 !important;
+  box-shadow: 0 -10px 30px rgba(255,215,0,0.8) !important;
+}
+.bottom-nav button.active {
+  background: linear-gradient(#FFD700, #8B0000) !important;
+  color: #110000 !important;
+}
+
+.bankroll-card {
+  border: 8px solid #FFD700 !important;
+  box-shadow: 0 0 35px rgba(255,215,0,0.7) !important;
+}
+.bank { text-shadow: 0 0 15px #FF4D4D; }
+
+/* Victory flash on win */
+.tile.state-L {
+  animation: victoryFlash 900ms ease-out !important;
+}
+@keyframes victoryFlash {
+  0%,100% { background: linear-gradient(#6b511c,#3b2c11); }
+  50% { background: #FFD700; color: #110000; }
+}
