@@ -246,7 +246,7 @@
 
   <script src="app.js"></script>
 
-  <!-- 🔥 FORCE TABS + KEYPAD TO WORK (this fixes the issue) -->
+  <!-- 🔥 STRONG FORCE INITIALIZATION FOR TABS + KEYPAD -->
   <script>
     function createSparkle() {
       const sparkle = document.createElement('div');
@@ -259,15 +259,20 @@
       setTimeout(() => sparkle.remove(), 3000);
     }
     setInterval(() => { if (Math.random() > 0.6) createSparkle(); }, 220);
-    
+
     window.addEventListener('load', () => {
-      for (let i = 0; i < 22; i++) setTimeout(createSparkle, i * 35);
+      for (let i = 0; i < 25; i++) setTimeout(createSparkle, i * 30);
       
-      // FORCE your app.js setup functions to run
+      // FORCE your app.js functions to run
       if (typeof setupTabs === 'function') setupTabs();
       if (typeof setupBoards === 'function') setupBoards();
       if (typeof setupControls === 'function') setupControls();
       if (typeof renderAll === 'function') renderAll();
+      
+      // Extra safety - re-run after 300ms
+      setTimeout(() => {
+        if (typeof renderAll === 'function') renderAll();
+      }, 300);
     });
   </script>
 </body>
