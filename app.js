@@ -843,38 +843,23 @@ function setupControls(){
 if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); }
 setupTabs(); setupBoards(); setupControls(); setupInstall(); renderAll();
 
-// 🔥 MYTHOLOGY TREASURY WAR - EPIC VISUAL ENHANCEMENTS (only visuals, no logic changed)
-function createSparkle() {
-  const sparkle = document.createElement('div');
-  sparkle.style.position = 'fixed';
-  sparkle.style.fontSize = (Math.random() * 22 + 18) + 'px';
-  sparkle.style.left = Math.random() * 100 + 'vw';
-  sparkle.style.top = Math.random() * 70 + 'vh';
-  sparkle.style.zIndex = '9999';
-  sparkle.style.pointerEvents = 'none';
-  sparkle.style.animation = 'sparkleAnim 2.8s forwards';
-  sparkle.innerHTML = Math.random() > 0.5 ? '✨' : '💎';
-  sparkle.style.color = '#FFD700';
-  document.body.appendChild(sparkle);
-  setTimeout(() => sparkle.remove(), 3000);
-}
-const style = document.createElement('style');
-style.innerHTML = `
-  @keyframes sparkleAnim { 0%{opacity:0;transform:scale(0.3) rotate(0deg)} 50%{opacity:1} 100%{opacity:0;transform:scale(1.6) rotate(360deg)} }
-  .tile { transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important; }
-  .tile:active { transform: scale(0.92) !important; box-shadow: 0 0 25px #FFD700 !important; }
-  .state-WIN { animation: victoryFlash 800ms ease-out !important; }
-  @keyframes victoryFlash { 0%,100%{background:#1a1208} 50%{background:#FFD700;color:#110000} }
-`;
-document.head.appendChild(style);
-
-// Launch sparkles on load + every win
-setInterval(() => { if (Math.random() > 0.6) createSparkle(); }, 220);
+// 🔥 FORCE INITIALIZATION - This fixes keypad & tabs not working
 window.addEventListener('load', () => {
-  for (let i = 0; i < 25; i++) setTimeout(createSparkle, i * 30);
-});
-document.addEventListener('click', (e) => {
-  if (e.target.classList.contains('tile') && e.target.classList.contains('state-WIN')) {
-    for (let i = 0; i < 8; i++) setTimeout(createSparkle, i * 40);
-  }
+  console.log('%c✅ Mythology Treasury War - Force init running', 'color:#FFD700;font-weight:bold');
+  
+  // Run all setup functions multiple times with delays
+  setTimeout(() => {
+    if (typeof setupTabs === 'function') setupTabs();
+    if (typeof setupBoards === 'function') setupBoards();
+    if (typeof setupControls === 'function') setupControls();
+    if (typeof renderAll === 'function') renderAll();
+  }, 100);
+
+  setTimeout(() => {
+    if (typeof renderAll === 'function') renderAll();
+  }, 500);
+
+  setTimeout(() => {
+    if (typeof renderAll === 'function') renderAll();
+  }, 1000);
 });
