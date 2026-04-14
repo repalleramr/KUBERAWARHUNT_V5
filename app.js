@@ -1,7 +1,6 @@
 const STORAGE_KEY = 'kubera-warhunt-v5pro-final-locked';
 
-// 🔥 THE GAMING SYMBOLS (Replaces numbers in text displays)
-const symMap = ['🌀', '💎', '🗡️', '🛡️', '🔥', '⚡', '🔮', '💀', '🐉', '👑'];
+// 🔥 THE GAMING SYMBOLS (Only used for the shifting keypad decoy now)
 const puzzleSymbols = ['💎', '🔥', '⚡', '🌟', '🔮', '🎲', '🌙', '☀️', '💠', '🔱', '🧿', '🧩'];
 
 const defaultSettings = {
@@ -205,8 +204,8 @@ function ensureKumbh(){ if(currentKumbh()) return currentKumbh(); const id=(stat
 function secondLadderBet(step){ const start=roundUpToCoin(state.settings.max/4,state.settings.coin); if(step<=5) return start; if(step<=10) return Math.min(state.settings.max,start*2); if(step<=15) return Math.min(state.settings.max,start*3); return state.settings.max; }
 function currentBetFor(info){ return info.ladder===2 ? secondLadderBet(info.step||1) : (state.ladder[Math.max(0,(info.step||1)-1)]?.bet || state.settings.max); }
 function soldierStepNetProfit(info){ const bet=currentBetFor(info); return (bet*8) - (Number(info?.prevLoss) || 0); }
-async function askCapDecision(side,num,info){ const stopLossPerNumber=Number(state.settings.stopLossPerNumber); if(state.settings.capRule!=='on' || info.ladder!==1 || !Number.isFinite(stopLossPerNumber)) return false; const stepNetProfit=soldierStepNetProfit(info); if(stepNetProfit>stopLossPerNumber) return false; const capNow=await askModal({ title:'STUN LIMIT REACHED', text:`${symMap[num]} drained ${stepNetProfit}. Limit is ${stopLossPerNumber}. Stun summon?`, okLabel:'Stun', cancelLabel:'Skip', okClass:'warn' }); return !!capNow; }
-async function askCapReturnDecision(side,num){ return !!(await askModal({ title:'REVIVE SUMMON', text:`${symMap[num]} has recovered. Revive for battle?`, okLabel:'Revive', cancelLabel:'Keep Stunned', okClass:'warn' })); }
+async function askCapDecision(side,num,info){ const stopLossPerNumber=Number(state.settings.stopLossPerNumber); if(state.settings.capRule!=='on' || info.ladder!==1 || !Number.isFinite(stopLossPerNumber)) return false; const stepNetProfit=soldierStepNetProfit(info); if(stepNetProfit>stopLossPerNumber) return false; const capNow=await askModal({ title:'STUN LIMIT REACHED', text:`[ ${num} ] drained ${stepNetProfit}. Limit is ${stopLossPerNumber}. Stun summon?`, okLabel:'Stun', cancelLabel:'Skip', okClass:'warn' }); return !!capNow; }
+async function askCapReturnDecision(side,num){ return !!(await askModal({ title:'REVIVE SUMMON', text:`[ ${num} ] has recovered. Revive for battle?`, okLabel:'Revive', cancelLabel:'Keep Stunned', okClass:'warn' })); }
 function nextExposureTotal(){ let total=0; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A' || info.status==='B') total += currentBetFor(info); }}); return total; }
 function previewNextAhutiFor(info){
   if(!info || (info.status!=='A' && info.status!=='B')) return null;
@@ -269,9 +268,9 @@ function renderBoards(){
   });
 }
 
-function renderVyuha(){ ['Y','K'].forEach(side=>{ const host=q(side==='Y'?'vyuhaY':'vyuhaK'); if(!host) return; host.innerHTML=''; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const d=document.createElement('div'); d.className='state-cell'; d.innerHTML=`<div class="num" style="font-size:32px;">${symMap[n]}</div><div class="meta">${statusCode(info)}</div>`; host.appendChild(d);} }); }
+function renderVyuha(){ ['Y','K'].forEach(side=>{ const host=q(side==='Y'?'vyuhaY':'vyuhaK'); if(!host) return; host.innerHTML=''; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const d=document.createElement('div'); d.className='state-cell'; d.innerHTML=`<div class="num" style="font-size:24px;">[ ${n} ]</div><div class="meta">${statusCode(info)}</div>`; host.appendChild(d);} }); }
 
-// 🔥 NEXT AHUTI TRANSLATED TO MANA POINTS & GAME SYMBOLS
+// 🔥 NEXT AHUTI CLEARLY SHOWS "+ 800 -> [ 2 ]" TO THE USER
 function formatNextAhuti(side){ 
     const groups=new Map(); 
     for(let n=1;n<=9;n++){ 
@@ -279,35 +278,33 @@ function formatNextAhuti(side){
         const preview=previewNextAhutiFor(info); 
         if(preview){ 
             if(!groups.has(preview.bet)) groups.set(preview.bet,[]); 
-            // Replaces "2(S1)" with "🗡️(T1)"
-            groups.get(preview.bet).push(`${symMap[n]}(${preview.stepLabel})`); 
+            groups.get(preview.bet).push(`[ ${n} ] (Lv${preview.stepLabel.replace('T', '')})`); 
         } 
     } 
-    const parts=[...groups.entries()].sort((a,b)=>b[0]-a[0]).map(([bet,arr])=>`${bet} MP ➔ ${arr.join(' ')}`); 
+    const parts=[...groups.entries()].sort((a,b)=>b[0]-a[0]).map(([bet,arr])=>`+ ${bet} ➔ ${arr.join(' & ')}`); 
     return `${side === 'Y' ? 'YAKSHA' : 'KINNARA'}: ${parts.join(' | ') || 'Idle'}`; 
 }
 
-// 🔥 ROUND TRANSLATED TO WAVE & RESULTS TRANSLATED TO SYMBOLS
+// 🔥 LAST RESULT CLEARLY SHOWS "[ 2 ] | [ 6 ]"
 function renderSangram(){ 
     if(q('bankValue')) q('bankValue').textContent=fmtMoney(state.liveBankroll); 
     if(q('chakraValue')) q('chakraValue').textContent=`Wave : ${state.currentChakra}`; 
     if(q('nextY')) q('nextY').textContent=formatNextAhuti('Y'); 
     if(q('nextK')) q('nextK').textContent=formatNextAhuti('K'); 
-    if(q('nextT')) q('nextT').textContent=`Total MP Cost: ${nextPreviewExposureTotal()}`; 
+    if(q('nextT')) q('nextT').textContent=`Total Queue: + ${nextPreviewExposureTotal()}`; 
     
     const lastRow=currentKumbh()?.rows?.at(-1); 
-    // Translates "2 | 6" to "🗡️ | 🔮"
-    const displayY = (lastRow && lastRow.y !== '-' && lastRow.y !== null && lastRow.y !== undefined) ? symMap[lastRow.y] : '➖';
-    const displayK = (lastRow && lastRow.k !== '-' && lastRow.k !== null && lastRow.k !== undefined) ? symMap[lastRow.k] : '➖';
+    const displayY = (lastRow && lastRow.y !== '-' && lastRow.y !== null && lastRow.y !== undefined) ? `[ ${lastRow.y} ]` : '➖';
+    const displayK = (lastRow && lastRow.k !== '-' && lastRow.k !== null && lastRow.k !== undefined) ? `[ ${lastRow.k} ]` : '➖';
     
-    if(q('lastResultValue')) q('lastResultValue').textContent=`${displayY} | ${displayK}`; 
+    if(q('lastResultValue')) q('lastResultValue').textContent=`${displayY}  |  ${displayK}`; 
 }
 
 function sideStatsSummary(counts){
   const entries = Object.entries(counts).filter(([n])=>n!=='0');
   return {
-    hot: entries.filter(([,v])=>v>=4).map(([n,v])=> `${symMap[n]}(${v})`),
-    cool: entries.filter(([,v])=>v<4).map(([n,v])=> `${symMap[n]}(${v})`)
+    hot: entries.filter(([,v])=>v>=4).map(([n,v])=> `[ ${n} ](${v})`),
+    cool: entries.filter(([,v])=>v<4).map(([n,v])=> `[ ${n} ](${v})`)
   };
 }
 function formatRoundInfoEntries(entries){ return entries.length ? entries.join(' | ') : '-'; }
@@ -333,18 +330,18 @@ function kumbhInsights(rows){
     const life = lifecycle[side][String(num)];
     if(life.selectedRound === null){
       life.selectedRound = chakra;
-      meta[`${key}SelCode`] = `${symMap[num]} T1`;
+      meta[`${key}SelCode`] = `[ ${num} ] T1`;
     } else if(life.hitRound === null){
       const travel = chakra - life.selectedRound;
       life.hitRound = chakra;
       meta[`${key}HitCode`] = `Hit T${travel}`;
       details[side].push({
         side,
-        number: symMap[num],
+        number: `[ ${num} ]`,
         selectedRound: life.selectedRound,
         hitRound: chakra,
         travelSteps: travel,
-        selectCode: `${symMap[num]} T1`,
+        selectCode: `[ ${num} ] T1`,
         hitCode: `Hit T${travel}`
       });
     }
@@ -355,8 +352,8 @@ function kumbhInsights(rows){
     const meta = {
       ySelCode:'-', yHitCode:'-',
       kSelCode:'-', kHitCode:'-',
-      capped:Array.isArray(row.cap) ? row.cap.map(c=>c.replace(/\d/, d=>symMap[d])) : [],
-      returned:Array.isArray(row.ret) ? row.ret.map(r=>r.replace(/\d/, d=>symMap[d])) : []
+      capped:Array.isArray(row.cap) ? row.cap.map(c=>`[ ${c.replace(/\D/g, '')} ]`) : [],
+      returned:Array.isArray(row.ret) ? row.ret.map(r=>`[ ${r.replace(/\D/g, '')} ]`) : []
     };
     processSide('Y', row.y, chakra, meta);
     processSide('K', row.k, chakra, meta);
@@ -379,20 +376,20 @@ function renderGranth(){
     const insight=kumbhInsights(k.rows||[]);
     const rows=[...(k.rows||[])].reverse().map(r=>{
       const meta=insight.rowMeta.get(Number(r.chakra)) || { ySelCode:'-', yHitCode:'-', kSelCode:'-', kHitCode:'-', capped:[], returned:[] };
-      return `<tr><td>${r.chakra}</td><td>${r.y==='-'?'-':symMap[r.y]}</td><td>${r.k==='-'?'-':symMap[r.k]}</td><td>${meta.ySelCode}</td><td>${meta.yHitCode}</td><td>${meta.kSelCode}</td><td>${meta.kHitCode}</td><td>${formatRoundInfoEntries(meta.capped)}</td><td>${formatRoundInfoEntries(meta.returned)}</td><td>${formatRoundInfoEntries(Array.isArray(r.np)?r.np:(r.np?[r.np]:[]))}</td><td>${r.axyapatra ?? '-'}</td></tr>`;
+      return `<tr><td>${r.chakra}</td><td>${r.y==='-'?'-':`[ ${r.y} ]`}</td><td>${r.k==='-'?'-':`[ ${r.k} ]`}</td><td>${meta.ySelCode}</td><td>${meta.yHitCode}</td><td>${meta.kSelCode}</td><td>${meta.kHitCode}</td><td>${formatRoundInfoEntries(meta.capped)}</td><td>${formatRoundInfoEntries(meta.returned)}</td><td>${formatRoundInfoEntries(Array.isArray(r.np)?r.np:(r.np?[r.np]:[]))}</td><td>${r.axyapatra ?? '-'}</td></tr>`;
     }).join('');
-    const yRpt=Object.entries(insight.counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`<span class="repeat-pill">${symMap[n]}:${c}</span>`).join('');
-    const kRpt=Object.entries(insight.counts.K).filter(([n])=>n!=='0').map(([n,c])=>`<span class="repeat-pill">${symMap[n]}:${c}</span>`).join('');
+    const yRpt=Object.entries(insight.counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`<span class="repeat-pill">[ ${n} ]:${c}</span>`).join('');
+    const kRpt=Object.entries(insight.counts.K).filter(([n])=>n!=='0').map(([n,c])=>`<span class="repeat-pill">[ ${n} ]:${c}</span>`).join('');
     const travelRows = [...insight.details.Y, ...insight.details.K].sort((a,b)=>a.hitRound-b.hitRound).map(d=>`<tr><td>${d.side}</td><td><span style="font-size:16px">${d.number}</span></td><td>${d.selectedRound}</td><td>${d.hitRound}</td><td>${d.travelSteps}</td></tr>`).join('') || '<tr><td colspan="5">No completed travel yet.</td></tr>';
     wrap.innerHTML=`<div class="label">#${String(k.id).padStart(2,'0')} Raid Log</div><div class="table-wrap compact-table"><table><thead><tr><th>Wave</th><th>Y</th><th>K</th><th>YSel</th><th>YHit</th><th>KSel</th><th>KHit</th><th>Stun</th><th>Revive</th><th>Net XP</th><th>Stash</th></tr></thead><tbody>${rows}</tbody></table></div><div class="granth-summary"><div class="summary-row"><span class="summary-label">Y Hot</span><span>${insight.yStats.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">Y Cool</span><span>${insight.yStats.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">Y Rpt</span><div class="repeat-grid">${yRpt}</div></div><div class="summary-row"><span class="summary-label">K Hot</span><span>${insight.kStats.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">K Cool</span><span>${insight.kStats.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">K Rpt</span><div class="repeat-grid">${kRpt}</div></div></div><div class="table-wrap compact-table"><table><thead><tr><th>Faction</th><th>Summon</th><th>ActiveWave</th><th>LootWave</th><th>Tiers</th></tr></thead><tbody>${travelRows}</tbody></table></div>`;
     host.appendChild(wrap);
   });
 }
 
-function renderDrishti(){ if(q('sumChakras')) q('sumChakras').textContent=Math.max(0,state.currentChakra); if(q('sumAhuti')) q('sumAhuti').textContent=state.summary.totalAhuti; if(q('sumProfit')) q('sumProfit').textContent=state.liveBankroll-state.settings.bankroll; if(q('sumExposure')) q('sumExposure').textContent=state.summary.maxExposure; const dt=q('drishtiTable'); if(!dt) return; const tbody=dt.querySelector('tbody'); if(!tbody) return; tbody.innerHTML=''; [...state.drishti].reverse().forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.side}</td><td><span style="font-size:16px">${symMap[r.number] || r.number}</span></td><td>${r.activationChakra}</td><td>${r.winChakra}</td><td>${r.steps}</td><td>${r.prevLoss}</td><td>${r.winBet}</td><td>${r.net}</td><td>${r.status}</td>`; tbody.appendChild(tr); }); }
+function renderDrishti(){ if(q('sumChakras')) q('sumChakras').textContent=Math.max(0,state.currentChakra); if(q('sumAhuti')) q('sumAhuti').textContent=state.summary.totalAhuti; if(q('sumProfit')) q('sumProfit').textContent=state.liveBankroll-state.settings.bankroll; if(q('sumExposure')) q('sumExposure').textContent=state.summary.maxExposure; const dt=q('drishtiTable'); if(!dt) return; const tbody=dt.querySelector('tbody'); if(!tbody) return; tbody.innerHTML=''; [...state.drishti].reverse().forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.side}</td><td><span style="font-size:16px">[ ${r.number} ]</span></td><td>${r.activationChakra}</td><td>${r.winChakra}</td><td>${r.steps}</td><td>${r.prevLoss}</td><td>${r.winBet}</td><td>${r.net}</td><td>${r.status}</td>`; tbody.appendChild(tr); }); }
 function renderSopana(){ const lt=q('ladderTable'); if(!lt) return; const tbody=lt.querySelector('tbody'); if(!tbody) return; tbody.innerHTML=''; state.ladder.forEach((row,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.step}</td><td><input class="ladder-bet-input" type="number" data-ladder-index="${idx}" inputmode="numeric" enterkeyhint="next" value="${row.bet}"></td><td>${row.winReturn}</td><td>${row.netProfit}</td><td>${row.ifLoseTotal}</td>`; tbody.appendChild(tr); }); const secondTable=q('secondLadderTable'); if(secondTable){ const tbody2=secondTable.querySelector('tbody'); if(tbody2) { tbody2.innerHTML=''; let prevLoss=0; for(let i=1;i<=Math.min(state.settings.maxSteps,15);i++){ const bet=secondLadderBet(i); const winReturn=bet*9; prevLoss += bet; const tr=document.createElement('tr'); tr.innerHTML=`<td>T${i}</td><td><input class="ladder-bet-input" type="number" data-second-ladder-index="${i-1}" inputmode="numeric" enterkeyhint="next" value="${bet}"></td><td>${winReturn}</td><td>${winReturn - prevLoss}</td><td>${-prevLoss}</td>`; tbody2.appendChild(tr); } } } }
 function renderYantra(){ const s=state.settings; if(q('setBankroll')) q('setBankroll').value=s.bankroll; if(q('setTargetDollar')) q('setTargetDollar').value=s.targetDollar; if(q('setTargetPercent')) q('setTargetPercent').value=s.targetPercent; if(q('setStopLoss')) q('setStopLoss').value=s.stopLoss; if(q('setMin')) q('setMin').value=s.min; if(q('setMax')) q('setMax').value=s.max; if(q('setCoin')) q('setCoin').value=s.coin; if(q('setTargetNum')) q('setTargetNum').value=s.targetNum; if(q('setDoubleLadder')) q('setDoubleLadder').value=s.doubleLadder||'on'; if(q('setKeypadMode')) q('setKeypadMode').value=s.keypadMode; if(q('setMaxSteps')) q('setMaxSteps').value=s.maxSteps; if(q('setReserve')) q('setReserve').value=s.reserve; if(q('setCapRule')) q('setCapRule').value=s.capRule; if(q('setAttackMode')) q('setAttackMode').value=s.attackMode || 'classic'; if(q('setTheme')) q('setTheme').value=s.theme || 'warhunt'; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; }
-function renderMedha(){ const active=[]; const cap=[]; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B') active.push(`${side}${symMap[n]} T${info.step}`); if(info.status==='C') cap.push(`${side}${symMap[n]}`);} }); if(q('medhaPanel')) q('medhaPanel').innerHTML=`<div class="medha-item"><div class="label">Active Summons</div><div style="font-size:16px">${active.join(' | ') || 'None'}</div></div><div class="medha-item"><div class="label">Stunned Summons</div><div style="font-size:16px">${cap.join(' | ') || 'None'}</div></div>`; }
+function renderMedha(){ const active=[]; const cap=[]; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B') active.push(`${side}[ ${n} ] T${info.step}`); if(info.status==='C') cap.push(`${side}[ ${n} ]`);} }); if(q('medhaPanel')) q('medhaPanel').innerHTML=`<div class="medha-item"><div class="label">Active Summons</div><div style="font-size:16px">${active.join(' | ') || 'None'}</div></div><div class="medha-item"><div class="label">Stunned Summons</div><div style="font-size:16px">${cap.join(' | ') || 'None'}</div></div>`; }
 function renderActiveTab(){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===`screen-${state.activeTab}`)); document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.target===state.activeTab)); if(q('screenTitle')) q('screenTitle').textContent=titles[state.activeTab]||titles.sangram; }
 function renderAll(){ applyTheme(state.settings.theme || 'warhunt'); renderActiveTab(); renderBoards(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderSopana(); renderYantra(); renderMedha(); saveState(); }
 
@@ -407,7 +404,7 @@ async function resolveNumber(side,num,notes,rowEvents){ const info=state.numbers
   if(info.status==='C'){
     const shouldReturn = await askCapReturnDecision(side,num);
     if(!shouldReturn) return;
-    info.status='B'; info.ladder=2; info.step=1; info.pendingSecond=false; if(rowEvents) rowEvents.ret.push(`${side}${num}`); notes.push({title:'SUMMON REVIVED',text:`${symMap[num]} back in battle`,kind:'warn'}); return;
+    info.status='B'; info.ladder=2; info.step=1; info.pendingSecond=false; if(rowEvents) rowEvents.ret.push(`${side}${num}`); notes.push({title:'SUMMON REVIVED',text:`[ ${num} ] back in battle`,kind:'warn'}); return;
   }
   const mode = getAttackMode();
   const threshold = attackThresholdForMode(mode);
@@ -436,8 +433,8 @@ async function resolveNumber(side,num,notes,rowEvents){ const info=state.numbers
   info.winningBet=bet; info.lastNet=net; pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'LOOTED' });
   if(rowEvents) rowEvents.np.push(`${side}${num} ${net >= 0 ? '+' : ''}${net}`);
   const vd=vijayDarshanaDisplay(info);
-  info.status='L'; notes.push({title:'LOOT SECURED', text:`${symMap[num]} T${vd.displayStep} Magic : +${vd.displayNet} XP`}); }
-async function advanceAfterLoss(side,notes,rowEvents,winningNum=null){ for(let n=1;n<=9;n++){ if(winningNum!==null && Number(winningNum)===n) continue; const info=state.numbers[side][n]; if(info.status!=='A' && info.status!=='B') continue; const bet=currentBetFor(info); info.prevLoss += bet; info.step += 1; if(info.ladder===1){ if(await askCapDecision(side,n,info)){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:info.step, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'STUNNED' }); if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); } notes.push({title:'STUNNED', text:`${symMap[n]} is stunned`, kind:'warn'}); } else if(info.step>state.settings.maxSteps){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:state.settings.maxSteps, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'STUNNED' }); if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); } notes.push({title:'STUNNED', text:`${symMap[n]} is stunned`, kind:'warn'}); }
+  info.status='L'; notes.push({title:'LOOT SECURED', text:`[ ${num} ] T${vd.displayStep} Magic : +${vd.displayNet} XP`}); }
+async function advanceAfterLoss(side,notes,rowEvents,winningNum=null){ for(let n=1;n<=9;n++){ if(winningNum!==null && Number(winningNum)===n) continue; const info=state.numbers[side][n]; if(info.status!=='A' && info.status!=='B') continue; const bet=currentBetFor(info); info.prevLoss += bet; info.step += 1; if(info.ladder===1){ if(await askCapDecision(side,n,info)){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:info.step, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'STUNNED' }); if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); } notes.push({title:'STUNNED', text:`[ ${n} ] is stunned`, kind:'warn'}); } else if(info.step>state.settings.maxSteps){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:state.settings.maxSteps, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'STUNNED' }); if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); } notes.push({title:'STUNNED', text:`[ ${n} ] is stunned`, kind:'warn'}); }
       else info.status='A';
     } else { if(info.step>15) info.step=15; info.status='B'; }
   } }
@@ -811,10 +808,10 @@ function granthWorkbookSheets(){
     rows.push([]);
     rows.push(['Y Hot', insight.yStats.hot.join(' | ') || '-']);
     rows.push(['Y Cool', insight.yStats.cool.join(' | ') || '-']);
-    rows.push(['Y Rpt', Object.entries(insight.counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`${symMap[n]}:${c}`).join(' | ') || '-']);
+    rows.push(['Y Rpt', Object.entries(insight.counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`[ ${n} ]:${c}`).join(' | ') || '-']);
     rows.push(['K Hot', insight.kStats.hot.join(' | ') || '-']);
     rows.push(['K Cool', insight.kStats.cool.join(' | ') || '-']);
-    rows.push(['K Rpt', Object.entries(insight.counts.K).filter(([n])=>n!=='0').map(([n,c])=>`${symMap[n]}:${c}`).join(' | ') || '-']);
+    rows.push(['K Rpt', Object.entries(insight.counts.K).filter(([n])=>n!=='0').map(([n,c])=>`[ ${n} ]:${c}`).join(' | ') || '-']);
     return { name:`Kumbh_${String(k.id).padStart(2,'0')}`, rows };
   });
 }
