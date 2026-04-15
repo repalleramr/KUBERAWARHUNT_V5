@@ -3,6 +3,7 @@ const STORAGE_KEY = 'kubera-warhunt-v5pro-final-locked';
 const puzzleSymbols = ['💎', '🔥', '⚡', '🌟', '🔮', '🎲', '🌙', '☀️', '💠', '🔱', '🧿', '🧩'];
 const romanMap = ['🌀', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 
+// 🔥 UPDATED DEFAULT SETTINGS
 const defaultSettings = {
   bankroll: 0,
   targetDollar: 500,
@@ -68,7 +69,6 @@ const q = id => document.getElementById(id);
 const fmtMoney = n => '💎 ' + Number(n || 0).toLocaleString('en-IN');
 const clone = obj => JSON.parse(JSON.stringify(obj));
 
-// 🔥 RESTORED HELPER FUNCTIONS (Fixed the Get Attack Mode crash)
 const parseSignedInt = (value, fallback=0) => { const cleaned = String(value ?? '').replace(/[^0-9-]/g,'').replace(/(?!^)-/g,''); const n = Number(cleaned); return Number.isFinite(n) ? n : fallback; };
 function getAttackMode(){ return state?.settings?.attackMode || 'classic'; }
 function attackThresholdForMode(mode){ return mode==='thirdstrike' ? 2 : mode==='fourthstrike' ? 3 : 1; }
@@ -76,35 +76,34 @@ function waitingCodeForInfo(info){ const mode = getAttackMode(); if(mode==='thir
 function activateTrackedNumber(info){ info.status='A'; info.step=1; info.ladder=1; info.activeAt=state.currentChakra; info.prevLoss=0; }
 function freshNumber(){ return { status:'I', step:0, ladder:1, activeAt:null, prevLoss:0, winningBet:0, lastNet:0, pendingSecond:false, watchCount:0 }; }
 
-let modalResolver = null;
-
+// 🔥 BULLETPROOF MODAL SYSTEM 🔥
 function askModal({ title, text, okLabel='OK', cancelLabel='Cancel', okClass='warn' }){
   return new Promise(resolve=>{
-    modalResolver = resolve;
     if(q('confirmTitle')) q('confirmTitle').textContent = title;
     if(q('confirmText')) q('confirmText').textContent = text;
+    
     const cancelBtn = q('confirmCancelBtn'); if(cancelBtn) cancelBtn.textContent = cancelLabel;
     const okBtn = q('confirmOkBtn'); if(okBtn) { okBtn.textContent = okLabel; okBtn.className = okClass === 'warn' ? 'warn' : ''; }
-    const overlay = q('confirmOverlay'); if(overlay) { overlay.classList.remove('hidden'); overlay.setAttribute('aria-hidden','false'); }
+    const overlay = q('confirmOverlay');
+    
+    const cleanup = (result) => {
+        if(overlay) { overlay.classList.add('hidden'); overlay.setAttribute('aria-hidden','true'); }
+        if(okBtn) okBtn.onclick = null;
+        if(cancelBtn) cancelBtn.onclick = null;
+        if(overlay) overlay.onclick = null;
+        resolve(result);
+    };
+
+    if(okBtn) okBtn.onclick = () => cleanup(true);
+    if(cancelBtn) cancelBtn.onclick = () => cleanup(false);
+    if(overlay) overlay.onclick = (e) => { if(e.target === overlay) cleanup(false); };
+
+    if(overlay) { overlay.classList.remove('hidden'); overlay.setAttribute('aria-hidden','false'); }
   });
 }
 
 function askClearKumbh(){ return askModal({ title:'ABANDON RAID', text:'End current raid wave?', okLabel:'End Raid', cancelLabel:'Cancel', okClass:'warn' }); }
 function askApplyYantra(){ return askModal({ title:'APPLY SETTINGS', text:'Lock in game settings?', okLabel:'Yes', cancelLabel:'No', okClass:'' }); }
-function closeClearKumbh(answer){
-  if(q('confirmOverlay')) { q('confirmOverlay').classList.add('hidden'); q('confirmOverlay').setAttribute('aria-hidden','true'); }
-  if(modalResolver){ const resolve = modalResolver; modalResolver = null; resolve(answer); }
-}
-
-document.addEventListener('click', (e) => {
-    const overlay = q('confirmOverlay');
-    if (overlay && !overlay.classList.contains('hidden')) {
-        const btnOk = e.target.closest('#confirmOkBtn'); const btnCancel = e.target.closest('#confirmCancelBtn');
-        if (btnOk) { e.preventDefault(); e.stopPropagation(); closeClearKumbh(true); } 
-        else if (btnCancel) { e.preventDefault(); e.stopPropagation(); closeClearKumbh(false); } 
-        else if (e.target === overlay) { e.preventDefault(); e.stopPropagation(); closeClearKumbh(false); }
-    }
-});
 
 function createSide(){ const s={}; for(let i=1;i<=9;i++) s[i]=freshNumber(); return s; }
 function roundUpToCoin(value, coin){ return Math.max(coin, Math.ceil(value / coin) * coin); }
@@ -178,7 +177,7 @@ function renderBoards(){
   ['Y','K'].forEach(side=>{
     const host=q(side==='Y'?'boardY':'boardK'); if(!host) return; host.innerHTML='';
     for(let i=1;i<=10;i++){
-      const n=i===10?0:i; const info=n===0?null:(state?.numbers?.[side]?.[n] || {status:'I'});
+      const n=i===10?0:i; const info=n===0?null:(state?.numbers?.[side]?.[n] || freshNumber());
       const btn=document.createElement('button'); const code=n===0?'0':statusCode(info); const metaClass=info?.step?`step${Math.min(info.step,6)}`:'';
       btn.type='button'; btn.className=`tile ${n===0?'zero':''} ${info?'state-'+info.status:''}`.trim(); btn.dataset.side=side; btn.dataset.num=String(n);
       
@@ -324,16 +323,16 @@ async function handleTap(side,num,el){
 }
 
 function switchTab(target){ if(!target) return; state.activeTab=target; renderActiveTab(); saveState(); }
-function setupTabs(){ document.querySelectorAll('.nav').forEach(btn=>{ btn.addEventListener('click',(e)=>{ e.preventDefault(); switchTab(btn.dataset.target); }); }); }
+function setupTabs(){ document.querySelectorAll('.nav').forEach(btn=>{ btn.onclick = (e)=>{ e.preventDefault(); switchTab(btn.dataset.target); }; }); }
 function setupBoards(){
   ['boardY','boardK'].forEach(id=>{
     const host=q(id); if(!host) return;
-    host.addEventListener('click', e=>{
+    host.onclick = e=>{
       const btn=e.target.closest('button.tile'); if(!(btn instanceof HTMLButtonElement) || !host.contains(btn)) return;
       const side=btn.dataset.side; const num=Number(btn.dataset.num);
       if((side!=='Y' && side!=='K') || !Number.isFinite(num)) return;
       handleTap(side,num,btn);
-    });
+    };
   });
 }
 function recalcTargetLink(source){ const bankroll=Number(q('setBankroll').value)||defaultSettings.bankroll; if(source==='dollar') if(q('setTargetPercent')) q('setTargetPercent').value=((Number(q('setTargetDollar').value||0)/bankroll)*100).toFixed(2); if(source==='percent') if(q('setTargetDollar')) q('setTargetDollar').value=Math.round((bankroll*Number(q('setTargetPercent').value||0))/100); }
@@ -361,7 +360,6 @@ function shouldCapNowSilent(side,num,info){
   return info.ladder===1 && info.step>state.settings.maxSteps;
 }
 
-// 🔥 EXCEL READER UPGRADED: Failsafes built in
 async function readUploadedFile(file) {
   const name = file.name.toLowerCase();
   if (name.endsWith('.xlsx')) {
@@ -538,7 +536,6 @@ function granthCsvContent(){
   }); return header + rows.join('\n');
 }
 
-// 🔥 FILE EXPORT FIXED: Mobile bypass to prevent silently failing
 async function saveWithPicker(name, content, type) {
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   if (!isMobile && window.showSaveFilePicker) {
@@ -593,7 +590,7 @@ async function importDrishtiCsv(e){
 
 function downloadFile(name,content,type){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
 function downloadBlob(name,blob){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
-function setupInstall(){ window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(q('installBtn')) q('installBtn').classList.remove('hidden'); }); if(q('installBtn')) q('installBtn').addEventListener('click', async()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; if(q('installBtn')) q('installBtn').classList.add('hidden'); }); }
+function setupInstall(){ window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(q('installBtn')) q('installBtn').classList.remove('hidden'); }); if(q('installBtn')) q('installBtn').onclick = async()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; if(q('installBtn')) q('installBtn').classList.add('hidden'); }; }
 
 function readYantraSettings(){
   const current = clone(state.settings); const bankrollRaw = Number(q('setBankroll')?.value); current.bankroll = Number.isFinite(bankrollRaw) && bankrollRaw >= 0 ? bankrollRaw : defaultSettings.bankroll;
@@ -602,40 +599,42 @@ function readYantraSettings(){
 }
 async function applyYantraSettings(){ if(!(await askApplyYantra())) return; state.settings = readYantraSettings(); applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten'); state.ladder = buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows){ replayAllKumbhsWithCurrentSettings(); } else { state.liveBankroll = state.settings.bankroll; } renderAll(); showToast('YANTRA APPLIED','Settings updated'); }
 
-// 🔥 SAFE BINDER: Ensures one bad button doesn't freeze the rest
-function bind(id, event, fn) { const el = q(id); if (el) { el.addEventListener(event, fn); } }
+// 🔥 SAFE BINDING: No double-firing ever.
+function bindClick(id, fn) { const el = q(id); if(el) el.onclick = fn; }
 
 function setupControls(){
-  bind('prayogaBtn', 'click', startPrayoga);
-  bind('kumbhaBtn', 'click', clearCurrentSession);
-  bind('undoBtn', 'click', undoLast);
-  bind('redoBtn', 'click', redoLast);
-  bind('setTargetDollar', 'input', ()=>recalcTargetLink('dollar'));
-  bind('setTargetPercent', 'input', ()=>recalcTargetLink('percent'));
-  bind('setBankroll', 'input', ()=>recalcTargetLink('dollar'));
-  bind('applyYantraBtn', 'click', applyYantraSettings);
-  bind('saveLadderBtn', 'click', ()=>{ document.querySelectorAll('[data-ladder-index]').forEach(inp=>{ inp.value=normalizeLadderBet(inp.value); }); syncFirstLadderFromInputs(); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA SAVED','Editable ladder updated'); });
-  bind('exportLadderBtn', 'click', exportLadderCsv);
-  bind('loadLadderBtn', 'click', ()=>q('loadLadderFile').click());
-  bind('loadLadderFile', 'change', importLadderCsv);
-  bind('resetLadderBtn', 'click', ()=>{ state.ladder=buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA RESET','Default ladder restored'); });
+  bindClick('prayogaBtn', startPrayoga);
+  bindClick('kumbhaBtn', clearCurrentSession);
+  bindClick('undoBtn', undoLast);
+  bindClick('redoBtn', redoLast);
+  
+  const sd = q('setTargetDollar'); if(sd) sd.oninput = ()=>recalcTargetLink('dollar');
+  const sp = q('setTargetPercent'); if(sp) sp.oninput = ()=>recalcTargetLink('percent');
+  const sb = q('setBankroll'); if(sb) sb.oninput = ()=>recalcTargetLink('dollar');
+  
+  bindClick('applyYantraBtn', applyYantraSettings);
+  bindClick('saveLadderBtn', ()=>{ document.querySelectorAll('[data-ladder-index]').forEach(inp=>{ inp.value=normalizeLadderBet(inp.value); }); syncFirstLadderFromInputs(); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA SAVED','Editable ladder updated'); });
+  bindClick('exportLadderBtn', exportLadderCsv);
+  bindClick('loadLadderBtn', ()=>q('loadLadderFile').click());
+  const llf = q('loadLadderFile'); if(llf) llf.onchange = importLadderCsv;
+  bindClick('resetLadderBtn', ()=>{ state.ladder=buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA RESET','Default ladder restored'); });
   
   document.addEventListener('input', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; refreshLinkedLadderCalculations(); });
   document.addEventListener('keydown', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; if(e.key==='Enter'){ e.preventDefault(); const current=Number(el.dataset.ladderIndex); const next=document.querySelector(`[data-ladder-index="${current+1}"]`); if(next){ next.focus(); next.select(); } else { el.blur(); } } });
   document.addEventListener('focusin', e=>{ const el=e.target; if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(()=>el.select(),0); });
   
-  bind('exportCsvBtn', 'click', exportDrishtiCsv); 
-  bind('exportPdfBtn', 'click', exportDrishtiPdf); 
-  bind('loadCsvBtn', 'click', ()=>q('loadCsvFile').click()); 
-  bind('loadCsvFile', 'change', importDrishtiCsv);
+  bindClick('exportCsvBtn', exportDrishtiCsv); 
+  bindClick('exportPdfBtn', exportDrishtiPdf); 
+  bindClick('loadCsvBtn', ()=>q('loadCsvFile').click()); 
+  const lcf = q('loadCsvFile'); if(lcf) lcf.onchange = importDrishtiCsv;
   
-  bind('exportGranthBtn', 'click', ()=>{ const fmt=q('granthExportFormat')?.value || 'json'; if(fmt==='csv') exportGranthCsv(); else if(fmt==='xlsx') exportGranthXlsx(); else exportGranthJson(); }); 
-  bind('importGranthBtn', 'click', ()=>q('importGranthFile').click()); 
-  bind('importGranthFile', 'change', importGranthJson);
+  bindClick('exportGranthBtn', ()=>{ const fmt=q('granthExportFormat')?.value || 'json'; if(fmt==='csv') exportGranthCsv(); else if(fmt==='xlsx') exportGranthXlsx(); else exportGranthJson(); }); 
+  bindClick('importGranthBtn', ()=>q('importGranthFile').click()); 
+  const igf = q('importGranthFile'); if(igf) igf.onchange = importGranthJson;
   
-  bind('deleteGranthBtn', 'click', async()=>{ const sel=q('deleteKumbhSelect'); const id=Number(sel?.value||0); if(id){ const ok=await askModal({ title:`Delete Raid Log #${String(id).padStart(2,'0')} ?`, text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=state.granth.filter(k=>k.id!==id).map((k,idx)=>({ ...k, id: idx+1 })); state.currentKumbhId=state.granth.at(-1)?.id||null; renderAll(); showToast('LOG DELETED','Selected Raid Log removed'); return; } const ok=await askModal({ title:'Delete all Raid history?', text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=[]; state.currentKumbhId=null; renderAll(); showToast('GRANTH PURGED','All Raid history removed'); });
+  bindClick('deleteGranthBtn', async()=>{ const sel=q('deleteKumbhSelect'); const id=Number(sel?.value||0); if(id){ const ok=await askModal({ title:`Delete Raid Log #${String(id).padStart(2,'0')} ?`, text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=state.granth.filter(k=>k.id!==id).map((k,idx)=>({ ...k, id: idx+1 })); state.currentKumbhId=state.granth.at(-1)?.id||null; renderAll(); showToast('LOG DELETED','Selected Raid Log removed'); return; } const ok=await askModal({ title:'Delete all Raid history?', text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=[]; state.currentKumbhId=null; renderAll(); showToast('GRANTH PURGED','All Raid history removed'); });
   
-  bind('historyUndoBtn', 'click', undoLast);
+  bindClick('historyUndoBtn', undoLast);
 }
 
 function initApp() {
