@@ -110,24 +110,35 @@ function activateTrackedNumber(info){
 
 function freshNumber(){ return { status:'I', step:0, ladder:1, activeAt:null, prevLoss:0, winningBet:0, lastNet:0, pendingSecond:false, watchCount:0 }; }
 
+// 🔥 BULLETPROOF MODAL BINDING: Forces tap listeners every single time to bypass cache bugs
 function askModal({ title, text, okLabel='OK', cancelLabel='Cancel', okClass='warn' }){
   return new Promise(resolve=>{
     modalResolver = resolve;
-    modalConfig = { title, text, okLabel, cancelLabel, okClass };
     if(q('confirmTitle')) q('confirmTitle').textContent = title;
     if(q('confirmText')) q('confirmText').textContent = text;
-    if(q('confirmCancelBtn')) q('confirmCancelBtn').textContent = cancelLabel;
-    if(q('confirmOkBtn')) {
-      q('confirmOkBtn').textContent = okLabel;
-      q('confirmOkBtn').classList.toggle('warn', okClass === 'warn');
+    
+    const cancelBtn = q('confirmCancelBtn');
+    if(cancelBtn) {
+        cancelBtn.textContent = cancelLabel;
+        cancelBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); closeClearKumbh(false); };
     }
-    if(q('confirmOverlay')) {
-      q('confirmOverlay').classList.remove('hidden');
-      q('confirmOverlay').setAttribute('aria-hidden','false');
+    
+    const okBtn = q('confirmOkBtn');
+    if(okBtn) {
+        okBtn.textContent = okLabel;
+        okBtn.classList.toggle('warn', okClass === 'warn');
+        okBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); closeClearKumbh(true); };
     }
-    if(q('confirmOkBtn')) q('confirmOkBtn').focus();
+    
+    const overlay = q('confirmOverlay');
+    if(overlay) {
+        overlay.classList.remove('hidden');
+        overlay.setAttribute('aria-hidden','false');
+        overlay.onclick = (e) => { if(e.target === overlay) closeClearKumbh(false); };
+    }
   });
 }
+
 function askClearKumbh(){
   return askModal({ title:'ABANDON RAID', text:'End current raid wave?', okLabel:'End Raid', cancelLabel:'Cancel', okClass:'warn' });
 }
@@ -243,7 +254,15 @@ function ensureKumbh(){ if(currentKumbh()) return currentKumbh(); const id=(stat
 function secondLadderBet(step){ const start=roundUpToCoin(state.settings.max/4,state.settings.coin); if(step<=5) return start; if(step<=10) return Math.min(state.settings.max,start*2); if(step<=15) return Math.min(state.settings.max,start*3); return state.settings.max; }
 function currentBetFor(info){ return info.ladder===2 ? secondLadderBet(info.step||1) : (state.ladder[Math.max(0,(info.step||1)-1)]?.bet || state.settings.max); }
 function soldierStepNetProfit(info){ const bet=currentBetFor(info); return (bet*8) - (Number(info?.prevLoss) || 0); }
-async function askCapDecision(side,num,info){ const stopLossPerNumber=Number(state.settings.stopLossPerNumber); if(state.settings.capRule!=='on' || info.ladder!==1 || !Number.isFinite(stopLossPerNumber)) return false; const stepNetProfit=soldierStepNetProfit(info); if(stepNetProfit>stopLossPerNumber) return false; const capNow=await askModal({ title:'STUN LIMIT REACHED', text:`[ ${num} ] drained ${stepNetProfit}. Limit is ${stopLossPerNumber}. Stun summon?`, okLabel:'Stun', cancelLabel:'Skip', okClass:'warn' }); return !!capNow; }
+
+async function askCapDecision(side,num,info){ 
+  const stopLossPerNumber=Number(state.settings.stopLossPerNumber); 
+  if(state.settings.capRule!=='on' || info.ladder!==1 || !Number.isFinite(stopLossPerNumber)) return false; 
+  const stepNetProfit=soldierStepNetProfit(info); 
+  if(stepNetProfit>stopLossPerNumber) return false; 
+  const capNow=await askModal({ title:'STUN LIMIT REACHED', text:`[ ${num} ] drained ${stepNetProfit}. Limit is ${stopLossPerNumber}. Stun summon?`, okLabel:'Stun', cancelLabel:'Skip', okClass:'warn' }); 
+  return !!capNow; 
+}
 async function askCapReturnDecision(side,num){ return !!(await askModal({ title:'REVIVE SUMMON', text:`[ ${num} ] has recovered. Revive for battle?`, okLabel:'Revive', cancelLabel:'Keep Stunned', okClass:'warn' })); }
 function nextExposureTotal(){ let total=0; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A' || info.status==='B') total += currentBetFor(info); }}); return total; }
 function previewNextAhutiFor(info){
@@ -295,7 +314,6 @@ function renderBoards(){
       if (info && info.status === 'L') {
         decoyContent = `<div class="decoy-score">👑 ${info.lastNet || 0}</div>`;
       } else if (info && info.status === 'C') {
-        // 🔥 NEW: Stunned visual lock
         decoyContent = `<div class="decoy-stun">⛓️</div>`;
       } else if (n !== 0) {
         const randSym = puzzleSymbols[Math.floor(Math.random() * puzzleSymbols.length)];
@@ -623,7 +641,6 @@ function shouldCapNowSilent(side,num,info){
   return info.ladder===1 && info.step>state.settings.maxSteps;
 }
 
-// 🔥 SHARED PARSER FOR JSON, CSV, AND EXCEL
 function processDataImport(text) {
     const trimmed = text.trim(); 
     if(trimmed.startsWith('KumbhId,')){
@@ -1043,37 +1060,4 @@ function setupControls(){
   if(q('loadLadderFile')) q('loadLadderFile').addEventListener('change', importLadderCsv);
   if(q('resetLadderBtn')) q('resetLadderBtn').addEventListener('click', ()=>{ state.ladder=buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA RESET','Default ladder restored'); });
   document.addEventListener('input', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; refreshLinkedLadderCalculations(); });
-  document.addEventListener('keydown', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; if(e.key==='Enter'){ e.preventDefault(); const current=Number(el.dataset.ladderIndex); const next=document.querySelector(`[data-ladder-index="${current+1}"]`); if(next){ next.focus(); next.select(); } else { el.blur(); } } });
-  document.addEventListener('focusin', e=>{ const el=e.target; if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(()=>el.select(),0); });
-  if(q('exportCsvBtn')) q('exportCsvBtn').addEventListener('click', exportDrishtiCsv); 
-  if(q('exportPdfBtn')) q('exportPdfBtn').addEventListener('click', exportDrishtiPdf); 
-  if(q('loadCsvBtn')) q('loadCsvBtn').addEventListener('click', ()=>q('loadCsvFile').click()); 
-  if(q('loadCsvFile')) q('loadCsvFile').addEventListener('change', importDrishtiCsv);
-  if(q('exportGranthBtn')) q('exportGranthBtn').addEventListener('click', ()=>{ const fmt=q('granthExportFormat')?.value || 'json'; if(fmt==='csv') exportGranthCsv(); else if(fmt==='xlsx') exportGranthXlsx(); else exportGranthJson(); }); 
-  if(q('importGranthBtn')) q('importGranthBtn').addEventListener('click', ()=>q('importGranthFile').click()); 
-  if(q('importGranthFile')) q('importGranthFile').addEventListener('change', importGranthJson);
-  if(q('deleteGranthBtn')) q('deleteGranthBtn').addEventListener('click', async()=>{ const sel=q('deleteKumbhSelect'); const id=Number(sel?.value||0); if(id){ const ok=await askModal({ title:`Delete Raid Log #${String(id).padStart(2,'0')} ?`, text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=state.granth.filter(k=>k.id!==id).map((k,idx)=>({ ...k, id: idx+1 })); state.currentKumbhId=state.granth.at(-1)?.id||null; renderAll(); showToast('LOG DELETED','Selected Raid Log removed'); return; } const ok=await askModal({ title:'Delete all Raid history?', text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=[]; state.currentKumbhId=null; renderAll(); showToast('GRANTH PURGED','All Raid history removed'); });
-  if(q('historyUndoBtn')) q('historyUndoBtn').addEventListener('click', undoLast);
-  if(q('confirmCancelBtn')) q('confirmCancelBtn').addEventListener('click', ()=>closeClearKumbh(false));
-  if(q('confirmOkBtn')) q('confirmOkBtn').addEventListener('click', ()=>closeClearKumbh(true));
-  if(q('confirmOverlay')) q('confirmOverlay').addEventListener('click', e=>{ if(e.target===q('confirmOverlay')) closeClearKumbh(false); });
-  document.addEventListener('keydown', e=>{ if(q('confirmOverlay') && q('confirmOverlay').classList.contains('hidden')) return; if(e.key==='Escape') closeClearKumbh(false); });
-}
-
-function initApp() {
-    try { setupTabs(); } catch(e) { console.error('setupTabs failed:', e); }
-    try { setupBoards(); } catch(e) { console.error('setupBoards failed:', e); }
-    try { setupControls(); } catch(e) { console.error('setupControls failed:', e); }
-    try { setupInstall(); } catch(e) { console.error('setupInstall failed:', e); }
-    try { renderAll(); } catch(e) { console.error('renderAll failed:', e); }
-}
-
-if('serviceWorker' in navigator){ 
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); 
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
-} else {
-    initApp();
-}
+  document.addEventListener('keydown', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; if(e.key==='Enter'){ e.preventDefault(); const current=Number(el.dataset.ladderIndex); const next=document.querySelector(`[data-ladder-index="${current+1}"]`); if(next){ next.focus(); next.select(); } else { el.blur
