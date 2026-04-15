@@ -291,10 +291,12 @@ function renderBoards(){
       btn.dataset.side=side; 
       btn.dataset.num=String(n);
       
-      // 🔥 NEW: Dynamic 👑 Decoy formatting with no '+' sign
       let decoyContent = '';
       if (info && info.status === 'L') {
         decoyContent = `<div class="decoy-score">👑 ${info.lastNet || 0}</div>`;
+      } else if (info && info.status === 'C') {
+        // 🔥 NEW: Stunned visual lock
+        decoyContent = `<div class="decoy-stun">⛓️</div>`;
       } else if (n !== 0) {
         const randSym = puzzleSymbols[Math.floor(Math.random() * puzzleSymbols.length)];
         decoyContent = `<div class="decoy-symbol">${randSym}</div>`;
@@ -620,6 +622,70 @@ function shouldCapNowSilent(side,num,info){
   }
   return info.ladder===1 && info.step>state.settings.maxSteps;
 }
+
+// 🔥 SHARED PARSER FOR JSON, CSV, AND EXCEL
+function processDataImport(text) {
+    const trimmed = text.trim(); 
+    if(trimmed.startsWith('KumbhId,')){
+        const grouped=new Map(); 
+        parseSimpleCsvLines(text).forEach(cols=>{ 
+            const kumbhId=Number(cols[0])||0; 
+            const chakra=Number(cols[1])||0; 
+            if(!kumbhId || !chakra) return; 
+            if(!grouped.has(kumbhId)) grouped.set(kumbhId,{id:kumbhId,rows:[]}); 
+            const target=grouped.get(kumbhId); 
+            if(!target.rows.some(r=>Number(r.chakra)===chakra)) target.rows.push({ chakra, y:(cols[2]==='-'?'':(Number(cols[2])||cols[2])), k:(cols[5]==='-'?'':(Number(cols[5])||cols[5])), cap: cols[8] && cols[8] !== '-' ? cols[8].split(' | ') : [], ret: cols[9] && cols[9] !== '-' ? cols[9].split(' | ') : [], np: cols[10] && cols[10] !== '-' ? cols[10].split(' | ') : [], ahuti:Number(cols[11])||0, axyapatra:Number(cols[12])||0 }); 
+        });
+        state.granth=[...grouped.values()].sort((a,b)=>a.id-b.id); 
+        state.currentKumbhId=state.granth.at(-1)?.id||null; 
+        pending={Y:null,K:null}; historyStack=[]; redoStack=[]; 
+        replayAllKumbhsWithCurrentSettings();
+    } else {
+        const parsed=JSON.parse(text);
+        if(parsed && parsed.state){ restoreSnapshot(parsed); }
+        else if(parsed && parsed.granth){ state = reviveState({ ...freshState(), granth: parsed.granth, currentKumbhId: parsed.granth.at(-1)?.id||null, settings: parsed.settings || state.settings }); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings(); }
+        else { state = reviveState(parsed); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; }
+    }
+    renderAll(); showToast('GRANTH LOADED','History imported successfully');
+}
+
+function importGranthJson(e){ 
+  const file=e.target.files[0]; 
+  if(!file) return; 
+  const name=(file.name||'').toLowerCase();
+  
+  if (name.endsWith('.xlsx')) {
+      if (typeof XLSX === 'undefined') {
+          showToast('SYSTEM WARNING', 'Internet required to load Excel library for import.', 'warn');
+          e.target.value='';
+          return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+          try {
+              const data = new Uint8Array(evt.target.result);
+              const workbook = XLSX.read(data, {type: 'array'});
+              if (!workbook.Sheets['SystemData']) {
+                  showToast('IMPORT ERROR', 'File is missing the hidden SystemData backup sheet.', 'warn');
+                  return;
+              }
+              const rawCsvData = XLSX.utils.sheet_to_csv(workbook.Sheets['SystemData']);
+              processDataImport(rawCsvData);
+          } catch(err) {
+              console.error(err);
+              showToast('IMPORT FAILED', 'Could not parse Excel file.', 'warn');
+          }
+      };
+      reader.readAsArrayBuffer(file);
+      e.target.value='';
+      return;
+  }
+  
+  file.text().then(text => {
+      processDataImport(text);
+  }).finally(()=>{ e.target.value=''; }); 
+}
+
 function resolveNumberSilent(side,num,rowEvents,shouldReturnFromCap=false){
   const info=state.numbers[side][num];
   if(!info || info.status==='L') return;
@@ -798,7 +864,6 @@ function replayAllKumbhsWithCurrentSettings(){
   }
 }
 
-// 🔥 XLSX EXPORT UPGRADE: Hidden SystemData Sheet for Import/Recovery
 function buildSheetXml(rows){
   const sheetRows=rows.map((row,rIdx)=>{
     const cells=row.map((value,cIdx)=>{
@@ -816,7 +881,6 @@ function buildXlsxWorkbook(kumbhs){
   const files=[];
   const add=(name,content)=>files.push({name,data:enc.encode(content)});
   
-  // Attach the hidden raw data sheet for accurate imports later
   const rawRows = parseSimpleCsvLines(granthCsvContent());
   const sheetEntries = (kumbhs||[]).length ? [...kumbhs, {name:'SystemData', rows: rawRows}] : [{name:'SystemData', rows:[['No data']]}];
   
@@ -914,89 +978,6 @@ function granthCsvContent(){
     });
   });
   return header + rows.join('\n');
-}
-
-// 🔥 SHARED PARSER FOR JSON, CSV, AND EXCEL
-function processDataImport(text) {
-    const trimmed = text.trim(); 
-    if(trimmed.startsWith('KumbhId,')){
-        const grouped=new Map(); 
-        parseSimpleCsvLines(text).forEach(cols=>{ 
-            const kumbhId=Number(cols[0])||0; 
-            const chakra=Number(cols[1])||0; 
-            if(!kumbhId || !chakra) return; 
-            if(!grouped.has(kumbhId)) grouped.set(kumbhId,{id:kumbhId,rows:[]}); 
-            const target=grouped.get(kumbhId); 
-            if(!target.rows.some(r=>Number(r.chakra)===chakra)) target.rows.push({ chakra, y:(cols[2]==='-'?'':(Number(cols[2])||cols[2])), k:(cols[5]==='-'?'':(Number(cols[5])||cols[5])), cap: cols[8] && cols[8] !== '-' ? cols[8].split(' | ') : [], ret: cols[9] && cols[9] !== '-' ? cols[9].split(' | ') : [], np: cols[10] && cols[10] !== '-' ? cols[10].split(' | ') : [], ahuti:Number(cols[11])||0, axyapatra:Number(cols[12])||0 }); 
-        });
-        state.granth=[...grouped.values()].sort((a,b)=>a.id-b.id); 
-        state.currentKumbhId=state.granth.at(-1)?.id||null; 
-        pending={Y:null,K:null}; historyStack=[]; redoStack=[]; 
-        replayAllKumbhsWithCurrentSettings();
-    } else {
-        const parsed=JSON.parse(text);
-        if(parsed && parsed.state){ restoreSnapshot(parsed); }
-        else if(parsed && parsed.granth){ state = reviveState({ ...freshState(), granth: parsed.granth, currentKumbhId: parsed.granth.at(-1)?.id||null, settings: parsed.settings || state.settings }); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings(); }
-        else { state = reviveState(parsed); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; }
-    }
-    renderAll(); showToast('GRANTH LOADED','History imported successfully');
-}
-
-function importGranthJson(e){ 
-  const file=e.target.files[0]; 
-  if(!file) return; 
-  const name=(file.name||'').toLowerCase();
-  
-  // 🔥 EXCEL IMPORT LOGIC 🔥
-  if (name.endsWith('.xlsx')) {
-      if (typeof XLSX === 'undefined') {
-          showToast('SYSTEM WARNING', 'Internet required to load Excel library for import.', 'warn');
-          e.target.value='';
-          return;
-      }
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-          try {
-              const data = new Uint8Array(evt.target.result);
-              const workbook = XLSX.read(data, {type: 'array'});
-              if (!workbook.Sheets['SystemData']) {
-                  showToast('IMPORT ERROR', 'File is missing the hidden SystemData backup sheet.', 'warn');
-                  return;
-              }
-              const rawCsvData = XLSX.utils.sheet_to_csv(workbook.Sheets['SystemData']);
-              processDataImport(rawCsvData);
-          } catch(err) {
-              console.error(err);
-              showToast('IMPORT FAILED', 'Could not parse Excel file.', 'warn');
-          }
-      };
-      reader.readAsArrayBuffer(file);
-      e.target.value='';
-      return;
-  }
-  
-  file.text().then(text => {
-      processDataImport(text);
-  }).finally(()=>{ e.target.value=''; }); 
-}
-
-function ladderCsvContent(){ return ['ladder,step,bet', ...state.ladder.map((row,idx)=>`L1,T${idx+1},${row.bet}`)].join('\n'); }
-async function exportLadderCsv(){ syncFirstLadderFromInputs(); const content=ladderCsvContent(); if(window.showSaveFilePicker){ try{ const handle=await window.showSaveFilePicker({ suggestedName:'sopana-ladder.csv', types:[{ description:'CSV Files', accept:{ 'text/csv':['.csv'] } }] }); const writable=await handle.createWritable(); await writable.write(content); await writable.close(); showToast('SOPANA EXPORTED','Ladder CSV saved'); return; }catch(err){ if(err && err.name==='AbortError') return; } } downloadFile('sopana-ladder.csv',content,'text/csv'); showToast('SOPANA EXPORTED','Ladder CSV downloaded'); }
-function exportDrishtiCsv(){ const header='Side,Number,ActivationChakra,WinChakra,StepsToWin,PreviousLoss,WinningBet,NetProfitLoss,Status\n'; const rows=state.drishti.map(r=>[r.side,r.number,r.activationChakra,r.winChakra,r.steps,r.prevLoss,r.winBet,r.net,r.status].join(',')).join('\n'); downloadFile('drishti.csv',header+rows,'text/csv'); }
-function exportDrishtiPdf(){ const html=`<html><head><title>Drishti</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #888;padding:6px;text-align:left}h1{font-size:20px}</style></head><body><h1>KUBERA WARHUNT V5Pro Final locked - DRISHTI</h1>${q('drishtiTable').outerHTML}</body></html>`; const w=window.open('','_blank'); if(!w) return; w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>w.print(), 250); }
-function importDrishtiCsv(e){ const file=e.target.files[0]; if(!file) return; file.text().then(text=>{ state.drishti=text.trim().split(/\r?\n/).slice(1).filter(Boolean).map(line=>{ const [side,number,activationChakra,winChakra,steps,prevLoss,winBet,net,status]=line.split(','); return {side,number,activationChakra,winChakra,steps,prevLoss,winBet,net,status}; }); renderAll(); showToast('DRISHTI LOADED','CSV imported'); }); e.target.value=''; }
-function escapeCsvValue(value){ const str=String(value ?? ""); return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str; }
-
-function xmlEscape(value){ return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
-function sheetNameSafe(name, fallback='Sheet1'){
-  const cleaned=String(name||fallback).replace(/[\\\/?*\[\]:]/g,' ').trim().slice(0,31);
-  return cleaned || fallback;
-}
-function xlsxCellRef(colIndex,rowIndex){
-  let col='';
-  let n=colIndex+1;
-  while(n>0){ const mod=(n-1)%26; col=String.fromCharCode(65+mod)+col; n=Math.floor((n-1)/26); }
-  return `${col}${rowIndex+1}`;
 }
 async function saveWithPicker(name,content,type){ if(window.showSaveFilePicker){ try{ const handle=await window.showSaveFilePicker({ suggestedName:name, types:[{ description:type.includes('json') ? 'JSON Files' : 'CSV Files', accept:{ [type]: [name.endsWith('.json') ? '.json' : '.csv'] } }] }); const writable=await handle.createWritable(); await writable.write(content); await writable.close(); return true; }catch(err){ if(err && err.name==='AbortError') return null; } } return false; }
 function exportPayload(){ return { app:'Kubera_V5Pro Final locked', version:'Kubera_V5Pro Final locked', exportedAt:new Date().toISOString(), state, pending, historyStack, redoStack }; }
