@@ -1060,4 +1060,33 @@ function setupControls(){
   if(q('loadLadderFile')) q('loadLadderFile').addEventListener('change', importLadderCsv);
   if(q('resetLadderBtn')) q('resetLadderBtn').addEventListener('click', ()=>{ state.ladder=buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA RESET','Default ladder restored'); });
   document.addEventListener('input', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; refreshLinkedLadderCalculations(); });
-  document.addEventListener('keydown', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; if(e.key==='Enter'){ e.preventDefault(); const current=Number(el.dataset.ladderIndex); const next=document.querySelector(`[data-ladder-index="${current+1}"]`); if(next){ next.focus(); next.select(); } else { el.blur
+  document.addEventListener('keydown', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; if(e.key==='Enter'){ e.preventDefault(); const current=Number(el.dataset.ladderIndex); const next=document.querySelector(`[data-ladder-index="${current+1}"]`); if(next){ next.focus(); next.select(); } else { el.blur(); } } });
+  document.addEventListener('focusin', e=>{ const el=e.target; if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(()=>el.select(),0); });
+  if(q('exportCsvBtn')) q('exportCsvBtn').addEventListener('click', exportDrishtiCsv); 
+  if(q('exportPdfBtn')) q('exportPdfBtn').addEventListener('click', exportDrishtiPdf); 
+  if(q('loadCsvBtn')) q('loadCsvBtn').addEventListener('click', ()=>q('loadCsvFile').click()); 
+  if(q('loadCsvFile')) q('loadCsvFile').addEventListener('change', importDrishtiCsv);
+  if(q('exportGranthBtn')) q('exportGranthBtn').addEventListener('click', ()=>{ const fmt=q('granthExportFormat')?.value || 'json'; if(fmt==='csv') exportGranthCsv(); else if(fmt==='xlsx') exportGranthXlsx(); else exportGranthJson(); }); 
+  if(q('importGranthBtn')) q('importGranthBtn').addEventListener('click', ()=>q('importGranthFile').click()); 
+  if(q('importGranthFile')) q('importGranthFile').addEventListener('change', importGranthJson);
+  if(q('deleteGranthBtn')) q('deleteGranthBtn').addEventListener('click', async()=>{ const sel=q('deleteKumbhSelect'); const id=Number(sel?.value||0); if(id){ const ok=await askModal({ title:`Delete Raid Log #${String(id).padStart(2,'0')} ?`, text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=state.granth.filter(k=>k.id!==id).map((k,idx)=>({ ...k, id: idx+1 })); state.currentKumbhId=state.granth.at(-1)?.id||null; renderAll(); showToast('LOG DELETED','Selected Raid Log removed'); return; } const ok=await askModal({ title:'Delete all Raid history?', text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=[]; state.currentKumbhId=null; renderAll(); showToast('GRANTH PURGED','All Raid history removed'); });
+  if(q('historyUndoBtn')) q('historyUndoBtn').addEventListener('click', undoLast);
+}
+
+function initApp() {
+    try { setupTabs(); } catch(e) { console.error('setupTabs failed:', e); }
+    try { setupBoards(); } catch(e) { console.error('setupBoards failed:', e); }
+    try { setupControls(); } catch(e) { console.error('setupControls failed:', e); }
+    try { setupInstall(); } catch(e) { console.error('setupInstall failed:', e); }
+    try { renderAll(); } catch(e) { console.error('renderAll failed:', e); }
+}
+
+if('serviceWorker' in navigator){ 
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); 
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
