@@ -4,15 +4,16 @@ const STORAGE_KEY = 'kubera-warhunt-v5pro-final-locked';
 const puzzleSymbols = ['💎', '🔥', '⚡', '🌟', '🔮', '🎲', '🌙', '☀️', '💠', '🔱', '🧿', '🧩'];
 const romanMap = ['🌀', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 
+// 🔥 UPDATED DEFAULT SETTINGS
 const defaultSettings = {
-  bankroll: 30000,
+  bankroll: 0,
   targetDollar: 500,
   targetPercent: 1.67,
-  stopLoss: 50000,
-  min: 100,
+  stopLoss: 30000,
+  min: 200,
   max: 3000,
   coin: 100,
-  targetNum: 500,
+  targetNum: 1000,
   doubleLadder: 'on',
   keypadMode: 'combined',
   maxSteps: 30,
@@ -23,6 +24,7 @@ const defaultSettings = {
   theme: 'warhunt',
   vaultBg: 'bg-molten'
 };
+
 const titles = { sangram:'⚔ SANGRAM', vyuha:'🛡 VYUHA', granth:'📜 GRANTH', drishti:'👁 DRISHTI', sopana:'🪜 SOPANA', yantra:'⚙ YANTRA', medha:'🧠 MEDHA' };
 const themePalette = {
   warhunt: { name:'Warhunt Gold', themeColor:'#120a05' },
@@ -110,10 +112,10 @@ function activateTrackedNumber(info){
 
 function freshNumber(){ return { status:'I', step:0, ladder:1, activeAt:null, prevLoss:0, winningBet:0, lastNet:0, pendingSecond:false, watchCount:0 }; }
 
-// 🔥 BULLETPROOF MODAL BINDING: Forces tap listeners every single time to bypass cache bugs
 function askModal({ title, text, okLabel='OK', cancelLabel='Cancel', okClass='warn' }){
   return new Promise(resolve=>{
     modalResolver = resolve;
+    modalConfig = { title, text, okLabel, cancelLabel, okClass };
     if(q('confirmTitle')) q('confirmTitle').textContent = title;
     if(q('confirmText')) q('confirmText').textContent = text;
     
@@ -996,7 +998,36 @@ function granthCsvContent(){
   });
   return header + rows.join('\n');
 }
-async function saveWithPicker(name,content,type){ if(window.showSaveFilePicker){ try{ const handle=await window.showSaveFilePicker({ suggestedName:name, types:[{ description:type.includes('json') ? 'JSON Files' : 'CSV Files', accept:{ [type]: [name.endsWith('.json') ? '.json' : '.csv'] } }] }); const writable=await handle.createWritable(); await writable.write(content); await writable.close(); return true; }catch(err){ if(err && err.name==='AbortError') return null; } } return false; }
+
+// 🔥 EXPORT FILE PICKER LOGIC
+async function saveWithPicker(name, content, type) {
+  if (window.showSaveFilePicker) {
+    try {
+      let ext = '.csv';
+      let desc = 'CSV Files';
+      if (name.endsWith('.json')) { ext = '.json'; desc = 'JSON Files'; }
+      else if (name.endsWith('.xlsx')) { ext = '.xlsx'; desc = 'Excel Files'; }
+
+      const handle = await window.showSaveFilePicker({
+        suggestedName: name,
+        types: [{
+          description: desc,
+          accept: { [type]: [ext] }
+        }]
+      });
+      
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      return true; 
+    } catch (err) {
+      if (err && err.name === 'AbortError') return null; 
+      console.error('File Picker Blocked:', err);
+    }
+  }
+  return false; 
+}
+
 function exportPayload(){ return { app:'Kubera_V5Pro Final locked', version:'Kubera_V5Pro Final locked', exportedAt:new Date().toISOString(), state, pending, historyStack, redoStack }; }
 async function exportGranthJson(){ const content=JSON.stringify(exportPayload(),null,2); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.json',content,'application/json'); if(saved===null) return; if(!saved) downloadFile('Kubera_V5Pro_Final_locked.json',content,'application/json'); }
 async function exportGranthCsv(){ const content=granthCsvContent(); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.csv',content,'text/csv'); if(saved===null) return; if(!saved) downloadFile('Kubera_V5Pro_Final_locked.csv',content,'text/csv'); }
@@ -1009,14 +1040,14 @@ function setupInstall(){ window.addEventListener('beforeinstallprompt',e=>{ e.pr
 function readYantraSettings(){
   const current = clone(state.settings);
   const bankrollRaw = Number(q('setBankroll')?.value);
-  current.bankroll = Number.isFinite(bankrollRaw) && bankrollRaw > 0 ? bankrollRaw : defaultSettings.bankroll;
+  current.bankroll = Number.isFinite(bankrollRaw) && bankrollRaw >= 0 ? bankrollRaw : defaultSettings.bankroll;
   current.targetDollar = Number(q('setTargetDollar')?.value)||500;
   current.targetPercent = Number(q('setTargetPercent')?.value)||1.67;
-  current.stopLoss = Number(q('setStopLoss')?.value)||50000;
-  current.min = Number(q('setMin')?.value)||100;
+  current.stopLoss = Number(q('setStopLoss')?.value)||30000;
+  current.min = Number(q('setMin')?.value)||200;
   current.max = Number(q('setMax')?.value)||3000;
   current.coin = Number(q('setCoin')?.value)||100;
-  current.targetNum = Number(q('setTargetNum')?.value)||500;
+  current.targetNum = Number(q('setTargetNum')?.value)||1000;
   current.doubleLadder = q('setDoubleLadder')?.value || 'on';
   current.keypadMode = q('setKeypadMode')?.value || 'combined';
   current.maxSteps = Number(q('setMaxSteps')?.value)||30;
