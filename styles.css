@@ -60,12 +60,10 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 .board-block{min-width:0; padding: 6px !important;} 
 .board-title{font-weight:800;color:var(--gold);margin:0 0 4px 4px; font-size: 14px; text-shadow: 0 0 8px var(--gold);}
 
-/* ⬆️ INCREASED: Grid height and spacing for larger buttons */
-.treasure-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px; min-height: 220px;} 
+/* Keep grids from collapsing */
+.treasure-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px; min-height: 160px;} 
 .treasure-grid .zero{grid-column:2}
-
-/* ⬆️ INCREASED: Tile min-height from 50px to 65px */
-.tile{position:relative;min-height:65px;border-radius:14px;border:1px solid var(--gold);background:linear-gradient(180deg,var(--tile-bg1),var(--tile-bg2));color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all 0.15s cubic-bezier(0.4, 0, 0.2, 1);}
+.tile{position:relative;min-height:50px;border-radius:12px;border:1px solid var(--gold);background:linear-gradient(180deg,var(--tile-bg1),var(--tile-bg2));color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all 0.15s cubic-bezier(0.4, 0, 0.2, 1);}
 .tile .num{font-size:20px;font-weight:800} 
 .tile,.bottom-nav button,.controls button,.btn-row button,.save-wrap button,.install-btn{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 
@@ -85,7 +83,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 .warn{background:#5a1d24!important;border-color:rgba(207,76,60,.4)!important}
 .split-grid,.summary-grid{display:grid;grid-template-columns:1fr;gap:6px}
 .state-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:6px}
-.state-cell{min-height:65px;border-radius:14px;background:var(--state-cell-bg);border:1px solid var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.state-cell{min-height:50px;border-radius:12px;background:var(--state-cell-bg);border:1px solid var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .state-cell .num{font-size:20px;font-weight:800}
 .state-cell .meta{font-size:10px;color:var(--muted);font-weight:700}
 .toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
@@ -134,14 +132,10 @@ th{position:sticky;top:0;background:var(--panel-2);color:var(--gold)}
 
 
 /* ========================================================================
-   🔥 THE KUBERA TREASURY VAULT (STEALTH MODE OVERRIDES)
+   🔥 THEME-SYNCED RPG STEALTH MODE (DYNAMIC BACKGROUNDS)
    ======================================================================== */
 
-body {
-  background: radial-gradient(ellipse at 50% 20%, rgba(80, 55, 15, 0.95), rgba(15, 8, 2, 1)), 
-              url('https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=2000&auto=format&fit=crop') center/cover fixed !important;
-  background-blend-mode: multiply;
-}
+/* Baseline Vignette overlay (stays constant) */
 body::before {
   content: '';
   position: fixed;
@@ -149,6 +143,34 @@ body::before {
   background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85) 120%);
   pointer-events: none;
   z-index: 1;
+}
+
+/* Background 1: Molten Gold (Default) */
+html[data-bg="bg-molten"] body {
+  background: radial-gradient(ellipse at 50% 20%, rgba(80, 55, 15, 0.95), rgba(15, 8, 2, 1)), 
+              url('https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=2000&auto=format&fit=crop') center/cover fixed !important;
+  background-blend-mode: multiply;
+}
+
+/* Background 2: Treasure Hoard */
+html[data-bg="bg-hoard"] body {
+  background: radial-gradient(ellipse at 50% 20%, rgba(60, 40, 10, 0.90), rgba(5, 2, 0, 1)), 
+              url('https://images.unsplash.com/photo-1621504450181-5d356f61d307?q=80&w=2000&auto=format&fit=crop') center/cover fixed !important;
+  background-blend-mode: multiply;
+}
+
+/* Background 3: Divine Aura */
+html[data-bg="bg-aura"] body {
+  background: radial-gradient(ellipse at 50% 20%, rgba(50, 35, 10, 0.85), rgba(10, 5, 5, 1)), 
+              url('https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=2000&auto=format&fit=crop') center/cover fixed !important;
+  background-blend-mode: overlay;
+}
+
+/* Background 4: Ancient Temple */
+html[data-bg="bg-temple"] body {
+  background: radial-gradient(ellipse at 50% 20%, rgba(40, 25, 15, 0.9), rgba(5, 5, 5, 1)), 
+              url('https://images.unsplash.com/photo-1505909182942-e2f09aee3e89?q=80&w=2000&auto=format&fit=crop') center/cover fixed !important;
+  background-blend-mode: multiply;
 }
 
 /* Fluid Borders synced to Theme */
@@ -210,7 +232,6 @@ body::before {
   margin-top: 0;
 }
 
-/* ⬆️ INCREASED: Shuffling puzzle symbols are now much larger */
 .decoy-symbol {
   font-size: 32px;
   margin-top: 4px;
@@ -222,7 +243,7 @@ body::before {
   100% { transform: scale(1) rotate(0deg); opacity: 1; } 
 }
 
-/* ⬆️ INCREASED: The Locked Win Score is larger and clearer */
+/* The Locked Win Score */
 .decoy-score {
   font-size: 14px;
   font-weight: 900;
@@ -278,7 +299,7 @@ body::before {
   100% { transform: scale(1); background: linear-gradient(145deg, var(--panel-2), var(--bg)); }
 }
 
-/* Bottom Navigation */
+/* Bottom Navigation Epic Glow synced to Theme */
 .bottom-nav {
   position: fixed !important;
   bottom: 0 !important;
