@@ -50,117 +50,78 @@ function applyBackground(bgName){
 
 function spawnButtonParticles(side, num, type) {
   const btn = document.querySelector(`button.tile[data-side="${side}"][data-num="${num}"]`);
-  let cx = window.innerWidth / 2;
-  let cy = window.innerHeight / 2;
-  if (btn) {
-      const rect = btn.getBoundingClientRect();
-      cx = rect.left + rect.width / 2;
-      cy = rect.top + rect.height / 2;
-  }
+  let cx = window.innerWidth / 2; let cy = window.innerHeight / 2;
+  if (btn) { const rect = btn.getBoundingClientRect(); cx = rect.left + rect.width / 2; cy = rect.top + rect.height / 2; }
   const emojis = type === 'win' ? ['💎', '💰', '✨', '🏆'] : ['💀', '💢', '💨', '🌧️'];
   for (let i = 0; i < 15; i++) {
-      const p = document.createElement('div');
-      p.className = `particle ${type}`;
-      p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-      p.style.left = cx + 'px';
-      p.style.top = cy + 'px';
-      const angle = Math.random() * Math.PI * 2;
-      const distance = Math.random() * 90 + 40;
-      const dx = Math.cos(angle) * distance;
-      const dy = Math.sin(angle) * distance - (type === 'win' ? 60 : -20);
-      p.style.setProperty('--dx', dx + 'px');
-      p.style.setProperty('--dy', dy + 'px');
-      document.body.appendChild(p);
-      setTimeout(() => p.remove(), 1200);
+      const p = document.createElement('div'); p.className = `particle ${type}`; p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      p.style.left = cx + 'px'; p.style.top = cy + 'px';
+      const angle = Math.random() * Math.PI * 2; const distance = Math.random() * 90 + 40;
+      const dx = Math.cos(angle) * distance; const dy = Math.sin(angle) * distance - (type === 'win' ? 60 : -20);
+      p.style.setProperty('--dx', dx + 'px'); p.style.setProperty('--dy', dy + 'px');
+      document.body.appendChild(p); setTimeout(() => p.remove(), 1200);
   }
 }
 
-let deferredPrompt = null;
-let historyStack = [];
-let redoStack = [];
-let pending = { Y: null, K: null };
-let keypadBusy = false;
-
+let deferredPrompt = null; let historyStack = []; let redoStack = []; let pending = { Y: null, K: null }; let keypadBusy = false;
 const q = id => document.getElementById(id);
 const fmtMoney = n => '💎 ' + Number(n || 0).toLocaleString('en-IN');
 const clone = obj => JSON.parse(JSON.stringify(obj));
 
-// 🔥 BUG 1 FIXED: Flawless, unbreakable Modal logic
+// 🔥 RESTORED HELPER FUNCTIONS (Fixed the Get Attack Mode crash)
+const parseSignedInt = (value, fallback=0) => { const cleaned = String(value ?? '').replace(/[^0-9-]/g,'').replace(/(?!^)-/g,''); const n = Number(cleaned); return Number.isFinite(n) ? n : fallback; };
+function getAttackMode(){ return state?.settings?.attackMode || 'classic'; }
+function attackThresholdForMode(mode){ return mode==='thirdstrike' ? 2 : mode==='fourthstrike' ? 3 : 1; }
+function waitingCodeForInfo(info){ const mode = getAttackMode(); if(mode==='thirdstrike') return 'W2'; if(mode==='fourthstrike') return 'W3'; return 'W'; }
+function activateTrackedNumber(info){ info.status='A'; info.step=1; info.ladder=1; info.activeAt=state.currentChakra; info.prevLoss=0; }
+function freshNumber(){ return { status:'I', step:0, ladder:1, activeAt:null, prevLoss:0, winningBet:0, lastNet:0, pendingSecond:false, watchCount:0 }; }
+
+let modalResolver = null;
+
 function askModal({ title, text, okLabel='OK', cancelLabel='Cancel', okClass='warn' }){
   return new Promise(resolve=>{
-    const overlay = q('confirmOverlay');
-    if(!overlay) return resolve(false);
-
+    modalResolver = resolve;
     if(q('confirmTitle')) q('confirmTitle').textContent = title;
     if(q('confirmText')) q('confirmText').textContent = text;
-
-    const cancelBtn = q('confirmCancelBtn');
-    const okBtn = q('confirmOkBtn');
-
-    if(cancelBtn) cancelBtn.textContent = cancelLabel;
-    if(okBtn) {
-        okBtn.textContent = okLabel;
-        okBtn.className = okClass === 'warn' ? 'warn' : ''; 
-    }
-
-    // Cleanly removes listeners so the app never freezes
-    const cleanup = (result) => {
-        overlay.classList.add('hidden');
-        overlay.setAttribute('aria-hidden','true');
-        if(okBtn) okBtn.onclick = null;
-        if(cancelBtn) cancelBtn.onclick = null;
-        overlay.onclick = null;
-        resolve(result);
-    };
-
-    if(okBtn) okBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); cleanup(true); };
-    if(cancelBtn) cancelBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); cleanup(false); };
-    overlay.onclick = (e) => { if(e.target === overlay) { e.preventDefault(); e.stopPropagation(); cleanup(false); } };
-
-    overlay.classList.remove('hidden');
-    overlay.setAttribute('aria-hidden','false');
+    const cancelBtn = q('confirmCancelBtn'); if(cancelBtn) cancelBtn.textContent = cancelLabel;
+    const okBtn = q('confirmOkBtn'); if(okBtn) { okBtn.textContent = okLabel; okBtn.className = okClass === 'warn' ? 'warn' : ''; }
+    const overlay = q('confirmOverlay'); if(overlay) { overlay.classList.remove('hidden'); overlay.setAttribute('aria-hidden','false'); }
   });
 }
 
-function askClearKumbh(){
-  return askModal({ title:'ABANDON RAID', text:'End current raid wave?', okLabel:'End Raid', cancelLabel:'Cancel', okClass:'warn' });
-}
-function askApplyYantra(){
-  return askModal({ title:'APPLY SETTINGS', text:'Lock in game settings?', okLabel:'Yes', cancelLabel:'No', okClass:'' });
+function askClearKumbh(){ return askModal({ title:'ABANDON RAID', text:'End current raid wave?', okLabel:'End Raid', cancelLabel:'Cancel', okClass:'warn' }); }
+function askApplyYantra(){ return askModal({ title:'APPLY SETTINGS', text:'Lock in game settings?', okLabel:'Yes', cancelLabel:'No', okClass:'' }); }
+function closeClearKumbh(answer){
+  if(q('confirmOverlay')) { q('confirmOverlay').classList.add('hidden'); q('confirmOverlay').setAttribute('aria-hidden','true'); }
+  if(modalResolver){ const resolve = modalResolver; modalResolver = null; resolve(answer); }
 }
 
-function createSide(){ const s={}; for(let i=1;i<=9;i++) s[i]={ status:'I', step:0, ladder:1, activeAt:null, prevLoss:0, winningBet:0, lastNet:0, pendingSecond:false, watchCount:0 }; return s; }
+document.addEventListener('click', (e) => {
+    const overlay = q('confirmOverlay');
+    if (overlay && !overlay.classList.contains('hidden')) {
+        const btnOk = e.target.closest('#confirmOkBtn'); const btnCancel = e.target.closest('#confirmCancelBtn');
+        if (btnOk) { e.preventDefault(); e.stopPropagation(); closeClearKumbh(true); } 
+        else if (btnCancel) { e.preventDefault(); e.stopPropagation(); closeClearKumbh(false); } 
+        else if (e.target === overlay) { e.preventDefault(); e.stopPropagation(); closeClearKumbh(false); }
+    }
+});
+
+function createSide(){ const s={}; for(let i=1;i<=9;i++) s[i]=freshNumber(); return s; }
 function roundUpToCoin(value, coin){ return Math.max(coin, Math.ceil(value / coin) * coin); }
 
 function buildLadder(settings){
-  const rows = [];
-  let previousLoss = 0;
-  let bet = roundUpToCoin(settings.min, settings.coin);
-  let currentLevel = bet;
+  const rows = []; let previousLoss = 0; let bet = roundUpToCoin(settings.min, settings.coin); let currentLevel = bet;
   for(let step=1; step<=settings.maxSteps; step++){
-    bet = Math.min(settings.max, roundUpToCoin(bet, settings.coin));
-    const winReturn = bet * 9;
+    bet = Math.min(settings.max, roundUpToCoin(bet, settings.coin)); const winReturn = bet * 9;
     rows.push({ step: `T${step}`, bet, winReturn, netProfit: winReturn - (previousLoss + bet), ifLoseTotal: -(previousLoss + bet) });
     previousLoss += bet;
     if(step < settings.maxSteps){
       if(((bet * 8) - previousLoss) < settings.targetNum){
-        if(settings.doubleLadder === 'on'){
-          currentLevel = Math.min(settings.max, roundUpToCoin(currentLevel * 2, settings.coin));
-          bet = currentLevel;
-        } else {
-          let probe = bet;
-          while((((probe * 8) - previousLoss) < settings.targetNum) && probe < settings.max){
-            probe = Math.min(settings.max, roundUpToCoin(probe + settings.coin, settings.coin));
-          }
-          bet = probe;
-          currentLevel = bet;
-        }
-      } else {
-        bet = currentLevel;
-      }
+        if(settings.doubleLadder === 'on'){ currentLevel = Math.min(settings.max, roundUpToCoin(currentLevel * 2, settings.coin)); bet = currentLevel; } 
+        else { let probe = bet; while((((probe * 8) - previousLoss) < settings.targetNum) && probe < settings.max){ probe = Math.min(settings.max, roundUpToCoin(probe + settings.coin, settings.coin)); } bet = probe; currentLevel = bet; }
+      } else { bet = currentLevel; }
     }
-  }
-  return rows;
+  } return rows;
 }
 
 function freshState(){
@@ -168,12 +129,7 @@ function freshState(){
   return { settings, liveBankroll: settings.bankroll, currentChakra: 0, numbers: { Y: createSide(), K: createSide() }, drishti: [], granth: [], currentKumbhId: null, summary: { totalAhuti: 0, maxExposure: 0 }, ladder: buildLadder(settings), activeTab: 'sangram' };
 }
 
-function validateState(st) {
-    if (!st || !st.numbers || !st.numbers.Y || !st.numbers.K) return false;
-    if (!st.numbers.Y[1] || typeof st.numbers.Y[1] !== 'object') return false;
-    return true;
-}
-
+function validateState(st) { if (!st || !st.numbers || !st.numbers.Y || !st.numbers.K) return false; if (!st.numbers.Y[1] || typeof st.numbers.Y[1] !== 'object') return false; return true; }
 function reviveState(raw){ const base = freshState(); const settings={...base.settings,...(raw.settings||{})}; if(!Number.isFinite(Number(settings.stopLoss)) || Number(settings.stopLoss)<=0) settings.stopLoss = base.settings.stopLoss; if(!Number.isFinite(Number(settings.stopLossPerNumber))) settings.stopLossPerNumber = base.settings.stopLossPerNumber; if(!settings.doubleLadder) settings.doubleLadder = 'on'; if(!settings.theme || !themePalette[settings.theme]) settings.theme = base.settings.theme; if(!settings.vaultBg) settings.vaultBg = base.settings.vaultBg; return {...base,...raw,settings,numbers:raw.numbers||base.numbers,summary:{...base.summary,...(raw.summary||{})},ladder:Array.isArray(raw.ladder)&&raw.ladder.length?raw.ladder:buildLadder(settings),activeTab:raw.activeTab||'sangram'}; }
 function coreSnapshot(){ return { state: clone(state), pending: clone(pending) }; }
 function historySnapshot(){ return JSON.stringify(coreSnapshot()); }
@@ -181,13 +137,8 @@ function persistedSnapshot(){ return JSON.stringify(coreSnapshot()); }
 function restoreSnapshot(payload){ const snap = typeof payload==='string' ? JSON.parse(payload) : payload; state = reviveState(snap.state || snap); pending = snap.pending || {Y:null,K:null}; if(!Array.isArray(historyStack)) historyStack = []; if(!Array.isArray(redoStack)) redoStack = []; }
 
 function loadState(){ 
-    try { 
-        const raw = localStorage.getItem(STORAGE_KEY); 
-        if(!raw) return state = freshState();
-        restoreSnapshot(JSON.parse(raw)); 
-        if (!validateState(state)) state = freshState(); 
-        historyStack = []; redoStack = []; 
-    } catch(err) { state = freshState(); historyStack = []; redoStack = []; } 
+    try { const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return state = freshState(); restoreSnapshot(JSON.parse(raw)); if (!validateState(state)) state = freshState(); historyStack = []; redoStack = []; } 
+    catch(err) { state = freshState(); historyStack = []; redoStack = []; } 
 }
 
 let state = freshState();
@@ -205,8 +156,7 @@ function soldierStepNetProfit(info){ const bet=currentBetFor(info); return (bet*
 async function askCapDecision(side,num,info){ 
   const stopLossPerNumber=Number(state.settings.stopLossPerNumber); 
   if(state.settings.capRule!=='on' || info.ladder!==1 || !Number.isFinite(stopLossPerNumber)) return false; 
-  const stepNetProfit=soldierStepNetProfit(info); 
-  if(stepNetProfit>stopLossPerNumber) return false; 
+  const stepNetProfit=soldierStepNetProfit(info); if(stepNetProfit>stopLossPerNumber) return false; 
   return !!(await askModal({ title:'STUN LIMIT REACHED', text:`[ ${num} ] drained ${stepNetProfit}. Limit is ${stopLossPerNumber}. Stun summon?`, okLabel:'Stun', cancelLabel:'Skip', okClass:'warn' })); 
 }
 async function askCapReturnDecision(side,num){ return !!(await askModal({ title:'REVIVE SUMMON', text:`[ ${num} ] has recovered. Revive for battle?`, okLabel:'Revive', cancelLabel:'Keep Stunned', okClass:'warn' })); }
@@ -238,8 +188,7 @@ function renderBoards(){
       else if (n !== 0) decoyContent = `<div class="decoy-symbol">${puzzleSymbols[Math.floor(Math.random() * puzzleSymbols.length)]}</div>`;
       else decoyContent = `<div class="decoy-symbol">🌀</div>`; 
       
-      btn.innerHTML=`<div class="num">${n}</div>${decoyContent}<div class="meta ${metaClass}">${code}</div>`;
-      host.appendChild(btn);
+      btn.innerHTML=`<div class="num">${n}</div>${decoyContent}<div class="meta ${metaClass}">${code}</div>`; host.appendChild(btn);
     }
   });
 }
@@ -281,6 +230,7 @@ function kumbhInsights(rows){
   }
   return { rowMeta, counts, details, yStats: sideStatsSummary(counts.Y), kStats: sideStatsSummary(counts.K) };
 }
+
 function renderGranth(){
   const host=q('granthList'); if(!host) return; host.innerHTML='';
   const sel=q('deleteKumbhSelect');
@@ -411,6 +361,26 @@ function shouldCapNowSilent(side,num,info){
   return info.ladder===1 && info.step>state.settings.maxSteps;
 }
 
+// 🔥 EXCEL READER UPGRADED: Failsafes built in
+async function readUploadedFile(file) {
+  const name = file.name.toLowerCase();
+  if (name.endsWith('.xlsx')) {
+    if (typeof XLSX === 'undefined') {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+        s.onload = res; s.onerror = () => rej(new Error("No internet for Excel."));
+        document.head.appendChild(s);
+      });
+    }
+    const data = new Uint8Array(await file.arrayBuffer());
+    const workbook = XLSX.read(data, {type: 'array'});
+    if (workbook.Sheets['SystemData']) return XLSX.utils.sheet_to_csv(workbook.Sheets['SystemData']);
+    return XLSX.utils.sheet_to_csv(workbook.Sheets[workbook.SheetNames[0]]);
+  }
+  return await file.text();
+}
+
 function processDataImport(text) {
     const trimmed = text.trim(); 
     if(trimmed.startsWith('KumbhId,')){
@@ -433,60 +403,10 @@ function processDataImport(text) {
     renderAll(); showToast('GRANTH LOADED','History imported successfully');
 }
 
-// 🔥 BUG 2 FIXED: Universal File Reader (Safely parses Excel binary into text automatically)
-async function readUploadedFile(file) {
-  const name = file.name.toLowerCase();
-  if (name.endsWith('.xlsx')) {
-    if (typeof XLSX === 'undefined') {
-      await new Promise(res => {
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
-        s.onload = res;
-        document.head.appendChild(s);
-      });
-    }
-    if (typeof XLSX === 'undefined') throw new Error("Excel library failed to load.");
-    const data = new Uint8Array(await file.arrayBuffer());
-    const workbook = XLSX.read(data, {type: 'array'});
-    if (workbook.Sheets['SystemData']) {
-      return XLSX.utils.sheet_to_csv(workbook.Sheets['SystemData']);
-    }
-    return XLSX.utils.sheet_to_csv(workbook.Sheets[workbook.SheetNames[0]]);
-  }
-  return await file.text();
-}
-
 async function importGranthJson(e){ 
   const file=e.target.files[0]; if(!file) return; 
-  try {
-      const text = await readUploadedFile(file);
-      processDataImport(text);
-  } catch(err) {
-      console.error(err); showToast('IMPORT FAILED', 'Could not read file', 'warn');
-  } finally { e.target.value=''; }
-}
-
-async function importLadderCsv(e){ 
-  const file=e.target.files[0]; if(!file) return; 
-  try {
-      const text = await readUploadedFile(file);
-      const lines=text.trim().split(/\r?\n/).slice(1).filter(Boolean); let cumulative1=0, cumulative2=0; 
-      lines.forEach(line=>{ 
-          const [ladder,stepLabel,betRaw]=line.split(','); const idx=Math.max(0, Number(String(stepLabel).replace(/\D/g,''))-1); const bet=Number(betRaw)||0; 
-          if(String(ladder).trim().toUpperCase()==='L2'){ cumulative2 += bet; } 
-          else { cumulative1 += bet; state.ladder[idx] = { step:`T${idx+1}`, bet, winReturn:bet*9, netProfit:(bet*9)-cumulative1, ifLoseTotal:-cumulative1 }; } 
-      }); 
-      const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA LOADED','Ladder loaded'); 
-  } catch(err) { console.error(err); showToast('ERROR', 'Failed to read ladder file', 'warn'); } 
-  finally { e.target.value=''; }
-}
-
-async function importDrishtiCsv(e){ 
-  const file=e.target.files[0]; if(!file) return; 
-  try {
-      const text = await readUploadedFile(file);
-      state.drishti=text.trim().split(/\r?\n/).slice(1).filter(Boolean).map(line=>{ const [side,number,activationChakra,winChakra,steps,prevLoss,winBet,net,status]=line.split(','); return {side,number,activationChakra,winChakra,steps,prevLoss,winBet,net,status}; }); renderAll(); showToast('DRISHTI LOADED','File imported'); 
-  } catch(err) { showToast('ERROR', 'Could not read file', 'warn'); } 
+  try { const text = await readUploadedFile(file); processDataImport(text); } 
+  catch(err) { console.error(err); showToast('IMPORT FAILED', 'Could not read file', 'warn'); } 
   finally { e.target.value=''; }
 }
 
@@ -618,25 +538,63 @@ function granthCsvContent(){
   }); return header + rows.join('\n');
 }
 
+// 🔥 FILE EXPORT FIXED: Mobile bypass to prevent silently failing
 async function saveWithPicker(name, content, type) {
-  if (window.showSaveFilePicker) {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (!isMobile && window.showSaveFilePicker) {
     try {
       let ext = '.csv'; let desc = 'CSV Files';
       if (name.endsWith('.json')) { ext = '.json'; desc = 'JSON Files'; } else if (name.endsWith('.xlsx')) { ext = '.xlsx'; desc = 'Excel Files'; }
       const handle = await window.showSaveFilePicker({ suggestedName: name, types: [{ description: desc, accept: { [type]: [ext] } }] });
       const writable = await handle.createWritable(); await writable.write(content); await writable.close(); return true; 
-    } catch (err) { if (err && err.name === 'AbortError') return null; console.error('File Picker Blocked:', err); }
+    } catch (err) { 
+      if (err && err.name === 'AbortError') return null; 
+      console.warn('File Picker Blocked, bypassing directly to download...', err); 
+    }
   } return false; 
 }
 
 function exportPayload(){ return { app:'Kubera_V5Pro Final locked', version:'Kubera_V5Pro Final locked', exportedAt:new Date().toISOString(), state, pending, historyStack, redoStack }; }
-async function exportGranthJson(){ const content=JSON.stringify(exportPayload(),null,2); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.json',content,'application/json'); if(saved===null) return; if(!saved) downloadFile('Kubera_V5Pro_Final_locked.json',content,'application/json'); }
-async function exportGranthCsv(){ const content=granthCsvContent(); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.csv',content,'text/csv'); if(saved===null) return; if(!saved) downloadFile('Kubera_V5Pro_Final_locked.csv',content,'text/csv'); }
+async function exportGranthJson(){ const content=JSON.stringify(exportPayload(),null,2); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.json',content,'application/json'); if(saved===null) return; if(!saved) downloadFile('Kubera_V5Pro_Final_locked.json',content,'application/json'); showToast('GRANTH EXPORTED','JSON saved'); }
+async function exportGranthCsv(){ const content=granthCsvContent(); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.csv',content,'text/csv'); if(saved===null) return; if(!saved) downloadFile('Kubera_V5Pro_Final_locked.csv',content,'text/csv'); showToast('GRANTH EXPORTED','CSV saved'); }
 async function exportGranthXlsx(){ const blob=buildXlsxWorkbook(granthWorkbookSheets()); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.xlsx',blob,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); if(saved===null) return; if(!saved) downloadBlob('Kubera_V5Pro_Final_locked.xlsx',blob); showToast('GRANTH EXPORTED','XLSX workbook saved'); }
+
+async function exportLadderCsv(){ 
+    syncFirstLadderFromInputs(); const content=ladderCsvContent(); 
+    const saved = await saveWithPicker('sopana-ladder.csv', content, 'text/csv');
+    if (saved === null) return; 
+    if (!saved) downloadFile('sopana-ladder.csv', content, 'text/csv');
+    showToast('SOPANA EXPORTED','Ladder CSV saved'); 
+}
+
+async function importLadderCsv(e){ 
+  const file=e.target.files[0]; if(!file) return; 
+  try {
+      const text = await readUploadedFile(file);
+      const lines=text.trim().split(/\r?\n/).slice(1).filter(Boolean); let cumulative1=0, cumulative2=0; 
+      lines.forEach(line=>{ 
+          const [ladder,stepLabel,betRaw]=line.split(','); const idx=Math.max(0, Number(String(stepLabel).replace(/\D/g,''))-1); const bet=Number(betRaw)||0; 
+          if(String(ladder).trim().toUpperCase()==='L2'){ cumulative2 += bet; } 
+          else { cumulative1 += bet; state.ladder[idx] = { step:`T${idx+1}`, bet, winReturn:bet*9, netProfit:(bet*9)-cumulative1, ifLoseTotal:-cumulative1 }; } 
+      }); 
+      const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA LOADED','Ladder loaded'); 
+  } catch(err) { showToast('ERROR', 'Failed to read ladder file', 'warn'); } 
+  finally { e.target.value=''; }
+}
+
+async function importDrishtiCsv(e){ 
+  const file=e.target.files[0]; if(!file) return; 
+  try {
+      const text = await readUploadedFile(file);
+      state.drishti=text.trim().split(/\r?\n/).slice(1).filter(Boolean).map(line=>{ const [side,number,activationChakra,winChakra,steps,prevLoss,winBet,net,status]=line.split(','); return {side,number,activationChakra,winChakra,steps,prevLoss,winBet,net,status}; }); renderAll(); showToast('DRISHTI LOADED','File imported'); 
+  } catch(err) { showToast('ERROR', 'Could not read file', 'warn'); } 
+  finally { e.target.value=''; }
+}
 
 function downloadFile(name,content,type){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
 function downloadBlob(name,blob){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
 function setupInstall(){ window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(q('installBtn')) q('installBtn').classList.remove('hidden'); }); if(q('installBtn')) q('installBtn').addEventListener('click', async()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; if(q('installBtn')) q('installBtn').classList.add('hidden'); }); }
+
 function readYantraSettings(){
   const current = clone(state.settings); const bankrollRaw = Number(q('setBankroll')?.value); current.bankroll = Number.isFinite(bankrollRaw) && bankrollRaw >= 0 ? bankrollRaw : defaultSettings.bankroll;
   current.targetDollar = Number(q('setTargetDollar')?.value)||500; current.targetPercent = Number(q('setTargetPercent')?.value)||1.67; current.stopLoss = Number(q('setStopLoss')?.value)||30000; current.min = Number(q('setMin')?.value)||200; current.max = Number(q('setMax')?.value)||3000; current.coin = Number(q('setCoin')?.value)||100; current.targetNum = Number(q('setTargetNum')?.value)||1000; current.doubleLadder = q('setDoubleLadder')?.value || 'on'; current.keypadMode = q('setKeypadMode')?.value || 'combined'; current.maxSteps = Number(q('setMaxSteps')?.value)||30; current.reserve = Number(q('setReserve')?.value)||20000; current.capRule = q('setCapRule')?.value || 'on';
@@ -644,32 +602,40 @@ function readYantraSettings(){
 }
 async function applyYantraSettings(){ if(!(await askApplyYantra())) return; state.settings = readYantraSettings(); applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten'); state.ladder = buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows){ replayAllKumbhsWithCurrentSettings(); } else { state.liveBankroll = state.settings.bankroll; } renderAll(); showToast('YANTRA APPLIED','Settings updated'); }
 
+// 🔥 SAFE BINDER: Ensures one bad button doesn't freeze the rest
+function bind(id, event, fn) { const el = q(id); if (el) { el.addEventListener(event, fn); } }
+
 function setupControls(){
-  if(q('prayogaBtn')) q('prayogaBtn').addEventListener('click', startPrayoga);
-  if(q('kumbhaBtn')) q('kumbhaBtn').addEventListener('click', clearCurrentSession);
-  if(q('undoBtn')) q('undoBtn').addEventListener('click', undoLast);
-  if(q('redoBtn')) q('redoBtn').addEventListener('click', redoLast);
-  if(q('setTargetDollar')) q('setTargetDollar').addEventListener('input', ()=>recalcTargetLink('dollar'));
-  if(q('setTargetPercent')) q('setTargetPercent').addEventListener('input', ()=>recalcTargetLink('percent'));
-  if(q('setBankroll')) q('setBankroll').addEventListener('input', ()=>recalcTargetLink('dollar'));
-  if(q('applyYantraBtn')) q('applyYantraBtn').addEventListener('click', applyYantraSettings);
-  if(q('saveLadderBtn')) q('saveLadderBtn').addEventListener('click', ()=>{ document.querySelectorAll('[data-ladder-index]').forEach(inp=>{ inp.value=normalizeLadderBet(inp.value); }); syncFirstLadderFromInputs(); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA SAVED','Editable ladder updated'); });
-  if(q('exportLadderBtn')) q('exportLadderBtn').addEventListener('click', ()=>{ exportLadderCsv(); });
-  if(q('loadLadderBtn')) q('loadLadderBtn').addEventListener('click', ()=>q('loadLadderFile').click());
-  if(q('loadLadderFile')) q('loadLadderFile').addEventListener('change', importLadderCsv);
-  if(q('resetLadderBtn')) q('resetLadderBtn').addEventListener('click', ()=>{ state.ladder=buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA RESET','Default ladder restored'); });
+  bind('prayogaBtn', 'click', startPrayoga);
+  bind('kumbhaBtn', 'click', clearCurrentSession);
+  bind('undoBtn', 'click', undoLast);
+  bind('redoBtn', 'click', redoLast);
+  bind('setTargetDollar', 'input', ()=>recalcTargetLink('dollar'));
+  bind('setTargetPercent', 'input', ()=>recalcTargetLink('percent'));
+  bind('setBankroll', 'input', ()=>recalcTargetLink('dollar'));
+  bind('applyYantraBtn', 'click', applyYantraSettings);
+  bind('saveLadderBtn', 'click', ()=>{ document.querySelectorAll('[data-ladder-index]').forEach(inp=>{ inp.value=normalizeLadderBet(inp.value); }); syncFirstLadderFromInputs(); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA SAVED','Editable ladder updated'); });
+  bind('exportLadderBtn', 'click', exportLadderCsv);
+  bind('loadLadderBtn', 'click', ()=>q('loadLadderFile').click());
+  bind('loadLadderFile', 'change', importLadderCsv);
+  bind('resetLadderBtn', 'click', ()=>{ state.ladder=buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA RESET','Default ladder restored'); });
+  
   document.addEventListener('input', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; refreshLinkedLadderCalculations(); });
   document.addEventListener('keydown', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; if(e.key==='Enter'){ e.preventDefault(); const current=Number(el.dataset.ladderIndex); const next=document.querySelector(`[data-ladder-index="${current+1}"]`); if(next){ next.focus(); next.select(); } else { el.blur(); } } });
   document.addEventListener('focusin', e=>{ const el=e.target; if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(()=>el.select(),0); });
-  if(q('exportCsvBtn')) q('exportCsvBtn').addEventListener('click', exportDrishtiCsv); 
-  if(q('exportPdfBtn')) q('exportPdfBtn').addEventListener('click', exportDrishtiPdf); 
-  if(q('loadCsvBtn')) q('loadCsvBtn').addEventListener('click', ()=>q('loadCsvFile').click()); 
-  if(q('loadCsvFile')) q('loadCsvFile').addEventListener('change', importDrishtiCsv);
-  if(q('exportGranthBtn')) q('exportGranthBtn').addEventListener('click', ()=>{ const fmt=q('granthExportFormat')?.value || 'json'; if(fmt==='csv') exportGranthCsv(); else if(fmt==='xlsx') exportGranthXlsx(); else exportGranthJson(); }); 
-  if(q('importGranthBtn')) q('importGranthBtn').addEventListener('click', ()=>q('importGranthFile').click()); 
-  if(q('importGranthFile')) q('importGranthFile').addEventListener('change', importGranthJson);
-  if(q('deleteGranthBtn')) q('deleteGranthBtn').addEventListener('click', async()=>{ const sel=q('deleteKumbhSelect'); const id=Number(sel?.value||0); if(id){ const ok=await askModal({ title:`Delete Raid Log #${String(id).padStart(2,'0')} ?`, text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=state.granth.filter(k=>k.id!==id).map((k,idx)=>({ ...k, id: idx+1 })); state.currentKumbhId=state.granth.at(-1)?.id||null; renderAll(); showToast('LOG DELETED','Selected Raid Log removed'); return; } const ok=await askModal({ title:'Delete all Raid history?', text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=[]; state.currentKumbhId=null; renderAll(); showToast('GRANTH PURGED','All Raid history removed'); });
-  if(q('historyUndoBtn')) q('historyUndoBtn').addEventListener('click', undoLast);
+  
+  bind('exportCsvBtn', 'click', exportDrishtiCsv); 
+  bind('exportPdfBtn', 'click', exportDrishtiPdf); 
+  bind('loadCsvBtn', 'click', ()=>q('loadCsvFile').click()); 
+  bind('loadCsvFile', 'change', importDrishtiCsv);
+  
+  bind('exportGranthBtn', 'click', ()=>{ const fmt=q('granthExportFormat')?.value || 'json'; if(fmt==='csv') exportGranthCsv(); else if(fmt==='xlsx') exportGranthXlsx(); else exportGranthJson(); }); 
+  bind('importGranthBtn', 'click', ()=>q('importGranthFile').click()); 
+  bind('importGranthFile', 'change', importGranthJson);
+  
+  bind('deleteGranthBtn', 'click', async()=>{ const sel=q('deleteKumbhSelect'); const id=Number(sel?.value||0); if(id){ const ok=await askModal({ title:`Delete Raid Log #${String(id).padStart(2,'0')} ?`, text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=state.granth.filter(k=>k.id!==id).map((k,idx)=>({ ...k, id: idx+1 })); state.currentKumbhId=state.granth.at(-1)?.id||null; renderAll(); showToast('LOG DELETED','Selected Raid Log removed'); return; } const ok=await askModal({ title:'Delete all Raid history?', text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=[]; state.currentKumbhId=null; renderAll(); showToast('GRANTH PURGED','All Raid history removed'); });
+  
+  bind('historyUndoBtn', 'click', undoLast);
 }
 
 function initApp() {
