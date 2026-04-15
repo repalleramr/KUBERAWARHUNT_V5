@@ -2,7 +2,7 @@ const STORAGE_KEY = 'kubera-warhunt-v5pro-final-locked';
 
 // 🔥 GAMING SYMBOLS
 const puzzleSymbols = ['💎', '🔥', '⚡', '🌟', '🔮', '🎲', '🌙', '☀️', '💠', '🔱', '🧿', '🧩'];
-// 🔥 ROMAN NUMERALS FOR DECOY RESULTS (0 is now a Portal 🌀)
+// 🔥 ROMAN NUMERALS FOR DECOY RESULTS
 const romanMap = ['🌀', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 
 const defaultSettings = {
@@ -22,7 +22,7 @@ const defaultSettings = {
   stopLossPerNumber: -100,
   attackMode: 'classic',
   theme: 'warhunt',
-  vaultBg: 'bg-molten' // NEW: Default background
+  vaultBg: 'bg-molten'
 };
 const titles = { sangram:'⚔ SANGRAM', vyuha:'🛡 VYUHA', granth:'📜 GRANTH', drishti:'👁 DRISHTI', sopana:'🪜 SOPANA', yantra:'⚙ YANTRA', medha:'🧠 MEDHA' };
 const themePalette = {
@@ -45,9 +45,40 @@ function applyTheme(themeName){
   if(meta) meta.setAttribute('content', themePalette[theme].themeColor);
 }
 
-// 🔥 NEW: Applies the background image selection
+// 🔥 FIXED: Robust Background Applier
 function applyBackground(bgName){
-  document.documentElement.dataset.bg = bgName || 'bg-molten';
+  document.body.setAttribute('data-vault-bg', bgName || 'bg-molten');
+}
+
+// 🔥 NEW: Epic Particle Pop Animations
+function spawnButtonParticles(side, num, type) {
+  const btn = document.querySelector(`button.tile[data-side="${side}"][data-num="${num}"]`);
+  let cx = window.innerWidth / 2;
+  let cy = window.innerHeight / 2;
+  if (btn) {
+      const rect = btn.getBoundingClientRect();
+      cx = rect.left + rect.width / 2;
+      cy = rect.top + rect.height / 2;
+  }
+  
+  const emojis = type === 'win' ? ['💎', '💰', '✨', '🏆'] : ['💀', '💢', '💨', '🌧️'];
+  for (let i = 0; i < 15; i++) {
+      const p = document.createElement('div');
+      p.className = `particle ${type}`;
+      p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      p.style.left = cx + 'px';
+      p.style.top = cy + 'px';
+      
+      const angle = Math.random() * Math.PI * 2;
+      const distance = Math.random() * 90 + 40;
+      const dx = Math.cos(angle) * distance;
+      const dy = Math.sin(angle) * distance - (type === 'win' ? 60 : -20); // Wins pop UP, Sad pops DOWN
+      
+      p.style.setProperty('--dx', dx + 'px');
+      p.style.setProperty('--dy', dy + 'px');
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 1200);
+  }
 }
 
 let deferredPrompt = null;
@@ -409,7 +440,11 @@ function undoLast(){ const prev=historyStack.pop(); if(!prev) return; redoStack.
 function redoLast(){ const next=redoStack.pop(); if(!next) return; historyStack.push(historySnapshot()); restoreSnapshot(next); renderAll(); showToast('TIMELINE RESTORED','Wave restored'); }
 
 function pushDrishti(rec){ state.drishti.push(rec); }
-async function resolveNumber(side,num,notes,rowEvents){ const info=state.numbers[side][num]; if(info.status==='L'){ return; }
+
+async function resolveNumber(side,num,notes,rowEvents){ 
+  const info=state.numbers[side][num]; 
+  if(info.status==='L'){ return; }
+  
   if(info.status==='C'){
     const shouldReturn = await askCapReturnDecision(side,num);
     if(!shouldReturn) return;
@@ -442,11 +477,48 @@ async function resolveNumber(side,num,notes,rowEvents){ const info=state.numbers
   info.winningBet=bet; info.lastNet=net; pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'LOOTED' });
   if(rowEvents) rowEvents.np.push(`${side}${num} ${net >= 0 ? '+' : ''}${net}`);
   const vd=vijayDarshanaDisplay(info);
-  info.status='L'; notes.push({title:'LOOT SECURED', text:`[ ${num} ] T${vd.displayStep} Magic : +${vd.displayNet} XP`}); }
-async function advanceAfterLoss(side,notes,rowEvents,winningNum=null){ for(let n=1;n<=9;n++){ if(winningNum!==null && Number(winningNum)===n) continue; const info=state.numbers[side][n]; if(info.status!=='A' && info.status!=='B') continue; const bet=currentBetFor(info); info.prevLoss += bet; info.step += 1; if(info.ladder===1){ if(await askCapDecision(side,n,info)){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:info.step, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'STUNNED' }); if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); } notes.push({title:'STUNNED', text:`[ ${n} ] is stunned`, kind:'warn'}); } else if(info.step>state.settings.maxSteps){ info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:state.settings.maxSteps, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'STUNNED' }); if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); } notes.push({title:'STUNNED', text:`[ ${n} ] is stunned`, kind:'warn'}); }
-      else info.status='A';
-    } else { if(info.step>15) info.step=15; info.status='B'; }
-  } }
+  
+  // 🔥 WIN POP ANIMATION TRIGGERED HERE 🔥
+  info.status='L'; 
+  spawnButtonParticles(side, num, 'win');
+  
+  notes.push({title:'LOOT SECURED', text:`[ ${num} ] T${vd.displayStep} Magic : +${vd.displayNet} XP`}); 
+}
+
+async function advanceAfterLoss(side,notes,rowEvents,winningNum=null){ 
+  for(let n=1;n<=9;n++){ 
+    if(winningNum!==null && Number(winningNum)===n) continue; 
+    const info=state.numbers[side][n]; 
+    if(info.status!=='A' && info.status!=='B') continue; 
+    const bet=currentBetFor(info); 
+    info.prevLoss += bet; 
+    info.step += 1; 
+    
+    if(info.ladder===1){ 
+      if(await askCapDecision(side,n,info)){ 
+        info.status='C'; 
+        pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:info.step, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'STUNNED' }); 
+        if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); } 
+        // 🔥 SAD POP ANIMATION TRIGGERED HERE 🔥
+        spawnButtonParticles(side, n, 'sad');
+        notes.push({title:'STUNNED', text:`[ ${n} ] is stunned`, kind:'warn'}); 
+      } else if(info.step>state.settings.maxSteps){ 
+        info.status='C'; 
+        pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:state.settings.maxSteps, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'STUNNED' }); 
+        if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); } 
+        // 🔥 SAD POP ANIMATION TRIGGERED HERE 🔥
+        spawnButtonParticles(side, n, 'sad');
+        notes.push({title:'STUNNED', text:`[ ${n} ] is stunned`, kind:'warn'}); 
+      } else {
+        info.status='A';
+      }
+    } else { 
+      if(info.step>15) info.step=15; 
+      info.status='B'; 
+    }
+  } 
+}
+
 async function processCombined(){ if(pending.Y===null || pending.K===null) return; recordSnapshot(); state.currentChakra += 1; ensureKumbh(); const y=pending.Y, k=pending.K; pending={Y:null,K:null}; let exposure=nextExposureTotal(); state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const notes=[]; const rowEvents={cap:[],ret:[],np:[]}; if(y===0) await advanceAfterLoss('Y',notes,rowEvents); else { await advanceAfterLoss('Y',[],rowEvents,y); await resolveNumber('Y',y,notes,rowEvents); } if(k===0) await advanceAfterLoss('K',notes,rowEvents); else { await advanceAfterLoss('K',[],rowEvents,k); await resolveNumber('K',k,notes,rowEvents); }
   currentKumbh()?.rows.push({ chakra:state.currentChakra, y, k, cap:rowEvents.cap, ret:rowEvents.ret, np:rowEvents.np, ahuti:exposure, axyapatra:state.liveBankroll });
   if(state.liveBankroll <= state.settings.bankroll - state.settings.stopLoss) notes.push({title:'STASH WARNING',text:'Diamond Stash approaching critical',kind:'warn'});
