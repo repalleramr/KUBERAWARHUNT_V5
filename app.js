@@ -2,8 +2,8 @@ const STORAGE_KEY = 'kubera-warhunt-v5pro-final-locked';
 
 // 🔥 GAMING SYMBOLS
 const puzzleSymbols = ['💎', '🔥', '⚡', '🌟', '🔮', '🎲', '🌙', '☀️', '💠', '🔱', '🧿', '🧩'];
-// 🔥 ROMAN NUMERALS FOR DECOY RESULTS
-const romanMap = ['0', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
+// 🔥 ROMAN NUMERALS FOR DECOY RESULTS (0 is now a Portal 🌀)
+const romanMap = ['🌀', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 
 const defaultSettings = {
   bankroll: 30000,
@@ -286,7 +286,7 @@ function formatNextAhuti(side){
     return `${side === 'Y' ? 'YAKSHA' : 'KINNARA'}: ${parts.join(' | ') || 'Idle'}`; 
 }
 
-// 🔥 LAST RESULT CLEARLY SHOWS ROMAN NUMERALS "[ II ] | [ VI ]" TO HIDE NUMBERS
+// 🔥 LAST RESULT CLEARLY SHOWS ROMAN NUMERALS
 function renderSangram(){ 
     if(q('bankValue')) q('bankValue').textContent=fmtMoney(state.liveBankroll); 
     if(q('chakraValue')) q('chakraValue').textContent=`Wave : ${state.currentChakra}`; 
