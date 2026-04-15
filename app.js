@@ -624,15 +624,60 @@ function setupControls(){
   document.addEventListener('focusin', e=>{ const el=e.target; if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(()=>el.select(),0); });
   
   bindClick('exportCsvBtn', exportDrishtiCsv); 
-  bindClick('exportPdfBtn', exportDrishtiPdf); 
+  if (typeof exportDrishtiPdf === 'function') {
+      bindClick('exportPdfBtn', exportDrishtiPdf); 
+  } else {
+      bindClick('exportPdfBtn', () => showToast('INFO', 'PDF export not available', 'warn'));
+  }
+  
   bindClick('loadCsvBtn', ()=>q('loadCsvFile').click()); 
   const lcf = q('loadCsvFile'); if(lcf) lcf.onchange = importDrishtiCsv;
   
-  bindClick('exportGranthBtn', ()=>{ const fmt=q('granthExportFormat')?.value || 'json'; if(fmt==='csv') exportGranthCsv(); else if(fmt==='xlsx') exportGranthXlsx(); else exportGranthJson(); }); 
-  bindClick('importGranthBtn', ()=>q('importGranthFile').click()); 
-  const igf = q('importGranthFile'); if(igf) igf.onchange = importGranthJson;
-  
-  bindClick('deleteGranthBtn', async()=>{ const sel=q('deleteKumbhSelect'); const id=Number(sel?.value||0); if(id){ const ok=await askModal({ title:`Delete Raid Log #${String(id).padStart(2,'0')} ?`, text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=state.granth.filter(k=>k.id!==id).map((k,idx)=>({ ...k, id: idx+1 })); state.currentKumbhId=state.granth.at(-1)?.id||null; renderAll(); showToast('LOG DELETED','Selected Raid Log removed'); return; } const ok=await askModal({ title:'Delete all Raid history?', text:'This action will permanently remove this history.', okLabel:'Delete', cancelLabel:'Cancel', okClass:'warn' }); if(!ok) return; state.granth=[]; state.currentKumbhId=null; renderAll(); showToast('GRANTH PURGED','All Raid history removed'); });
+  // 🔥 FIXED GRANTH CONTROLS
+  bindClick('exportGranthBtn', () => {
+    const fmt = q('granthExportFormat')?.value || 'json';
+    if (fmt === 'csv') exportGranthCsv();
+    else if (fmt === 'xlsx') exportGranthXlsx();
+    else exportGranthJson();
+  });
+
+  bindClick('importGranthBtn', () => q('importGranthFile').click());
+  const igf = q('importGranthFile');
+  if (igf) igf.onchange = importGranthJson;
+
+  bindClick('deleteGranthBtn', async () => {
+    const sel = q('deleteKumbhSelect');
+    const id = Number(sel?.value || 0);
+    
+    if (id) {
+      const ok = await askModal({ 
+        title: `DELETE RAID #${String(id).padStart(2, '0')}`, 
+        text: 'Remove this specific raid log?', 
+        okLabel: 'Delete', 
+        cancelLabel: 'Cancel',
+        okClass: 'warn'
+      });
+      if (!ok) return;
+      state.granth = state.granth.filter(k => k.id !== id).map((k, idx) => ({ ...k, id: idx + 1 }));
+      state.currentKumbhId = state.granth.at(-1)?.id || null;
+      renderAll(); 
+      showToast('LOG DELETED', 'Selected Raid Log removed');
+      return;
+    } 
+    
+    const ok = await askModal({ 
+      title: 'PURGE ALL HISTORY', 
+      text: 'This will permanently erase the entire Granth.', 
+      okLabel: 'Purge All', 
+      cancelLabel: 'Cancel',
+      okClass: 'warn'
+    });
+    if (!ok) return;
+    state.granth = [];
+    state.currentKumbhId = null;
+    renderAll();
+    showToast('GRANTH PURGED', 'All Raid history removed');
+  });
   
   bindClick('historyUndoBtn', undoLast);
 }
