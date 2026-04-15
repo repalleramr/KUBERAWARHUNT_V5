@@ -21,7 +21,8 @@ const defaultSettings = {
   capRule: 'on',
   stopLossPerNumber: -100,
   attackMode: 'classic',
-  theme: 'warhunt'
+  theme: 'warhunt',
+  vaultBg: 'bg-molten' // NEW: Default background
 };
 const titles = { sangram:'⚔ SANGRAM', vyuha:'🛡 VYUHA', granth:'📜 GRANTH', drishti:'👁 DRISHTI', sopana:'🪜 SOPANA', yantra:'⚙ YANTRA', medha:'🧠 MEDHA' };
 const themePalette = {
@@ -36,12 +37,19 @@ const themePalette = {
   moon: { name:'Moon Ashram', themeColor:'#161526' },
   thunder: { name:'Thunder Relic', themeColor:'#10131f' }
 };
+
 function applyTheme(themeName){
   const theme = themePalette[themeName] ? themeName : 'warhunt';
   document.documentElement.dataset.theme = theme;
   const meta = document.querySelector('meta[name="theme-color"]');
   if(meta) meta.setAttribute('content', themePalette[theme].themeColor);
 }
+
+// 🔥 NEW: Applies the background image selection
+function applyBackground(bgName){
+  document.documentElement.dataset.bg = bgName || 'bg-molten';
+}
+
 let deferredPrompt = null;
 let historyStack = [];
 let redoStack = [];
@@ -172,7 +180,7 @@ function validateState(st) {
     return true;
 }
 
-function reviveState(raw){ const base = freshState(); const settings={...base.settings,...(raw.settings||{})}; if(!Number.isFinite(Number(settings.stopLoss)) || Number(settings.stopLoss)<=0) settings.stopLoss = base.settings.stopLoss; if(!Number.isFinite(Number(settings.stopLossPerNumber))) settings.stopLossPerNumber = base.settings.stopLossPerNumber; if(!settings.doubleLadder) settings.doubleLadder = 'on'; if(!settings.theme || !themePalette[settings.theme]) settings.theme = base.settings.theme; return {...base,...raw,settings,numbers:raw.numbers||base.numbers,summary:{...base.summary,...(raw.summary||{})},ladder:Array.isArray(raw.ladder)&&raw.ladder.length?raw.ladder:buildLadder(settings),activeTab:raw.activeTab||'sangram'}; }
+function reviveState(raw){ const base = freshState(); const settings={...base.settings,...(raw.settings||{})}; if(!Number.isFinite(Number(settings.stopLoss)) || Number(settings.stopLoss)<=0) settings.stopLoss = base.settings.stopLoss; if(!Number.isFinite(Number(settings.stopLossPerNumber))) settings.stopLossPerNumber = base.settings.stopLossPerNumber; if(!settings.doubleLadder) settings.doubleLadder = 'on'; if(!settings.theme || !themePalette[settings.theme]) settings.theme = base.settings.theme; if(!settings.vaultBg) settings.vaultBg = base.settings.vaultBg; return {...base,...raw,settings,numbers:raw.numbers||base.numbers,summary:{...base.summary,...(raw.summary||{})},ladder:Array.isArray(raw.ladder)&&raw.ladder.length?raw.ladder:buildLadder(settings),activeTab:raw.activeTab||'sangram'}; }
 function coreSnapshot(){ return { state: clone(state), pending: clone(pending) }; }
 function historySnapshot(){ return JSON.stringify(coreSnapshot()); }
 function persistedSnapshot(){ return JSON.stringify(coreSnapshot()); }
@@ -199,6 +207,7 @@ function loadState(){
 let state = freshState();
 loadState();
 applyTheme(state.settings.theme || 'warhunt');
+applyBackground(state.settings.vaultBg || 'bg-molten');
 
 function saveState(){ try{ localStorage.setItem(STORAGE_KEY, persistedSnapshot()); } catch(err){ console.warn('State save skipped', err); } }
 function currentKumbh(){ return state.granth.find(k => k.id === state.currentKumbhId) || null; }
@@ -286,7 +295,6 @@ function formatNextAhuti(side){
     return `${side === 'Y' ? 'YAKSHA' : 'KINNARA'}: ${parts.join(' | ') || 'Idle'}`; 
 }
 
-// 🔥 LAST RESULT CLEARLY SHOWS ROMAN NUMERALS
 function renderSangram(){ 
     if(q('bankValue')) q('bankValue').textContent=fmtMoney(state.liveBankroll); 
     if(q('chakraValue')) q('chakraValue').textContent=`Wave : ${state.currentChakra}`; 
@@ -389,10 +397,10 @@ function renderGranth(){
 
 function renderDrishti(){ if(q('sumChakras')) q('sumChakras').textContent=Math.max(0,state.currentChakra); if(q('sumAhuti')) q('sumAhuti').textContent=state.summary.totalAhuti; if(q('sumProfit')) q('sumProfit').textContent=state.liveBankroll-state.settings.bankroll; if(q('sumExposure')) q('sumExposure').textContent=state.summary.maxExposure; const dt=q('drishtiTable'); if(!dt) return; const tbody=dt.querySelector('tbody'); if(!tbody) return; tbody.innerHTML=''; [...state.drishti].reverse().forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.side}</td><td><span style="font-size:16px">[ ${r.number} ]</span></td><td>${r.activationChakra}</td><td>${r.winChakra}</td><td>${r.steps}</td><td>${r.prevLoss}</td><td>${r.winBet}</td><td>${r.net}</td><td>${r.status}</td>`; tbody.appendChild(tr); }); }
 function renderSopana(){ const lt=q('ladderTable'); if(!lt) return; const tbody=lt.querySelector('tbody'); if(!tbody) return; tbody.innerHTML=''; state.ladder.forEach((row,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.step}</td><td><input class="ladder-bet-input" type="number" data-ladder-index="${idx}" inputmode="numeric" enterkeyhint="next" value="${row.bet}"></td><td>${row.winReturn}</td><td>${row.netProfit}</td><td>${row.ifLoseTotal}</td>`; tbody.appendChild(tr); }); const secondTable=q('secondLadderTable'); if(secondTable){ const tbody2=secondTable.querySelector('tbody'); if(tbody2) { tbody2.innerHTML=''; let prevLoss=0; for(let i=1;i<=Math.min(state.settings.maxSteps,15);i++){ const bet=secondLadderBet(i); const winReturn=bet*9; prevLoss += bet; const tr=document.createElement('tr'); tr.innerHTML=`<td>T${i}</td><td><input class="ladder-bet-input" type="number" data-second-ladder-index="${i-1}" inputmode="numeric" enterkeyhint="next" value="${bet}"></td><td>${winReturn}</td><td>${winReturn - prevLoss}</td><td>${-prevLoss}</td>`; tbody2.appendChild(tr); } } } }
-function renderYantra(){ const s=state.settings; if(q('setBankroll')) q('setBankroll').value=s.bankroll; if(q('setTargetDollar')) q('setTargetDollar').value=s.targetDollar; if(q('setTargetPercent')) q('setTargetPercent').value=s.targetPercent; if(q('setStopLoss')) q('setStopLoss').value=s.stopLoss; if(q('setMin')) q('setMin').value=s.min; if(q('setMax')) q('setMax').value=s.max; if(q('setCoin')) q('setCoin').value=s.coin; if(q('setTargetNum')) q('setTargetNum').value=s.targetNum; if(q('setDoubleLadder')) q('setDoubleLadder').value=s.doubleLadder||'on'; if(q('setKeypadMode')) q('setKeypadMode').value=s.keypadMode; if(q('setMaxSteps')) q('setMaxSteps').value=s.maxSteps; if(q('setReserve')) q('setReserve').value=s.reserve; if(q('setCapRule')) q('setCapRule').value=s.capRule; if(q('setAttackMode')) q('setAttackMode').value=s.attackMode || 'classic'; if(q('setTheme')) q('setTheme').value=s.theme || 'warhunt'; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; }
+function renderYantra(){ const s=state.settings; if(q('setBankroll')) q('setBankroll').value=s.bankroll; if(q('setTargetDollar')) q('setTargetDollar').value=s.targetDollar; if(q('setTargetPercent')) q('setTargetPercent').value=s.targetPercent; if(q('setStopLoss')) q('setStopLoss').value=s.stopLoss; if(q('setMin')) q('setMin').value=s.min; if(q('setMax')) q('setMax').value=s.max; if(q('setCoin')) q('setCoin').value=s.coin; if(q('setTargetNum')) q('setTargetNum').value=s.targetNum; if(q('setDoubleLadder')) q('setDoubleLadder').value=s.doubleLadder||'on'; if(q('setKeypadMode')) q('setKeypadMode').value=s.keypadMode; if(q('setMaxSteps')) q('setMaxSteps').value=s.maxSteps; if(q('setReserve')) q('setReserve').value=s.reserve; if(q('setCapRule')) q('setCapRule').value=s.capRule; if(q('setAttackMode')) q('setAttackMode').value=s.attackMode || 'classic'; if(q('setTheme')) q('setTheme').value=s.theme || 'warhunt'; if(q('setVaultBg')) q('setVaultBg').value=s.vaultBg || 'bg-molten'; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; }
 function renderMedha(){ const active=[]; const cap=[]; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B') active.push(`${side}[ ${n} ] T${info.step}`); if(info.status==='C') cap.push(`${side}[ ${n} ]`);} }); if(q('medhaPanel')) q('medhaPanel').innerHTML=`<div class="medha-item"><div class="label">Active Summons</div><div style="font-size:16px">${active.join(' | ') || 'None'}</div></div><div class="medha-item"><div class="label">Stunned Summons</div><div style="font-size:16px">${cap.join(' | ') || 'None'}</div></div>`; }
 function renderActiveTab(){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===`screen-${state.activeTab}`)); document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.target===state.activeTab)); if(q('screenTitle')) q('screenTitle').textContent=titles[state.activeTab]||titles.sangram; }
-function renderAll(){ applyTheme(state.settings.theme || 'warhunt'); renderActiveTab(); renderBoards(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderSopana(); renderYantra(); renderMedha(); saveState(); }
+function renderAll(){ applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten'); renderActiveTab(); renderBoards(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderSopana(); renderYantra(); renderMedha(); saveState(); }
 
 function startPrayoga(){ if(state.currentChakra===0 && !(currentKumbh()?.rows?.length)){ state.liveBankroll = state.settings.bankroll; } else if(state.currentChakra!==0 || currentKumbh()?.rows?.length){ state.currentKumbhId=null; state.liveBankroll = state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; } const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID STARTED', `Entering Zone #${String(kumbh.id).padStart(2,'0')}`); }
 async function clearCurrentSession(){ if(!(await askClearKumbh())) return; state.liveBankroll=state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; state.currentKumbhId=null; const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID ABANDONED',`Reset to Zone #${String(kumbh.id).padStart(2,'0')}`); }
@@ -895,6 +903,7 @@ function readYantraSettings(){
   current.capRule = q('setCapRule')?.value || 'on';
   if(q('setAttackMode')) current.attackMode = q('setAttackMode').value || 'classic';
   current.theme = q('setTheme')?.value || 'warhunt';
+  current.vaultBg = q('setVaultBg')?.value || 'bg-molten';
   const stopLossPerNumberValue = Number(q('setStopLossPerNumber')?.value);
   current.stopLossPerNumber = Number.isFinite(stopLossPerNumberValue) ? stopLossPerNumberValue : -100;
   return current;
@@ -903,6 +912,7 @@ async function applyYantraSettings(){
   if(!(await askApplyYantra())) return;
   state.settings = readYantraSettings();
   applyTheme(state.settings.theme || 'warhunt');
+  applyBackground(state.settings.vaultBg || 'bg-molten');
   state.ladder = buildLadder(state.settings);
   const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length);
   if(hasRecordedRows){
