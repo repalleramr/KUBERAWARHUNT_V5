@@ -99,6 +99,18 @@ function ladderCsvContent() {
     for (let i = 1; i <= Math.min(state.settings.maxSteps, 15); i++) { csv += `L2,T${i},${secondLadderBet(i)}\n`; }
     return csv;
 }
+
+function parseCsvToGrid(text){
+  const lines=String(text||'').trim().split(/\r?\n/).filter(Boolean);
+  return lines.map(line=>{
+    const out=[]; let cur=''; let inQuotes=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){ if(inQuotes && line[i+1]==='"'){ cur+='"'; i++; } else inQuotes=!inQuotes; } 
+      else if(ch===',' && !inQuotes){ out.push(cur); cur=''; } else cur+=ch;
+    } out.push(cur); return out;
+  });
+}
 // ============================================================================
 
 let deferredPrompt = null; let historyStack = []; let redoStack = []; let pending = { Y: null, K: null }; let keypadBusy = false;
@@ -417,25 +429,51 @@ async function readUploadedFile(file) {
 }
 
 function processDataImport(text) {
-    const trimmed = text.trim(); 
-    if(trimmed.includes('KumbhId')){ // 🔥 Changed from startsWith to includes to handle BOM characters
-        const grouped=new Map(); 
-        parseSimpleCsvLines(text).forEach(cols=>{ 
-            const kumbhId=Number(cols[0])||0; const chakra=Number(cols[1])||0; if(!kumbhId || !chakra) return; 
-            if(!grouped.has(kumbhId)) grouped.set(kumbhId,{id:kumbhId,rows:[]}); 
-            const target=grouped.get(kumbhId); 
-            if(!target.rows.some(r=>Number(r.chakra)===chakra)) target.rows.push({ chakra, y:(cols[2]==='-'?'':(Number(cols[2])||cols[2])), k:(cols[5]==='-'?'':(Number(cols[5])||cols[5])), cap: cols[8] && cols[8] !== '-' ? cols[8].split(' | ') : [], ret: cols[9] && cols[9] !== '-' ? cols[9].split(' | ') : [], np: cols[10] && cols[10] !== '-' ? cols[10].split(' | ') : [], ahuti:Number(cols[11])||0, axyapatra:Number(cols[12])||0 }); 
-        });
-        state.granth=[...grouped.values()].sort((a,b)=>a.id-b.id); 
-        state.currentKumbhId=state.granth.at(-1)?.id||null; 
-        pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings();
-    } else {
-        const parsed=JSON.parse(text);
-        if(parsed && parsed.state){ restoreSnapshot(parsed); }
-        else if(parsed && parsed.granth){ state = reviveState({ ...freshState(), granth: parsed.granth, currentKumbhId: parsed.granth.at(-1)?.id||null, settings: parsed.settings || state.settings }); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings(); }
-        else { state = reviveState(parsed); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; }
+    const trimmed = String(text || '').trim();
+    
+    // SAFE CHECK: If it looks like JSON, parse as JSON
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+            const parsed=JSON.parse(trimmed);
+            if(parsed && parsed.state){ restoreSnapshot(parsed); }
+            else if(parsed && parsed.granth){ state = reviveState({ ...freshState(), granth: parsed.granth, currentKumbhId: parsed.granth.at(-1)?.id||null, settings: parsed.settings || state.settings }); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings(); }
+            else { state = reviveState(parsed); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; }
+            renderAll(); showToast('GRANTH LOADED','JSON imported successfully');
+        } catch(e) {
+            console.error(e);
+            showToast('IMPORT FAILED', 'Invalid JSON structure', 'warn');
+        }
+    } 
+    // OTHERWISE: Treat as CSV / XLSX
+    else {
+        try {
+            const grouped=new Map();
+            const grid = parseCsvToGrid(trimmed);
+            
+            // Skip header if it is present
+            let dataRows = grid;
+            if (grid.length > 0 && grid[0].length > 0 && String(grid[0][0]).includes('KumbhId')) {
+                dataRows = grid.slice(1);
+            }
+            
+            dataRows.forEach(cols=>{ 
+                const kumbhId=Number(cols[0])||0; const chakra=Number(cols[1])||0; if(!kumbhId || !chakra) return; 
+                if(!grouped.has(kumbhId)) grouped.set(kumbhId,{id:kumbhId,rows:[]}); 
+                const target=grouped.get(kumbhId); 
+                if(!target.rows.some(r=>Number(r.chakra)===chakra)) target.rows.push({ chakra, y:(cols[2]==='-'?'':(Number(cols[2])||cols[2])), k:(cols[5]==='-'?'':(Number(cols[5])||cols[5])), cap: cols[8] && cols[8] !== '-' ? cols[8].split(' | ') : [], ret: cols[9] && cols[9] !== '-' ? cols[9].split(' | ') : [], np: cols[10] && cols[10] !== '-' ? cols[10].split(' | ') : [], ahuti:Number(cols[11])||0, axyapatra:Number(cols[12])||0 }); 
+            });
+            
+            if(grouped.size === 0) throw new Error("No data found");
+            
+            state.granth=[...grouped.values()].sort((a,b)=>a.id-b.id); 
+            state.currentKumbhId=state.granth.at(-1)?.id||null; 
+            pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings();
+            renderAll(); showToast('GRANTH LOADED','Spreadsheet imported successfully');
+        } catch(e) {
+            console.error(e);
+            showToast('IMPORT FAILED', 'Could not read CSV/XLSX data', 'warn');
+        }
     }
-    renderAll(); showToast('GRANTH LOADED','History imported successfully');
 }
 
 async function importGranthJson(e){ 
@@ -508,7 +546,8 @@ function buildSheetXml(rows){
 }
 function buildXlsxWorkbook(kumbhs){
   const enc=new TextEncoder(); const files=[]; const add=(name,content)=>files.push({name,data:enc.encode(content)});
-  const rawRows = parseSimpleCsvLines(granthCsvContent()); const sheetEntries = (kumbhs||[]).length ? [...kumbhs, {name:'SystemData', rows: rawRows}] : [{name:'SystemData', rows:[['No data']]}];
+  const rawRows = parseCsvToGrid(granthCsvContent()); // 🔥 FIXED TO INCLUDE HEADER IN EXCEL
+  const sheetEntries = (kumbhs||[]).length ? [...kumbhs, {name:'SystemData', rows: rawRows}] : [{name:'SystemData', rows:[['No data']]}];
   const wbSheets=sheetEntries.map((s,i)=>`<sheet name="${xmlEscape(sheetNameSafe(s.name,`Sheet${i+1}`))}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('');
   const wbRels=sheetEntries.map((s,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('');
   const contentOverrides=sheetEntries.map((s,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('');
@@ -549,17 +588,6 @@ function granthWorkbookSheets(){
   });
 }
 
-function parseSimpleCsvLines(text){
-  const lines=String(text||'').trim().split(/\r?\n/).filter(Boolean);
-  return lines.slice(1).map(line=>{
-    const out=[]; let cur=''; let inQuotes=false;
-    for(let i=0;i<line.length;i++){
-      const ch=line[i];
-      if(ch==='"'){ if(inQuotes && line[i+1]==='"'){ cur+='"'; i++; } else inQuotes=!inQuotes; } 
-      else if(ch===',' && !inQuotes){ out.push(cur); cur=''; } else cur+=ch;
-    } out.push(cur); return out;
-  });
-}
 function granthCsvContent(){
   const header='KumbhId,Chakra,Y,YSel,YHit,K,KSel,KHit,Cap,Ret,NP,Ah,Ax,Side,Number,SelectedRound,HitRound,TravelSteps,SelectCode,HitCode\n'; const rows=[];
   state.granth.forEach(k=>{
@@ -573,60 +601,90 @@ function granthCsvContent(){
   }); return header + rows.join('\n');
 }
 
-async function saveWithPicker(name, content, type) {
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  if (!isMobile && window.showSaveFilePicker) {
-    try {
-      let ext = '.csv'; let desc = 'CSV Files';
-      if (name.endsWith('.json')) { ext = '.json'; desc = 'JSON Files'; } else if (name.endsWith('.xlsx')) { ext = '.xlsx'; desc = 'Excel Files'; }
-      const handle = await window.showSaveFilePicker({ suggestedName: name, types: [{ description: desc, accept: { [type]: [ext] } }] });
-      const writable = await handle.createWritable(); await writable.write(content); await writable.close(); return true; 
-    } catch (err) { 
-      if (err && err.name === 'AbortError') return null; 
-      console.warn('File Picker Blocked, bypassing directly to download...', err); 
-    }
-  } return false; 
-}
-
+// ============================================================================
+// 🔥 BULLETPROOF EXPORT WITH IMMEDIATE PATH PICKER 🔥
+// ============================================================================
 function exportPayload(){ return { app:'Kubera_V5Pro Final locked', version:'Kubera_V5Pro Final locked', exportedAt:new Date().toISOString(), state, pending, historyStack, redoStack }; }
-async function exportGranthJson(){ const content=JSON.stringify(exportPayload(),null,2); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.json',content,'application/json'); if(saved===null) return; if(!saved) downloadFile('Kubera_V5Pro_Final_locked.json',content,'application/json'); showToast('GRANTH EXPORTED','JSON saved'); }
-async function exportGranthCsv(){ const content=granthCsvContent(); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.csv',content,'text/csv'); if(saved===null) return; if(!saved) downloadFile('Kubera_V5Pro_Final_locked.csv',content,'text/csv'); showToast('GRANTH EXPORTED','CSV saved'); }
-async function exportGranthXlsx(){ const blob=buildXlsxWorkbook(granthWorkbookSheets()); const saved=await saveWithPicker('Kubera_V5Pro_Final_locked.xlsx',blob,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); if(saved===null) return; if(!saved) downloadBlob('Kubera_V5Pro_Final_locked.xlsx',blob); showToast('GRANTH EXPORTED','XLSX workbook saved'); }
+
+async function runExport(format) {
+    let handle = null;
+    let fileName = 'Kubera_V5Pro_Final_locked.' + format;
+    let fileType = ''; let mimeType = '';
+    
+    if (format === 'json') { fileType = 'JSON Files'; mimeType = 'application/json'; }
+    else if (format === 'csv') { fileType = 'CSV Files'; mimeType = 'text/csv'; }
+    else if (format === 'xlsx') { fileType = 'Excel Files'; mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; }
+
+    // 1. Instantly trigger the File Picker BEFORE any heavy processing (Requires user gesture)
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (!isMobile && window.showSaveFilePicker) {
+        try {
+            handle = await window.showSaveFilePicker({
+                suggestedName: fileName,
+                types: [{ description: fileType, accept: { [mimeType]: ['.' + format] } }]
+            });
+        } catch (err) {
+            if (err.name === 'AbortError') return; // User closed the save dialog
+            console.warn('Picker blocked, falling back to instant download.', err);
+        }
+    }
+
+    // 2. Do the heavy file generation safely AFTER the path is chosen
+    showToast('EXPORTING...', 'Generating file data...', 'warn');
+    await new Promise(r => setTimeout(r, 10)); // Give UI a micro-tick to breathe
+
+    let content;
+    if (format === 'json') { content = JSON.stringify(exportPayload(), null, 2); } 
+    else if (format === 'csv') { content = granthCsvContent(); } 
+    else if (format === 'xlsx') { content = buildXlsxWorkbook(granthWorkbookSheets()); }
+
+    // 3. Save the data to the path
+    if (handle) {
+        try {
+            const writable = await handle.createWritable();
+            await writable.write(content);
+            await writable.close();
+            showToast('GRANTH EXPORTED', `${format.toUpperCase()} saved successfully`);
+            return;
+        } catch(e) {
+            console.error('File write failed', e);
+        }
+    }
+
+    // Fallback: If File Picker failed, just download it to the default folder
+    const blob = (content instanceof Blob) ? content : new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+    showToast('GRANTH EXPORTED', `${format.toUpperCase()} downloaded`);
+}
 
 async function exportLadderCsv(){ 
-    syncFirstLadderFromInputs(); const content=ladderCsvContent(); 
-    const saved = await saveWithPicker('sopana-ladder.csv', content, 'text/csv');
-    if (saved === null) return; 
-    if (!saved) downloadFile('sopana-ladder.csv', content, 'text/csv');
-    showToast('SOPANA EXPORTED','Ladder CSV saved'); 
+    syncFirstLadderFromInputs(); 
+    const content = ladderCsvContent(); 
+    let handle = null;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (!isMobile && window.showSaveFilePicker) {
+        try { handle = await window.showSaveFilePicker({ suggestedName: 'sopana-ladder.csv', types: [{ description: 'CSV Files', accept: { 'text/csv': ['.csv'] } }] }); } 
+        catch (err) { if (err.name === 'AbortError') return; }
+    }
+    
+    if (handle) {
+        const writable = await handle.createWritable();
+        await writable.write(content); await writable.close();
+        showToast('SOPANA EXPORTED','Ladder CSV saved'); return;
+    }
+    
+    const blob = new Blob([content], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'sopana-ladder.csv'; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 500); showToast('SOPANA EXPORTED','Ladder CSV saved');
 }
 
-async function importLadderCsv(e){ 
-  const file=e.target.files[0]; if(!file) return; 
-  try {
-      const text = await readUploadedFile(file);
-      const lines=text.trim().split(/\r?\n/).slice(1).filter(Boolean); let cumulative1=0, cumulative2=0; 
-      lines.forEach(line=>{ 
-          const [ladder,stepLabel,betRaw]=line.split(','); const idx=Math.max(0, Number(String(stepLabel).replace(/\D/g,''))-1); const bet=Number(betRaw)||0; 
-          if(String(ladder).trim().toUpperCase()==='L2'){ cumulative2 += bet; } 
-          else { cumulative1 += bet; state.ladder[idx] = { step:`T${idx+1}`, bet, winReturn:bet*9, netProfit:(bet*9)-cumulative1, ifLoseTotal:-cumulative1 }; } 
-      }); 
-      const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA LOADED','Ladder loaded'); 
-  } catch(err) { showToast('ERROR', 'Failed to read ladder file', 'warn'); } 
-  finally { e.target.value=''; }
-}
-
-async function importDrishtiCsv(e){ 
-  const file=e.target.files[0]; if(!file) return; 
-  try {
-      const text = await readUploadedFile(file);
-      state.drishti=text.trim().split(/\r?\n/).slice(1).filter(Boolean).map(line=>{ const [side,number,activationChakra,winChakra,steps,prevLoss,winBet,net,status]=line.split(','); return {side,number,activationChakra,winChakra,steps,prevLoss,winBet,net,status}; }); renderAll(); showToast('DRISHTI LOADED','File imported'); 
-  } catch(err) { showToast('ERROR', 'Could not read file', 'warn'); } 
-  finally { e.target.value=''; }
-}
-
-function downloadFile(name,content,type){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
-function downloadBlob(name,blob){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
 function setupInstall(){ window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(q('installBtn')) q('installBtn').classList.remove('hidden'); }); if(q('installBtn')) q('installBtn').onclick = async()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; if(q('installBtn')) q('installBtn').classList.add('hidden'); }; }
 
 function readYantraSettings(){
@@ -665,11 +723,10 @@ function setupControls(){
   bindClick('loadCsvBtn', ()=>q('loadCsvFile').click()); 
   const lcf = q('loadCsvFile'); if(lcf) lcf.onchange = importDrishtiCsv;
   
+  // 🔥 FIRE THE NEW BULLETPROOF EXPORT FUNCTION
   bindClick('exportGranthBtn', () => {
     const fmt = q('granthExportFormat')?.value || 'json';
-    if (fmt === 'csv') exportGranthCsv();
-    else if (fmt === 'xlsx') exportGranthXlsx();
-    else exportGranthJson();
+    runExport(fmt);
   });
 
   bindClick('importGranthBtn', () => q('importGranthFile').click());
