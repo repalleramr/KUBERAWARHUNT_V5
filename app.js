@@ -236,6 +236,15 @@ function renderSangram(){
 
 function formatRoundInfoEntries(entries){ return entries.length ? entries.join(', ') : '-'; }
 
+// 🔥 FIX FOR EXCEL EXPORT HOT/COOL CRASH 🔥
+function sideStatsSummary(counts){ 
+    const entries = Object.entries(counts).filter(([n])=>n!=='0'); 
+    return { 
+        hot: entries.filter(([,v])=>v>=4).map(([n,v])=> `${n}(${v})`), 
+        cool: entries.filter(([,v])=>v<4).map(([n,v])=> `${n}(${v})`) 
+    }; 
+}
+
 function kumbhInsights(rows){
   const sortedRows = [...(rows||[])].sort((a,b)=>(Number(a.chakra)||0)-(Number(b.chakra)||0));
   const rowMeta = new Map(); 
@@ -257,9 +266,14 @@ function kumbhInsights(rows){
     processSide('Y', row.y, chakra, meta); processSide('K', row.k, chakra, meta); rowMeta.set(chakra, meta);
   }
   
-  const yStats = Object.entries(counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`<span class="pill">[${n}]: ${c}</span>`);
-  const kStats = Object.entries(counts.K).filter(([n])=>n!=='0').map(([n,c])=>`<span class="pill">[${n}]: ${c}</span>`);
-  return { rowMeta, counts, details, yRptHTML: yStats.join(' '), kRptHTML: kStats.join(' ') };
+  const yStats = Object.entries(counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`<span class="pill">[${romanMap[Number(n)]}]: ${c}</span>`);
+  const kStats = Object.entries(counts.K).filter(([n])=>n!=='0').map(([n,c])=>`<span class="pill">[${romanMap[Number(n)]}]: ${c}</span>`);
+  
+  return { 
+      rowMeta, counts, details, 
+      yRptHTML: yStats.join(' '), kRptHTML: kStats.join(' '),
+      yStats: sideStatsSummary(counts.Y), kStats: sideStatsSummary(counts.K) 
+  };
 }
 
 function renderGranth(){
