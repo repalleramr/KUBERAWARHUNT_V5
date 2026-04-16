@@ -1,0 +1,328 @@
+/* ========================================================================
+   🔥 THEME VARIABLES (10 MYTHOLOGY RELICS)
+   ======================================================================== */
+:root {
+  --bg:#120a05; --bg-2:#0d0704; --panel:#1b120b; --panel-2:#23170e; --surface:#130c07; --surface-2:#1a110a; 
+  --gold:#f6c66b; --gold-soft:#d9a64d; --text:#f7ebd1; --muted:#bda783; --red:#cf4c3c; --green:#40b46b; 
+  --cyan:#42b7c8; --blue:#4f83d3; --orange:#d9853a; --shell-top:rgba(18,10,5,.98); --shell-mid:rgba(18,10,5,.9); 
+  --card-grad:linear-gradient(180deg,rgba(35,23,14,.98),rgba(22,14,9,.98)); --btn-bg:#2d1d11; 
+  --tile-bg1:#302114; --tile-bg2:#20150d; --state-cell-bg:#23170e; --table-bg:#1a110a; --shadow:0 8px 24px rgba(0,0,0,.28);
+}
+
+:root[data-theme="warhunt"] { --bg:#120a05; --bg-2:#0d0704; --panel:#1b120b; --panel-2:#23170e; --surface:#130c07; --surface-2:#1a110a; --gold:#f6c66b; --gold-soft:#d9a64d; --text:#f7ebd1; --muted:#bda783; --shell-top:rgba(18,10,5,.98); --shell-mid:rgba(18,10,5,.9); --card-grad:linear-gradient(180deg,rgba(35,23,14,.98),rgba(22,14,9,.98)); --btn-bg:#2d1d11; --tile-bg1:#302114; --tile-bg2:#20150d; --state-cell-bg:#23170e; --table-bg:#1a110a; }
+:root[data-theme="temple"] { --bg:#2a1408; --bg-2:#140b05; --panel:#2a1b10; --panel-2:#3a2314; --surface:#1a1008; --surface-2:#24160d; --gold:#ffcf83; --gold-soft:#f0a94a; --text:#fff0db; --muted:#d8b98a; --shell-top:rgba(42,20,8,.98); --shell-mid:rgba(42,20,8,.9); --card-grad:linear-gradient(180deg,rgba(58,35,20,.98),rgba(30,18,11,.98)); --btn-bg:#402616; --tile-bg1:#4b2b15; --tile-bg2:#2b1a0f; --state-cell-bg:#2f1b10; --table-bg:#23150d; }
+:root[data-theme="vault"] { --bg:#071a11; --bg-2:#04110b; --panel:#102319; --panel-2:#173125; --surface:#0c1a13; --surface-2:#12261d; --gold:#d9c46d; --gold-soft:#9fd08d; --text:#eaf7ee; --muted:#9eb6a6; --shell-top:rgba(7,26,17,.98); --shell-mid:rgba(7,26,17,.9); --card-grad:linear-gradient(180deg,rgba(16,35,25,.98),rgba(10,24,17,.98)); --btn-bg:#143226; --tile-bg1:#204232; --tile-bg2:#10261c; --state-cell-bg:#10281e; --table-bg:#0d1d15; }
+:root[data-theme="oracle"] { --bg:#0b1024; --bg-2:#050816; --panel:#151c38; --panel-2:#1d2647; --surface:#0d1224; --surface-2:#121831; --gold:#bfa4ff; --gold-soft:#7f96ff; --text:#eef0ff; --muted:#a3aad1; --shell-top:rgba(11,16,36,.98); --shell-mid:rgba(11,16,36,.9); --card-grad:linear-gradient(180deg,rgba(21,28,56,.98),rgba(13,18,36,.98)); --btn-bg:#1c2550; --tile-bg1:#27335f; --tile-bg2:#151d3d; --state-cell-bg:#171f41; --table-bg:#10162d; }
+:root[data-theme="crimson"] { --bg:#2a0a0d; --bg-2:#130507; --panel:#341116; --panel-2:#4a151c; --surface:#1d090c; --surface-2:#270d12; --gold:#ffb7b7; --gold-soft:#ff7d7d; --text:#fff0ef; --muted:#d5a4a4; --shell-top:rgba(42,10,13,.98); --shell-mid:rgba(42,10,13,.9); --card-grad:linear-gradient(180deg,rgba(52,17,22,.98),rgba(28,11,15,.98)); --btn-bg:#4c1820; --tile-bg1:#5b1f29; --tile-bg2:#331015; --state-cell-bg:#331016; --table-bg:#230b0f; }
+:root[data-theme="onyx"] { --bg:#09090c; --bg-2:#040405; --panel:#151518; --panel-2:#202026; --surface:#0f0f12; --surface-2:#151519; --gold:#d1d1d1; --gold-soft:#9b9b9b; --text:#f3f3f3; --muted:#a0a0a8; --shell-top:rgba(9,9,12,.98); --shell-mid:rgba(9,9,12,.9); --card-grad:linear-gradient(180deg,rgba(21,21,24,.98),rgba(13,13,16,.98)); --btn-bg:#1f1f24; --tile-bg1:#26262c; --tile-bg2:#16161a; --state-cell-bg:#18181c; --table-bg:#121215; }
+:root[data-theme="sapphire"] { --bg:#07162c; --bg-2:#040a15; --panel:#102847; --panel-2:#17355a; --surface:#0d1d34; --surface-2:#132742; --gold:#9ad7ff; --gold-soft:#6aa9ff; --text:#eef6ff; --muted:#a8bfd8; --shell-top:rgba(7,22,44,.98); --shell-mid:rgba(7,22,44,.9); --card-grad:linear-gradient(180deg,rgba(16,40,71,.98),rgba(11,27,49,.98)); --btn-bg:#173b66; --tile-bg1:#1d4b7a; --tile-bg2:#102d52; --state-cell-bg:#123052; --table-bg:#0f213b; }
+:root[data-theme="emerald"] { --bg:#071f17; --bg-2:#03110d; --panel:#103226; --panel-2:#174232; --surface:#0c1c15; --surface-2:#10271e; --gold:#b6f0c3; --gold-soft:#72d39a; --text:#eefbf1; --muted:#a4c7b2; --shell-top:rgba(7,31,23,.98); --shell-mid:rgba(7,31,23,.9); --card-grad:linear-gradient(180deg,rgba(16,50,38,.98),rgba(11,28,21,.98)); --btn-bg:#164736; --tile-bg1:#1d5b44; --tile-bg2:#0f3226; --state-cell-bg:#12382b; --table-bg:#0d231b; }
+:root[data-theme="moon"] { --bg:#161526; --bg-2:#0c0b14; --panel:#24233a; --panel-2:#2f2d47; --surface:#141324; --surface-2:#1a1930; --gold:#d9d2ff; --gold-soft:#9f8dff; --text:#f5f2ff; --muted:#b7b0d2; --shell-top:rgba(22,21,38,.98); --shell-mid:rgba(22,21,38,.9); --card-grad:linear-gradient(180deg,rgba(36,35,58,.98),rgba(22,20,40,.98)); --btn-bg:#2b2847; --tile-bg1:#34305d; --tile-bg2:#1e1c39; --state-cell-bg:#20203b; --table-bg:#17162c; }
+:root[data-theme="thunder"] { --bg:#10131f; --bg-2:#060810; --panel:#1b2235; --panel-2:#27314a; --surface:#101521; --surface-2:#151b2a; --gold:#d8e4ff; --gold-soft:#8baeff; --text:#f2f6ff; --muted:#a6b1ca; --shell-top:rgba(16,19,31,.98); --shell-mid:rgba(16,19,31,.9); --card-grad:linear-gradient(180deg,rgba(27,34,53,.98),rgba(16,21,33,.98)); --btn-bg:#242e49; --tile-bg1:#2e3b5c; --tile-bg2:#181f31; --state-cell-bg:#1c2439; --table-bg:#131829; }
+
+/* ========================================================================
+   🔥 BASE LAYOUT & TYPOGRAPHY
+   ======================================================================== */
+*{box-sizing:border-box}
+html,body{height:100%; overflow-x: hidden; touch-action: manipulation;}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text)}
+button,input,select,table{font:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation; outline: none;}
+.hidden{display:none!important}
+#app{min-height:100dvh;padding-bottom:76px;position:relative;z-index:2;} 
+
+.fixed-shell{position:sticky;top:0;z-index:30;padding:6px 8px 0;background:linear-gradient(180deg,var(--shell-top),var(--shell-mid) 78%,rgba(0,0,0,0))} 
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{font-weight:800;letter-spacing:.08em;color:var(--gold);font-size:12px} 
+.screen-title{font-weight:900;font-size:18px; text-shadow: 0 0 10px var(--gold); letter-spacing: 1px;} 
+.install-btn{border:1px solid var(--gold);background:rgba(255,255,255,.05);color:var(--gold);padding:6px 10px;border-radius:12px; font-size: 12px;}
+
+.content-pad{padding:4px 8px 80px;} 
+.screen{display:none}
+.screen.active{display:block; animation: fadeInTab 0.3s ease-out;}
+@keyframes fadeInTab { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ========================================================================
+   🔥 CLASSIC GAMING BOARD LAYOUT (Matches your Screenshot)
+   ======================================================================== */
+
+.boards-compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background: transparent !important;
+    margin-top: 4px;
+}
+
+.board-block {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.board-title {
+    font-weight: 800;
+    color: var(--gold);
+    margin: 0 0 6px 4px;
+    font-size: 13px;
+    text-align: left;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px var(--gold);
+    letter-spacing: 1px;
+}
+
+.treasure-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-height: 230px;
+}
+
+.treasure-grid .zero { grid-column: 2; }
+
+/* 🔥 The Arcade Keys (Gold/Brown Gradient like screenshot) 🔥 */
+.treasure-grid .tile {
+    position: relative;
+    min-height: 65px;
+    border-radius: 12px !important;
+    background: linear-gradient(145deg, var(--gold-soft), var(--tile-bg2)) !important;
+    border: 1px solid var(--gold) !important;
+    box-shadow: inset 1px 1px 3px rgba(255,255,255,0.4), inset -2px -3px 6px rgba(0,0,0,0.5), 0 4px 0 var(--panel-2), 0 5px 8px rgba(0,0,0,0.6) !important;
+    color: var(--bg) !important; 
+    font-weight: 900;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+}
+
+/* Key Press / Tap Effect */
+.treasure-grid .tile:active, .tile.key-glow {
+    transform: translateY(4px) scale(0.96) !important;
+    box-shadow: inset 2px 2px 10px rgba(0,0,0,0.6), 0 0 0 var(--panel-2), 0 0 12px var(--gold) !important;
+    background: linear-gradient(145deg, var(--gold), var(--gold-soft)) !important;
+}
+
+/* Hide raw HTML numbers */
+.treasure-grid .tile .num { display: none !important; }
+
+/* ========================================================================
+   🔥 FIXED "T1" TEXT (No boxes, clean outlined text on the edge)
+   ======================================================================== */
+.treasure-grid .tile .meta {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    background: transparent !important; /* Forces NO BOX */
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    font-size: 13px !important; 
+    font-weight: 900 !important;
+    color: #FFFFFF !important;
+    
+    /* Heavy black text-shadow creates a clean outline instead of a box */
+    text-shadow: 
+        -1.5px -1.5px 0 #000,  
+         1.5px -1.5px 0 #000,
+        -1.5px  1.5px 0 #000,
+         1.5px  1.5px 0 #000,
+         0      2px   4px rgba(0,0,0,0.9) !important;
+         
+    z-index: 10;
+    text-align: right;
+    opacity: 1 !important;
+    pointer-events: none;
+}
+
+/* Color codes for the tiers (Text changes color, outline stays black) */
+.tile .meta.step1 { color: #40b46b !important; } 
+.tile .meta.step2 { color: #42b7c8 !important; } 
+.tile .meta.step3 { color: #4f83d3 !important; } 
+.tile .meta.step4 { color: #ffd285 !important; } 
+.tile .meta.step5, .tile .meta.step6 { color: #ff4d4d !important; }
+
+/* ========================================================================
+   🔥 DECOY AESTHETICS & POPUPS
+   ======================================================================== */
+.decoy-symbol {
+    font-size: 32px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+    animation: shufflePop 0.3s ease-out;
+}
+@keyframes shufflePop { 0% { transform: scale(0.5) rotate(15deg); opacity: 0; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+
+.decoy-score {
+    font-size: 16px; font-weight: 900; color: #FFF; background: rgba(0,0,0,0.7); 
+    padding: 5px 8px; border-radius: 10px; border: 1px solid var(--gold); 
+    text-shadow: 0 0 10px var(--gold); z-index: 5;
+    animation: winPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes winPop { 0% { transform: scale(0.1) rotate(-10deg); } 50% { transform: scale(1.2) rotate(5deg); } 100% { transform: scale(1) rotate(0deg); } }
+
+/* Loot & Stun Tile Styles */
+.treasure-grid .tile.state-C {
+    background: linear-gradient(145deg, rgba(139, 0, 0, 0.6), rgba(40, 10, 10, 0.9)) !important;
+    border: 1px solid #ff4d4d !important;
+    box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.4), 0 5px 8px rgba(0,0,0,0.6) !important;
+}
+.tile.state-L {
+    background: linear-gradient(145deg, var(--panel-2), var(--bg)) !important;
+    color: var(--gold) !important; box-shadow: inset 0 0 15px var(--gold) !important;
+}
+
+.decoy-stun {
+    font-size: 32px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+    animation: stunPulse 2s ease-in-out infinite;
+}
+@keyframes stunPulse { 0%, 100% { transform: scale(0.9); opacity: 0.6; } 50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 15px #ff4d4d); } }
+
+.particle {
+    position: fixed; pointer-events: none; z-index: 9999; font-size: 32px;
+    animation: explodeParticle 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+@keyframes explodeParticle {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.5) rotate(45deg); opacity: 0; }
+}
+
+/* Stage Cleared Popup */
+.stage-popup {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
+    background: radial-gradient(circle, rgba(255,215,0,0.95) 0%, rgba(255,140,0,0.95) 100%);
+    color: #fff; font-size: 28px; font-weight: 900; text-align: center;
+    padding: 20px 40px; border-radius: 24px; border: 4px solid #fff;
+    box-shadow: 0 0 50px rgba(255,215,0,1), inset 0 0 20px rgba(255,255,255,0.8);
+    text-shadow: 2px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+    z-index: 999999; pointer-events: none;
+    animation: popupAnim 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.stage-popup span { font-size: 46px; display: block; margin-top: -5px; letter-spacing: 2px; }
+@keyframes popupAnim {
+    0% { transform: translate(-50%, -50%) scale(0.1) rotate(-15deg); opacity: 0; }
+    15% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); opacity: 1; }
+    80% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+/* ========================================================================
+   🔥 UI CARDS, TABLES & DASHBOARD CONTROLS
+   ======================================================================== */
+.bankroll-card{margin-top:4px !important;} 
+.card, .compact-card, .chakra-card, .yantra-card {
+  position: relative; background: rgba(0, 0, 0, 0.6) !important; backdrop-filter: blur(10px);
+  border: none !important; border-radius: 14px !important;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 5px 15px rgba(0,0,0,0.6) !important; z-index: 2; padding:8px 12px;
+}
+.card::after, .compact-card::after, .chakra-card::after, .yantra-card::after {
+  content: ''; position: absolute; inset: -2px; border-radius: 16px;
+  background: linear-gradient(60deg, var(--gold), var(--bg-2), var(--gold-soft), var(--panel), var(--gold));
+  background-size: 300% 300%; z-index: -1; animation: flowingBorder 6s linear infinite; opacity: 0.8;
+}
+@keyframes flowingBorder { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+.label{color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase; margin-bottom: 4px;}
+.bank { font-size: 26px !important; font-weight: 900; background: linear-gradient(to bottom, #FFF, var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: breatheBank 2.5s ease-in-out infinite; }
+@keyframes breatheBank { 0%, 100% { text-shadow: 0 0 10px var(--gold-soft), 0 0 20px var(--panel); transform: scale(1); } 50% { text-shadow: 0 0 15px var(--gold), 0 0 30px var(--bg); transform: scale(1.02); } }
+
+.compact-card{margin-top:8px !important;} 
+.ahuti-row,.total{margin-top:4px;font-weight:700;line-height:1.3; font-size: 14px;}
+.total{color:var(--gold)}
+.chakra-line{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.chakra-value{font-size:18px;font-weight:900;margin-top:2px; color: #FFF;}
+
+.controls button,.btn-row button,.save-wrap button,.bottom-nav button{border:none;border-radius:10px;padding:10px 12px;background:var(--btn-bg);color:var(--text);border:1px solid var(--gold); transition: all 0.2s; font-size: 13px; font-weight: 700; user-select:none;}
+.controls button:active, .btn-row button:active, .strip-btn:active { transform: scale(0.92); box-shadow: 0 0 15px var(--gold); }
+.warn{background:#5a1d24!important;border-color:rgba(207,76,60,.4)!important; color: #ffb7b7 !important;}
+
+.split-grid,.summary-grid{display:grid;grid-template-columns:1fr;gap:8px}
+.state-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+.state-cell{min-height:75px;border-radius:14px;background:var(--state-cell-bg);border:1px solid var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);}
+.state-cell .num{font-size:24px;font-weight:900; color: #FFF;}
+.state-cell .meta{font-size:12px;color:var(--muted);font-weight:800}
+
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap; margin-bottom: 8px;}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap}
+.action-strip{display:flex;gap:8px;flex-wrap:wrap}
+.strip-btn{flex:1 1 0;min-width:0; padding: 12px 6px !important; font-weight: 900 !important; font-size: 20px !important;}
+
+.table-wrap{margin-top:8px;overflow:auto;border-radius:12px;border:1px solid var(--gold);-webkit-overflow-scrolling:touch; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);}
+table{width:100%;border-collapse:collapse;min-width:420px;background:rgba(0,0,0,0.6);table-layout:fixed}
+th,td{padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;font-size:12px;white-space:nowrap}
+th{position:sticky;top:0;background:var(--panel-2);color:var(--gold); font-weight: 900;}
+.stat-value{font-size:24px;font-weight:900;margin-top:4px;color:var(--gold); text-shadow: 0 0 10px var(--gold);}
+
+.settings-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px;max-height:calc(100dvh - 280px);overflow:auto;padding-right:4px}
+.settings-grid label{display:flex;flex-direction:column;gap:6px}
+.settings-grid span{font-size:12px;color:var(--muted);font-weight:800}
+.settings-grid input,.settings-grid select,#ladderTable input,#secondLadderTable input{width:100%;background:rgba(0,0,0,0.8);border:1px solid var(--gold);color:#FFF;padding:10px 12px;border-radius:10px; font-size: 14px; font-weight: 700;}
+#ladderTable input,#secondLadderTable input{width:8ch;min-width:8ch;max-width:9ch;padding:8px;text-align:right;}
+.save-wrap{margin-top:16px}
+
+.medha-panel{display:grid;gap:12px;margin-top:8px}
+.medha-item{padding:12px;border:1px solid var(--gold);border-radius:12px;background:rgba(0,0,0,0.6); font-size: 14px;}
+
+/* ========================================================================
+   🔥 BULLETPROOF MODALS & TOASTS
+   ======================================================================== */
+.modal-overlay{position:fixed;inset:0;z-index:99999;background:rgba(6,4,3,.85); backdrop-filter: blur(8px); display:flex;align-items:center;justify-content:center;padding:16px; pointer-events: auto;}
+.modal-card{width:min(92vw,420px);background:var(--card-grad);border:2px solid var(--gold);border-radius:20px;padding:20px;box-shadow:0 24px 54px rgba(0,0,0,.9),0 0 40px var(--gold); animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);}
+@keyframes modalPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.modal-title{font-size:15px;color:var(--gold);font-weight:900;letter-spacing:.1em;text-transform:uppercase; text-shadow: 0 0 10px var(--gold);}
+.modal-text{margin-top:12px;font-size:18px;font-weight:700;line-height:1.4; color: #FFF;}
+.modal-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:20px}
+.modal-actions button{min-width:90px;border-radius:12px;padding:12px 16px;background:var(--btn-bg);color:#FFF;border:1px solid var(--gold); font-weight: 900; font-size: 14px;}
+.modal-actions button.warn{background:linear-gradient(180deg, #8B0000, #5a1d24);border-color:#ff4d4d; box-shadow: 0 0 15px rgba(255,0,0,0.4);}
+
+.toast-layer{position:fixed;top:16px;left:50%;transform:translateX(-50%);width:min(94vw,420px);z-index:9999;display:grid;gap:8px;pointer-events:none}
+.toast{background:rgba(10,5,0,.98);border:2px solid var(--gold);color:#FFF;padding:12px 16px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.8),0 0 20px var(--gold);animation:toastIn .2s cubic-bezier(0.175, 0.885, 0.32, 1.275), toastOut .35s ease 3.25s forwards}
+.toast .title{font-size:12px;color:var(--gold);font-weight:900;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.toast.warn{border-color:#ff4d4d;box-shadow:0 10px 30px rgba(0,0,0,.8),0 0 20px rgba(255,77,77,.4);}
+@keyframes toastIn{from{opacity:0;transform:translateY(-20px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-10px) scale(.95)}}
+
+/* ========================================================================
+   🔥 RPG STEALTH MODE BACKGROUNDS
+   ======================================================================== */
+body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85) 120%); pointer-events: none; z-index: 1; }
+body[data-vault-bg="bg-molten"] { background: radial-gradient(ellipse at 50% 20%, rgba(80, 55, 15, 0.95), rgba(15, 8, 2, 1)), url('https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=2000&auto=format&fit=crop') center/cover fixed !important; background-blend-mode: multiply; }
+body[data-vault-bg="bg-hoard"] { background: radial-gradient(ellipse at 50% 20%, rgba(60, 40, 10, 0.90), rgba(5, 2, 0, 1)), url('https://images.unsplash.com/photo-1621504450181-5d356f61d307?q=80&w=2000&auto=format&fit=crop') center/cover fixed !important; background-blend-mode: multiply; }
+body[data-vault-bg="bg-aura"] { background: radial-gradient(ellipse at 50% 20%, rgba(50, 35, 10, 0.85), rgba(10, 5, 5, 1)), url('https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=2000&auto=format&fit=crop') center/cover fixed !important; background-blend-mode: overlay; }
+body[data-vault-bg="bg-temple"] { background: radial-gradient(ellipse at 50% 20%, rgba(40, 25, 15, 0.9), rgba(5, 5, 5, 1)), url('https://images.unsplash.com/photo-1505909182942-e2f09aee3e89?q=80&w=2000&auto=format&fit=crop') center/cover fixed !important; background-blend-mode: multiply; }
+body { background: radial-gradient(ellipse at 50% 20%, rgba(80, 55, 15, 0.95), rgba(15, 8, 2, 1)), url('https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=2000&auto=format&fit=crop') center/cover fixed !important; background-blend-mode: multiply; }
+
+/* ========================================================================
+   🔥 BOTTOM NAVIGATION (MOBILE SAFE)
+   ======================================================================== */
+.bottom-nav {
+  position: fixed !important; bottom: 0 !important; width: 100%;
+  background: rgba(0, 0, 0, 0.95) !important; backdrop-filter: blur(15px);
+  border-top: 2px solid var(--gold) !important;
+  box-shadow: 0 -5px 25px rgba(0,0,0,0.9), inset 0 10px 10px -10px var(--gold) !important;
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom)) !important; 
+  display: flex; justify-content: space-around; z-index: 50;
+}
+.bottom-nav button {
+  transition: all 0.3s; border-radius: 10px; margin: 0 2px; padding: 8px 4px !important; flex: 1; font-weight: 800; font-size: 11px;
+}
+.bottom-nav button.active {
+  background: linear-gradient(180deg, rgba(255,255,255,0.1), transparent) !important;
+  color: var(--gold) !important; transform: translateY(-4px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.8); border-bottom: 2px solid var(--gold);
+}
+.bottom-nav button:active { transform: scale(0.9); }
+
+/* Desktop Scaling */
+@media (min-width:720px){
+  .content-pad{width:min(920px,100%);margin:0 auto;padding-bottom:120px}
+  .fixed-shell{padding-left:max(12px, calc((100vw - min(920px,100%))/2 + 12px));padding-right:max(12px, calc((100vw - min(920px,100%))/2 + 12px))}
+  .summary-grid{grid-template-columns:repeat(4,1fr)}
+  .split-grid{grid-template-columns:1fr 1fr}
+  .settings-grid{grid-template-columns:1fr 1fr;max-height:none;overflow:visible}
+  .bottom-nav{width:min(920px,100%); left:50%; transform:translateX(-50%); border-radius:20px 20px 0 0; padding-bottom: 8px !important;}
+}
