@@ -292,24 +292,134 @@ th{position:sticky;top:0;background:var(--panel-2);color:var(--gold); font-weigh
 .medha-item{padding:12px;border:1px solid var(--gold);border-radius:12px;background:rgba(0,0,0,0.6); font-size: 14px;}
 
 /* ========================================================================
-   🔥 BULLETPROOF MODALS & MYTHOLOGY TOASTS
+   🔥 MYTHOLOGY KUBERA TREASURY MODALS & TOASTS 🔥
    ======================================================================== */
-.modal-overlay{position:fixed;inset:0;z-index:99999;background:rgba(6,4,3,.85); backdrop-filter: blur(8px); display:flex;align-items:center;justify-content:center;padding:16px; pointer-events: auto;}
-.modal-card{width:min(92vw,420px);background:var(--card-grad);border:2px solid var(--gold);border-radius:20px;padding:20px;box-shadow:0 24px 54px rgba(0,0,0,.9),0 0 40px var(--gold); animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);}
-@keyframes modalPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-.modal-title{font-size:15px;color:var(--gold);font-weight:900;letter-spacing:.1em;text-transform:uppercase; text-shadow: 0 0 10px var(--gold);}
-.modal-text{margin-top:12px;font-size:18px;font-weight:700;line-height:1.4; color: #FFF;}
-.modal-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:20px}
-.modal-actions button{min-width:90px;border-radius:12px;padding:12px 16px;background:var(--btn-bg);color:#FFF;border:1px solid var(--gold); font-weight: 900; font-size: 14px;}
-.modal-actions button.warn{background:linear-gradient(180deg, #8B0000, #5a1d24);border-color:#ff4d4d; box-shadow: 0 0 15px rgba(255,0,0,0.4);}
 
-.toast-layer { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: min(94vw, 400px); z-index: 99999; display: grid; gap: 10px; pointer-events: none; }
-.toast { background: linear-gradient(135deg, rgba(25, 12, 5, 0.98), rgba(40, 20, 10, 0.98)); border: 2px solid var(--gold); border-left: 6px solid var(--gold); color: #fff; padding: 14px 18px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(217,166,77,0.3); font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif; animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), toastOut 0.4s ease 3s forwards; display: flex; flex-direction: column; }
-.toast .title { font-size: 14px; color: var(--gold); font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
-.toast.warn { border-color: #cf4c3c; border-left-color: #ff4d4d; background: linear-gradient(135deg, rgba(40, 10, 10, 0.98), rgba(20, 5, 5, 0.98)); box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(207,76,60,0.4); }
-.toast.warn .title { color: #ff8585; }
-@keyframes toastIn{from{opacity:0;transform:translateY(-20px) scale(.9)}to{opacity:1;transform:none}}
-@keyframes toastOut{to{opacity:0;transform:translateY(-10px) scale(.95)}}
+/* --- TREASURY MODALS (Alerts & Confirmations) --- */
+.modal-overlay {
+    position: fixed; inset: 0; z-index: 99999;
+    background: rgba(10, 5, 2, 0.9);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px; pointer-events: auto;
+}
+
+.modal-card {
+    width: min(92vw, 400px);
+    background: linear-gradient(145deg, #2a1608, #120a05);
+    border: 2px solid var(--gold);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 24px 54px rgba(0,0,0,1), 0 0 50px rgba(246, 198, 107, 0.3), inset 0 0 15px rgba(246, 198, 107, 0.15);
+    position: relative;
+    animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Golden top glow on modal */
+.modal-card::before {
+    content: ''; position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
+    width: 50%; height: 4px;
+    background: radial-gradient(ellipse, var(--gold), transparent 70%);
+    border-radius: 50%; opacity: 0.9;
+}
+
+@keyframes modalPop { 
+    0% { transform: scale(0.8) translateY(20px); opacity: 0; } 
+    100% { transform: scale(1) translateY(0); opacity: 1; } 
+}
+
+.modal-title {
+    font-size: 16px; color: var(--gold); font-weight: 900; letter-spacing: 2px;
+    text-transform: uppercase; text-align: center;
+    text-shadow: 0 2px 8px rgba(246, 198, 107, 0.6), 0 4px 4px #000;
+    border-bottom: 1px solid rgba(246, 198, 107, 0.2);
+    padding-bottom: 12px; margin-bottom: 16px;
+}
+
+.modal-text { 
+    font-size: 16px; font-weight: 700; line-height: 1.5; color: #fff; 
+    text-align: center; text-shadow: 0 2px 4px #000; 
+}
+
+.modal-actions { 
+    display: flex; justify-content: center; gap: 16px; margin-top: 24px; 
+}
+
+.modal-actions button {
+    min-width: 110px; border-radius: 12px; padding: 12px 16px;
+    background: linear-gradient(180deg, #3a2211, #1a0f05);
+    color: #FFF; border: 2px solid var(--gold-soft);
+    font-weight: 900; font-size: 14px; text-transform: uppercase;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.8);
+    transition: all 0.2s;
+}
+
+.modal-actions button:active {
+    transform: scale(0.92);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.9);
+}
+
+.modal-actions button.warn {
+    background: linear-gradient(180deg, #8B0000, #4a0f14);
+    border-color: #ff4d4d; color: #ffb7b7;
+    box-shadow: 0 6px 15px rgba(207,76,60,0.4);
+}
+
+/* --- TOASTS (KUBERA SLIDERS) --- */
+.toast-layer {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    width: min(94vw, 420px); z-index: 99999; display: grid; gap: 12px; pointer-events: none;
+}
+
+.toast {
+    background: linear-gradient(90deg, rgba(30,15,5,0.98) 0%, rgba(15,5,0,0.95) 100%);
+    border: 1px solid var(--gold-soft);
+    border-left: 8px solid var(--gold);
+    color: #fff; padding: 16px 20px; border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.9), 0 0 25px rgba(246, 198, 107, 0.2);
+    font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+    animation: kuberaToastIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), toastOut 0.4s ease 3.5s forwards;
+    display: flex; flex-direction: column; position: relative; overflow: hidden;
+}
+
+/* Kubera Gold Shine Animation passing over the notification */
+.toast::after {
+    content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transform: skewX(-20deg); animation: shine 3s infinite;
+}
+
+.toast .title {
+    font-size: 13px; color: var(--gold); font-weight: 900; letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 6px; text-shadow: 0 2px 4px #000;
+    display: flex; align-items: center; gap: 8px;
+}
+
+/* Success Star Icon */
+.toast .title::before { content: '✨'; font-size: 14px; }
+
+/* Danger/Warning Red Toast */
+.toast.warn {
+    border-color: #cf4c3c; border-left-color: #ff4d4d;
+    background: linear-gradient(90deg, rgba(40,5,5,0.98) 0%, rgba(15,0,0,0.95) 100%);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.9), 0 0 25px rgba(207,76,60,0.3);
+}
+
+.toast.warn .title { color: #ffb7b7; text-shadow: 0 0 10px rgba(255,0,0,0.5); }
+.toast.warn .title::before { content: '⚠️'; filter: drop-shadow(0 0 5px red); }
+
+@keyframes kuberaToastIn { 
+    from { opacity: 0; transform: translateY(-30px) scale(0.9); } 
+    to { opacity: 1; transform: none; } 
+}
+@keyframes toastOut { 
+    to { opacity: 0; transform: translateY(-15px) scale(0.95); } 
+}
+@keyframes shine { 
+    0% { left: -100%; } 
+    20% { left: 200%; } 
+    100% { left: 200%; } 
+}
 
 /* ========================================================================
    🔥 RPG STEALTH MODE BACKGROUNDS
