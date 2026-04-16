@@ -43,19 +43,14 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 @keyframes fadeInTab { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ========================================================================
-   🔥 UNIFIED CANDY CRUSH BOARD (MERGED YAKSHA & KINNARA)
+   🔥 UNIFIED CANDY CRUSH BOARD (DYNAMIC RANDOM BACKGROUND)
    ======================================================================== */
 
 .boards-compact {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-    background: linear-gradient(145deg, rgba(10, 5, 0, 0.7), rgba(0, 0, 0, 0.9)) !important;
-    backdrop-filter: blur(10px);
-    border: 2px solid var(--gold) !important;
-    border-radius: 20px !important;
-    padding: 12px !important;
-    box-shadow: inset 0 0 30px rgba(0,0,0,0.9), 0 15px 35px rgba(0,0,0,0.8) !important;
+    background: transparent !important;
     margin-top: 4px;
 }
 
@@ -68,51 +63,65 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 
 .board-title {
     font-weight: 900;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.6);
     margin: 0 0 6px 0;
-    font-size: 11px;
+    font-size: 12px;
     text-align: center;
     letter-spacing: 3px;
-    text-shadow: none;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.9);
 }
 
+/* THE RANDOM BACKGROUND IS APPLIED HERE VIA JS */
 .treasure-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-    padding: 0 !important;
-    background: transparent !important;
-    border: none !important;
-    min-height: auto;
+    gap: 8px;
+    padding: 10px !important;
+    background: var(--grid-bg, rgba(0,0,0,0.8)) center/cover !important;
+    border-radius: 16px;
+    border: 2px solid var(--gold) !important;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.9), 0 10px 20px rgba(0,0,0,0.8) !important;
+    position: relative;
+    overflow: hidden;
+    min-height: 250px;
+}
+
+/* Dark overlay to make the keys pop against the random background */
+.treasure-grid::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5); 
+    z-index: 0;
 }
 
 .treasure-grid .zero { grid-column: 2; }
 
-/* 🔥 The Arcade Keys (Candy Crush Blocks) 🔥 */
+/* 🔥 The Arcade Keys 🔥 */
 .treasure-grid .tile {
     position: relative;
+    z-index: 1;
     min-height: 70px;
     border-radius: 12px !important;
-    background: linear-gradient(145deg, var(--panel), var(--bg-2)) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    border-bottom: 5px solid var(--bg) !important; /* 3D Pop effect */
-    box-shadow: 0 6px 10px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.1) !important;
+    background: linear-gradient(145deg, rgba(30,20,15,0.9), rgba(10,5,0,0.95)) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-bottom: 5px solid rgba(0,0,0,0.9) !important; /* 3D Pop effect */
+    box-shadow: 0 6px 10px rgba(0,0,0,0.7), inset 0 2px 4px rgba(255,255,255,0.1) !important;
     color: var(--text);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1) !important;
     user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
-    overflow: hidden; /* Keeps glowing text contained cleanly */
 }
 
-/* Key Press / Tap Effect */
+/* Key Press Effect */
 .treasure-grid .tile:active, .tile.key-glow {
-    transform: translateY(4px) scale(0.96) !important;
-    border-bottom: 2px solid var(--bg) !important; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.8), inset 0 4px 12px rgba(0,0,0,0.8) !important;
-    background: linear-gradient(145deg, var(--bg-2), var(--panel)) !important;
+    transform: translateY(4px) scale(0.95) !important;
+    border-bottom: 2px solid rgba(0,0,0,0.9) !important; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.9), inset 0 4px 12px rgba(0,0,0,0.9) !important;
+    background: linear-gradient(145deg, rgba(10,5,0,0.95), rgba(30,20,15,0.9)) !important;
 }
 
-/* Hide raw HTML numbers */
+/* Hide raw HTML numbers & tiny boxes */
 .treasure-grid .tile .num { display: none !important; }
 
 /* ========================================================================
@@ -127,18 +136,15 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
-    font-size: 26px !important; /* Massive in-built size */
+    font-size: 28px !important; 
     font-weight: 900 !important;
     color: rgba(255, 255, 255, 0.95) !important;
-    
-    /* Heavy engraved stroke effect to guarantee visibility */
     text-shadow: 
         -2px -2px 0 #000,  
          2px -2px 0 #000,
         -2px  2px 0 #000,
          2px  2px 0 #000,
-         0    4px 6px rgba(0,0,0,0.9) !important;
-         
+         0    4px 10px rgba(0,0,0,0.9) !important;
     z-index: 10;
     width: 100%;
     text-align: center;
@@ -148,11 +154,11 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 }
 
 /* Color Glows based on Tier level */
-.tile .meta.step1 { color: #85ffb1 !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 15px #85ffb1 !important; } 
-.tile .meta.step2 { color: #85e8ff !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 15px #85e8ff !important; } 
-.tile .meta.step3 { color: #85aeff !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 15px #85aeff !important; } 
-.tile .meta.step4 { color: #ffd285 !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 15px #ffd285 !important; } 
-.tile .meta.step5, .tile .meta.step6 { color: #ff8585 !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 15px #ff8585 !important; }
+.tile .meta.step1 { color: #85ffb1 !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 20px #85ffb1 !important; } 
+.tile .meta.step2 { color: #85e8ff !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 20px #85e8ff !important; } 
+.tile .meta.step3 { color: #85aeff !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 20px #85aeff !important; } 
+.tile .meta.step4 { color: #ffd285 !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 20px #ffd285 !important; } 
+.tile .meta.step5, .tile .meta.step6 { color: #ff8585 !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 20px #ff8585 !important; }
 
 /* ========================================================================
    🔥 DECOY AESTHETICS & CANDY CRUSH EFFECTS
@@ -167,25 +173,13 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 
 /* FADE DECOY SYMBOL WHEN "T" LABEL IS ACTIVE */
 .treasure-grid .tile:has(.meta.step1, .meta.step2, .meta.step3, .meta.step4, .meta.step5, .meta.step6) .decoy-symbol {
-    opacity: 0.25 !important;
-    filter: blur(2px) drop-shadow(0 0 2px rgba(0,0,0,1)) !important;
-    transform: scale(0.7) !important;
-}
-
-/* Fallback for older browsers that don't support :has() perfectly */
-.treasure-grid .tile .meta.step1 ~ .decoy-symbol,
-.treasure-grid .tile .meta.step2 ~ .decoy-symbol,
-.treasure-grid .tile .meta.step3 ~ .decoy-symbol,
-.treasure-grid .tile .meta.step4 ~ .decoy-symbol,
-.treasure-grid .tile .meta.step5 ~ .decoy-symbol,
-.treasure-grid .tile .meta.step6 ~ .decoy-symbol {
-    opacity: 0.25 !important;
-    filter: blur(2px) drop-shadow(0 0 2px rgba(0,0,0,1)) !important;
+    opacity: 0.15 !important;
+    filter: blur(3px) drop-shadow(0 0 2px rgba(0,0,0,1)) !important;
     transform: scale(0.7) !important;
 }
 
 .decoy-score {
-    font-size: 16px; font-weight: 900; color: #FFF; background: rgba(0,0,0,0.7); 
+    font-size: 16px; font-weight: 900; color: #FFF; background: rgba(0,0,0,0.8); 
     padding: 5px 8px; border-radius: 10px; border: 1px solid var(--gold); 
     text-shadow: 0 0 10px var(--gold); z-index: 5;
     animation: winPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -193,15 +187,15 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 @keyframes winPop { 0% { transform: scale(0.1) rotate(-10deg); } 50% { transform: scale(1.2) rotate(5deg); } 100% { transform: scale(1) rotate(0deg); } }
 
 .treasure-grid .tile.state-C {
-    background: linear-gradient(145deg, rgba(139, 0, 0, 0.6), rgba(40, 10, 10, 0.9)) !important;
+    background: linear-gradient(145deg, rgba(139, 0, 0, 0.7), rgba(40, 10, 10, 0.95)) !important;
     border: 1px solid #ff4d4d !important;
-    box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.4), 0 5px 8px rgba(0,0,0,0.6) !important;
+    box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.5), 0 5px 8px rgba(0,0,0,0.8) !important;
 }
 .decoy-stun {
     font-size: 32px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
     animation: stunPulse 2s ease-in-out infinite;
 }
-@keyframes stunPulse { 0%, 100% { transform: scale(0.9); opacity: 0.6; } 50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 10px #ff4d4d); } }
+@keyframes stunPulse { 0%, 100% { transform: scale(0.9); opacity: 0.6; } 50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 15px #ff4d4d); } }
 
 .particle {
     position: fixed; pointer-events: none; z-index: 9999; font-size: 32px;
@@ -211,6 +205,25 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
     0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
     80% { opacity: 1; }
     100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.5) rotate(45deg); opacity: 0; }
+}
+
+/* 🔥 MASSIVE STAGE CLEARED POPUP 🔥 */
+.stage-popup {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
+    background: radial-gradient(circle, rgba(255,215,0,0.95) 0%, rgba(255,140,0,0.95) 100%);
+    color: #fff; font-size: 28px; font-weight: 900; text-align: center;
+    padding: 20px 40px; border-radius: 24px; border: 4px solid #fff;
+    box-shadow: 0 0 50px rgba(255,215,0,1), inset 0 0 20px rgba(255,255,255,0.8);
+    text-shadow: 2px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+    z-index: 999999; pointer-events: none;
+    animation: popupAnim 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.stage-popup span { font-size: 46px; display: block; margin-top: -5px; letter-spacing: 2px; }
+@keyframes popupAnim {
+    0% { transform: translate(-50%, -50%) scale(0.1) rotate(-15deg); opacity: 0; }
+    15% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); opacity: 1; }
+    80% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
 }
 
 @keyframes candyCrushPop {
