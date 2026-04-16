@@ -64,6 +64,43 @@ function spawnButtonParticles(side, num, type) {
   }
 }
 
+// ============================================================================
+// 🔥 MISSING CSV & XLSX HELPER FUNCTIONS ADDED HERE 🔥
+// ============================================================================
+function escapeCsvValue(val) {
+    if (val === null || val === undefined) return '';
+    const str = String(val);
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+}
+
+function xmlEscape(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
+function sheetNameSafe(name, fallback) {
+    if (!name) return fallback;
+    const safe = String(name).replace(/[\\/?*[\]]/g, '').substring(0, 31);
+    return safe || fallback;
+}
+
+function xlsxCellRef(cIdx, rIdx) {
+    let colStr = ''; let c = cIdx;
+    while (c >= 0) { colStr = String.fromCharCode(65 + (c % 26)) + colStr; c = Math.floor(c / 26) - 1; }
+    return `${colStr}${rIdx + 1}`;
+}
+
+function ladderCsvContent() {
+    let csv = 'Ladder,Step,Bet\n';
+    state.ladder.forEach((r, i) => { csv += `L1,${r.step},${r.bet}\n`; });
+    for (let i = 1; i <= Math.min(state.settings.maxSteps, 15); i++) { csv += `L2,T${i},${secondLadderBet(i)}\n`; }
+    return csv;
+}
+// ============================================================================
+
 let deferredPrompt = null; let historyStack = []; let redoStack = []; let pending = { Y: null, K: null }; let keypadBusy = false;
 const q = id => document.getElementById(id);
 const fmtMoney = n => '💎 ' + Number(n || 0).toLocaleString('en-IN');
@@ -381,7 +418,7 @@ async function readUploadedFile(file) {
 
 function processDataImport(text) {
     const trimmed = text.trim(); 
-    if(trimmed.startsWith('KumbhId,')){
+    if(trimmed.includes('KumbhId')){ // 🔥 Changed from startsWith to includes to handle BOM characters
         const grouped=new Map(); 
         parseSimpleCsvLines(text).forEach(cols=>{ 
             const kumbhId=Number(cols[0])||0; const chakra=Number(cols[1])||0; if(!kumbhId || !chakra) return; 
@@ -599,7 +636,6 @@ function readYantraSettings(){
 }
 async function applyYantraSettings(){ if(!(await askApplyYantra())) return; state.settings = readYantraSettings(); applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten'); state.ladder = buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows){ replayAllKumbhsWithCurrentSettings(); } else { state.liveBankroll = state.settings.bankroll; } renderAll(); showToast('YANTRA APPLIED','Settings updated'); }
 
-// 🔥 SAFE BINDING: No double-firing ever.
 function bindClick(id, fn) { const el = q(id); if(el) el.onclick = fn; }
 
 function setupControls(){
@@ -623,23 +659,12 @@ function setupControls(){
   document.addEventListener('keydown', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; if(e.key==='Enter'){ e.preventDefault(); const current=Number(el.dataset.ladderIndex); const next=document.querySelector(`[data-ladder-index="${current+1}"]`); if(next){ next.focus(); next.select(); } else { el.blur(); } } });
   document.addEventListener('focusin', e=>{ const el=e.target; if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(()=>el.select(),0); });
   
-  // 🔥 FIX: Check if Drishti exports exist before binding so it doesn't crash the script
-  if (typeof exportDrishtiCsv === 'function') {
-      bindClick('exportCsvBtn', exportDrishtiCsv); 
-  } else {
-      bindClick('exportCsvBtn', () => showToast('INFO', 'Drishti CSV export not available', 'warn'));
-  }
-  
-  if (typeof exportDrishtiPdf === 'function') {
-      bindClick('exportPdfBtn', exportDrishtiPdf); 
-  } else {
-      bindClick('exportPdfBtn', () => showToast('INFO', 'PDF export not available', 'warn'));
-  }
+  if (typeof exportDrishtiCsv === 'function') { bindClick('exportCsvBtn', exportDrishtiCsv); } else { bindClick('exportCsvBtn', () => showToast('INFO', 'Drishti CSV export not available', 'warn')); }
+  if (typeof exportDrishtiPdf === 'function') { bindClick('exportPdfBtn', exportDrishtiPdf); } else { bindClick('exportPdfBtn', () => showToast('INFO', 'PDF export not available', 'warn')); }
   
   bindClick('loadCsvBtn', ()=>q('loadCsvFile').click()); 
   const lcf = q('loadCsvFile'); if(lcf) lcf.onchange = importDrishtiCsv;
   
-  // 🔥 NOW THESE WILL ACTUALLY FIRE
   bindClick('exportGranthBtn', () => {
     const fmt = q('granthExportFormat')?.value || 'json';
     if (fmt === 'csv') exportGranthCsv();
@@ -654,40 +679,20 @@ function setupControls(){
   bindClick('deleteGranthBtn', async () => {
     const sel = q('deleteKumbhSelect');
     const id = Number(sel?.value || 0);
-    
     if (id) {
-      const ok = await askModal({ 
-        title: `DELETE RAID #${String(id).padStart(2, '0')}`, 
-        text: 'Remove this specific raid log?', 
-        okLabel: 'Delete', 
-        cancelLabel: 'Cancel',
-        okClass: 'warn'
-      });
+      const ok = await askModal({ title: `DELETE RAID #${String(id).padStart(2, '0')}`, text: 'Remove this specific raid log?', okLabel: 'Delete', cancelLabel: 'Cancel', okClass: 'warn' });
       if (!ok) return;
       state.granth = state.granth.filter(k => k.id !== id).map((k, idx) => ({ ...k, id: idx + 1 }));
       state.currentKumbhId = state.granth.at(-1)?.id || null;
-      renderAll(); 
-      showToast('LOG DELETED', 'Selected Raid Log removed');
-      return;
+      renderAll(); showToast('LOG DELETED', 'Selected Raid Log removed'); return;
     } 
-    
-    const ok = await askModal({ 
-      title: 'PURGE ALL HISTORY', 
-      text: 'This will permanently erase the entire Granth.', 
-      okLabel: 'Purge All', 
-      cancelLabel: 'Cancel',
-      okClass: 'warn'
-    });
+    const ok = await askModal({ title: 'PURGE ALL HISTORY', text: 'This will permanently erase the entire Granth.', okLabel: 'Purge All', cancelLabel: 'Cancel', okClass: 'warn' });
     if (!ok) return;
-    state.granth = [];
-    state.currentKumbhId = null;
-    renderAll();
-    showToast('GRANTH PURGED', 'All Raid history removed');
+    state.granth = []; state.currentKumbhId = null;
+    renderAll(); showToast('GRANTH PURGED', 'All Raid history removed');
   });
   
-  if (typeof undoLast === 'function') {
-      bindClick('historyUndoBtn', undoLast);
-  }
+  if (typeof undoLast === 'function') { bindClick('historyUndoBtn', undoLast); }
 }
 
 function initApp() {
@@ -702,8 +707,4 @@ if('serviceWorker' in navigator){
     window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); 
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
-} else {
-    initApp();
-}
+if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initApp); } else { initApp(); }
