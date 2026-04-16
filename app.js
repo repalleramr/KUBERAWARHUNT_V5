@@ -1,35 +1,24 @@
 const STORAGE_KEY = 'kubera-warhunt-v5pro-final-locked';
 
-// 🔥 EXPANDED DECOY SYMBOLS (Candy Crush / Mythology Style)
+// 🔥 EXPANDED DECOY SYMBOLS 
 const puzzleSymbols = ['💎','🔥','⚡','🌟','🔮','🎲','🌙','☀️','💠','🔱','🧿','🧩','👑','🏺','🗿','📜','🗡️','🛡️','🪙','🐉','🐲','👹','👺','📿','⚕️'];
 const romanMap = ['🌀', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 
-// 🔥 DYNAMIC CSS INJECTION (Fixes 'T' Visibility & Adds Candy Crush Animation)
-const styleFix = document.createElement('style');
-styleFix.innerHTML = `
-    .treasure-grid .tile .meta { 
-        opacity: 1 !important; 
-        color: #FFFFFF !important; 
-        background: rgba(0,0,0,0.9) !important; 
-        padding: 3px 6px !important; 
-        border-radius: 6px !important; 
-        font-size: 11px !important; 
-        font-weight: 900 !important; 
-        border: 1px solid var(--gold) !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.9) !important;
-        text-shadow: 0px 1px 2px #000 !important;
-        z-index: 10;
-    }
-    @keyframes candyCrushPop {
-        0% { transform: scale(1); filter: brightness(1); }
-        40% { transform: scale(1.35); filter: brightness(1.6) drop-shadow(0 0 25px var(--gold)); z-index: 100; }
-        80% { transform: scale(0.9); filter: brightness(1.2); }
-        100% { transform: scale(1); filter: brightness(1); }
-    }
-`;
-document.head.appendChild(styleFix);
+// 🔥 HD BACKGROUNDS FOR CANDY CRUSH GRID (Randomized on New Raid)
+const gridBackgrounds = [
+  'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=800&auto=format&fit=crop'
+];
 
-// 🔥 NATIVE AUDIO SYNTHESIZER (No MP3s Needed)
+function setRandomGridBg() {
+    const bg = gridBackgrounds[Math.floor(Math.random() * gridBackgrounds.length)];
+    document.documentElement.style.setProperty('--grid-bg', `url('${bg}')`);
+}
+
+// 🔥 NATIVE AUDIO SYNTHESIZER (Plays retro sounds without downloading MP3s)
 let audioCtx = null;
 function initAudio() {
     if (!audioCtx) {
@@ -56,40 +45,34 @@ function playSound(event) {
         playTone(523.25, 'sine', 0.1, 0.1, 0);      // C5
         playTone(659.25, 'sine', 0.1, 0.1, 0.1);    // E5
         playTone(783.99, 'sine', 0.15, 0.1, 0.2);   // G5
-        playTone(1046.50, 'sine', 0.3, 0.15, 0.3);  // C6 (Triumphant finish)
+        playTone(1046.50, 'sine', 0.3, 0.15, 0.3);  // C6 (Triumphant)
     } else if (event === 'stun') {
         playTone(250, 'sawtooth', 0.2, 0.1, 0);     // Low buzz
-        playTone(200, 'sawtooth', 0.3, 0.1, 0.15);  // Lower buzz
+        playTone(200, 'sawtooth', 0.3, 0.1, 0.15);  
     }
 }
 
-// 🔥 CANDY CRUSH UI EFFECT
+// 🔥 MASSIVE CANDY CRUSH POPUP
+function triggerStagePopup(stage) {
+    const popup = document.createElement('div');
+    popup.className = 'stage-popup';
+    popup.innerHTML = `STAGE ${stage}<br><span>CLEARED!</span>`;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 1800);
+}
+
 function triggerCandyCrushPop(btn) {
     if(!btn) return;
     btn.style.animation = 'none';
-    void btn.offsetWidth; // Trigger reflow
+    void btn.offsetWidth; // Reflow
     btn.style.animation = 'candyCrushPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
 }
 
-const defaultSettings = {
-  bankroll: 0, targetDollar: 500, targetPercent: 1.67, stopLoss: 30000, min: 200, max: 3000,
-  coin: 100, targetNum: 1000, doubleLadder: 'on', keypadMode: 'combined', maxSteps: 30,
-  reserve: 20000, capRule: 'on', stopLossPerNumber: -100, attackMode: 'classic', theme: 'warhunt', vaultBg: 'bg-molten'
-};
-
+const defaultSettings = { bankroll: 0, targetDollar: 500, targetPercent: 1.67, stopLoss: 30000, min: 200, max: 3000, coin: 100, targetNum: 1000, doubleLadder: 'on', keypadMode: 'combined', maxSteps: 30, reserve: 20000, capRule: 'on', stopLossPerNumber: -100, attackMode: 'classic', theme: 'warhunt', vaultBg: 'bg-molten' };
 const titles = { sangram:'⚔ SANGRAM', vyuha:'🛡 VYUHA', granth:'📜 GRANTH', drishti:'👁 DRISHTI', sopana:'🪜 SOPANA', yantra:'⚙ YANTRA', medha:'🧠 MEDHA' };
-const themePalette = {
-  warhunt: { themeColor:'#120a05' }, temple: { themeColor:'#2a1408' }, vault: { themeColor:'#0f1a12' },
-  oracle: { themeColor:'#0b1024' }, crimson: { themeColor:'#2a0a0d' }, onyx: { themeColor:'#0b0b0d' },
-  sapphire: { themeColor:'#07182d' }, emerald: { themeColor:'#071f17' }, moon: { themeColor:'#161526' }, thunder: { themeColor:'#10131f' }
-};
+const themePalette = { warhunt: { themeColor:'#120a05' }, temple: { themeColor:'#2a1408' }, vault: { themeColor:'#0f1a12' }, oracle: { themeColor:'#0b1024' }, crimson: { themeColor:'#2a0a0d' }, onyx: { themeColor:'#0b0b0d' }, sapphire: { themeColor:'#07182d' }, emerald: { themeColor:'#071f17' }, moon: { themeColor:'#161526' }, thunder: { themeColor:'#10131f' } };
 
-function applyTheme(themeName){
-  const theme = themePalette[themeName] ? themeName : 'warhunt';
-  document.documentElement.dataset.theme = theme;
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute('content', themePalette[theme].themeColor);
-}
+function applyTheme(themeName){ const theme = themePalette[themeName] ? themeName : 'warhunt'; document.documentElement.dataset.theme = theme; const meta = document.querySelector('meta[name="theme-color"]'); if(meta) meta.setAttribute('content', themePalette[theme].themeColor); }
 function applyBackground(bgName){ document.body.setAttribute('data-vault-bg', bgName || 'bg-molten'); }
 
 function spawnButtonParticles(side, num, type) {
@@ -112,10 +95,8 @@ const q = id => document.getElementById(id);
 const fmtMoney = n => '💎 ' + Number(n || 0).toLocaleString('en-IN');
 const clone = obj => JSON.parse(JSON.stringify(obj));
 
-const parseSignedInt = (value, fallback=0) => { const cleaned = String(value ?? '').replace(/[^0-9-]/g,'').replace(/(?!^)-/g,''); const n = Number(cleaned); return Number.isFinite(n) ? n : fallback; };
 function getAttackMode(){ return state?.settings?.attackMode || 'classic'; }
 function attackThresholdForMode(mode){ return mode==='thirdstrike' ? 2 : mode==='fourthstrike' ? 3 : 1; }
-function waitingCodeForInfo(info){ const mode = getAttackMode(); if(mode==='thirdstrike') return 'W2'; if(mode==='fourthstrike') return 'W3'; return 'W'; }
 function activateTrackedNumber(info){ info.status='A'; info.step=1; info.ladder=1; info.activeAt=state.currentChakra; info.prevLoss=0; }
 function freshNumber(){ return { status:'I', step:0, ladder:1, activeAt:null, prevLoss:0, winningBet:0, lastNet:0, pendingSecond:false, watchCount:0 }; }
 
@@ -126,11 +107,7 @@ function askModal({ title, text, okLabel='OK', cancelLabel='Cancel', okClass='wa
     const cancelBtn = q('confirmCancelBtn'); if(cancelBtn) cancelBtn.textContent = cancelLabel;
     const okBtn = q('confirmOkBtn'); if(okBtn) { okBtn.textContent = okLabel; okBtn.className = okClass === 'warn' ? 'warn' : ''; }
     const overlay = q('confirmOverlay');
-    const cleanup = (result) => {
-        if(overlay) { overlay.classList.add('hidden'); overlay.setAttribute('aria-hidden','true'); }
-        if(okBtn) okBtn.onclick = null; if(cancelBtn) cancelBtn.onclick = null; if(overlay) overlay.onclick = null;
-        resolve(result);
-    };
+    const cleanup = (result) => { if(overlay) { overlay.classList.add('hidden'); overlay.setAttribute('aria-hidden','true'); } if(okBtn) okBtn.onclick = null; if(cancelBtn) cancelBtn.onclick = null; if(overlay) overlay.onclick = null; resolve(result); };
     if(okBtn) okBtn.onclick = () => cleanup(true);
     if(cancelBtn) cancelBtn.onclick = () => cleanup(false);
     if(overlay) overlay.onclick = (e) => { if(e.target === overlay) cleanup(false); };
@@ -158,10 +135,7 @@ function buildLadder(settings){
   } return rows;
 }
 
-function freshState(){
-  const settings = { ...defaultSettings };
-  return { settings, liveBankroll: settings.bankroll, currentChakra: 0, numbers: { Y: createSide(), K: createSide() }, drishti: [], granth: [], currentKumbhId: null, summary: { totalAhuti: 0, maxExposure: 0 }, ladder: buildLadder(settings), activeTab: 'sangram' };
-}
+function freshState(){ const settings = { ...defaultSettings }; return { settings, liveBankroll: settings.bankroll, currentChakra: 0, numbers: { Y: createSide(), K: createSide() }, drishti: [], granth: [], currentKumbhId: null, summary: { totalAhuti: 0, maxExposure: 0 }, ladder: buildLadder(settings), activeTab: 'sangram' }; }
 function validateState(st) { if (!st || !st.numbers || !st.numbers.Y || !st.numbers.K) return false; if (!st.numbers.Y[1] || typeof st.numbers.Y[1] !== 'object') return false; return true; }
 function reviveState(raw){ const base = freshState(); const settings={...base.settings,...(raw.settings||{})}; if(!Number.isFinite(Number(settings.stopLoss)) || Number(settings.stopLoss)<=0) settings.stopLoss = base.settings.stopLoss; if(!Number.isFinite(Number(settings.stopLossPerNumber))) settings.stopLossPerNumber = base.settings.stopLossPerNumber; if(!settings.doubleLadder) settings.doubleLadder = 'on'; if(!settings.theme || !themePalette[settings.theme]) settings.theme = base.settings.theme; if(!settings.vaultBg) settings.vaultBg = base.settings.vaultBg; return {...base,...raw,settings,numbers:raw.numbers||base.numbers,summary:{...base.summary,...(raw.summary||{})},ladder:Array.isArray(raw.ladder)&&raw.ladder.length?raw.ladder:buildLadder(settings),activeTab:raw.activeTab||'sangram'}; }
 function coreSnapshot(){ return { state: clone(state), pending: clone(pending) }; }
@@ -169,12 +143,8 @@ function historySnapshot(){ return JSON.stringify(coreSnapshot()); }
 function persistedSnapshot(){ return JSON.stringify(coreSnapshot()); }
 function restoreSnapshot(payload){ const snap = typeof payload==='string' ? JSON.parse(payload) : payload; state = reviveState(snap.state || snap); pending = snap.pending || {Y:null,K:null}; if(!Array.isArray(historyStack)) historyStack = []; if(!Array.isArray(redoStack)) redoStack = []; }
 
-function loadState(){ 
-    try { const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return state = freshState(); restoreSnapshot(JSON.parse(raw)); if (!validateState(state)) state = freshState(); historyStack = []; redoStack = []; } 
-    catch(err) { state = freshState(); historyStack = []; redoStack = []; } 
-}
-let state = freshState();
-loadState(); applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten');
+function loadState(){ try { const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return state = freshState(); restoreSnapshot(JSON.parse(raw)); if (!validateState(state)) state = freshState(); historyStack = []; redoStack = []; } catch(err) { state = freshState(); historyStack = []; redoStack = []; } }
+let state = freshState(); loadState(); applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten'); setRandomGridBg();
 
 function saveState(){ try{ localStorage.setItem(STORAGE_KEY, persistedSnapshot()); } catch(err){} }
 function currentKumbh(){ return state.granth.find(k => k.id === state.currentKumbhId) || null; }
@@ -183,25 +153,21 @@ function secondLadderBet(step){ const start=roundUpToCoin(state.settings.max/4,s
 function currentBetFor(info){ return info.ladder===2 ? secondLadderBet(info.step||1) : (state.ladder[Math.max(0,(info.step||1)-1)]?.bet || state.settings.max); }
 function soldierStepNetProfit(info){ const bet=currentBetFor(info); return (bet*8) - (Number(info?.prevLoss) || 0); }
 
-async function askCapDecision(side,num,info){ 
-  const stopLossPerNumber=Number(state.settings.stopLossPerNumber); 
-  if(state.settings.capRule!=='on' || info.ladder!==1 || !Number.isFinite(stopLossPerNumber)) return false; 
-  const stepNetProfit=soldierStepNetProfit(info); if(stepNetProfit>stopLossPerNumber) return false; 
-  return !!(await askModal({ title:'STUN LIMIT REACHED', text:`[ ${num} ] drained ${stepNetProfit}. Limit is ${stopLossPerNumber}. Stun summon?`, okLabel:'Stun', cancelLabel:'Skip', okClass:'warn' })); 
-}
-async function askCapReturnDecision(side,num){ return !!(await askModal({ title:'REVIVE SUMMON', text:`[ ${num} ] has recovered. Revive for battle?`, okLabel:'Revive', cancelLabel:'Keep Stunned', okClass:'warn' })); }
+async function askCapDecision(side,num,info){ const stopLossPerNumber=Number(state.settings.stopLossPerNumber); if(state.settings.capRule!=='on' || info.ladder!==1 || !Number.isFinite(stopLossPerNumber)) return false; const stepNetProfit=soldierStepNetProfit(info); if(stepNetProfit>stopLossPerNumber) return false; return !!(await askModal({ title:'STUN LIMIT REACHED', text:`${num} drained ${stepNetProfit}. Limit is ${stopLossPerNumber}. Stun summon?`, okLabel:'Stun', cancelLabel:'Skip', okClass:'warn' })); }
+async function askCapReturnDecision(side,num){ return !!(await askModal({ title:'REVIVE SUMMON', text:`${num} has recovered. Revive for battle?`, okLabel:'Revive', cancelLabel:'Keep Stunned', okClass:'warn' })); }
 function nextExposureTotal(){ let total=0; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A' || info.status==='B') total += currentBetFor(info); }}); return total; }
-function previewNextAhutiFor(info){
-  if(!info || (info.status!=='A' && info.status!=='B')) return null;
-  if(info.ladder===2){ return { stepLabel:`T${Math.max(1, Number(info.step)||1)}`, bet: secondLadderBet(Math.max(1, Number(info.step)||1)) }; }
-  const step = Math.max(1, (Number(info.step)||0) + 1);
-  return { stepLabel:`T${step}`, bet: state.ladder[Math.max(0, step-1)]?.bet || state.settings.max };
-}
+function previewNextAhutiFor(info){ if(!info || (info.status!=='A' && info.status!=='B')) return null; if(info.ladder===2){ return { stepLabel:`T${Math.max(1, Number(info.step)||1)}`, bet: secondLadderBet(Math.max(1, Number(info.step)||1)) }; } const step = Math.max(1, (Number(info.step)||0) + 1); return { stepLabel:`T${step}`, bet: state.ladder[Math.max(0, step-1)]?.bet || state.settings.max }; }
 function nextPreviewExposureTotal(){ let total=0; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const preview=previewNextAhutiFor(state.numbers[side][n]); if(preview) total += preview.bet; }}); return total; }
 
 function showToast(title,text,kind=''){ const layer=q('toastLayer'); if(!layer) return; const el=document.createElement('div'); el.className=`toast ${kind}`; el.innerHTML=`<div class="title">${title}</div><div>${text}</div>`; layer.appendChild(el); setTimeout(()=>el.remove(),3600); }
 function glowKey(el){ if(!el) return; el.classList.remove('key-glow'); void el.offsetWidth; el.classList.add('key-glow'); setTimeout(()=>el.classList.remove('key-glow'),220); }
-function statusCode(info){ if(!info) return '0'; if(info.status==='W') return (state?.settings?.attackMode==='thirdstrike'?'W2':state?.settings?.attackMode==='fourthstrike'?'W3':'W'); if(info.status==='A') return `T${Math.max(1, Number(info.step)||1)}`; if(info.status==='B') return 'B'; return info.status; }
+
+// 🔥 ONLY RETURN TEXT IF THE BUTTON IS ACTIVE (Destroys tiny boxes for idle states)
+function statusCode(info){ 
+    if(!info) return null; 
+    if(info.status === 'A') return `T${Math.max(1, Number(info.step)||1)}`; 
+    return null; 
+}
 function vijayDarshanaDisplay(info){ const bet=currentBetFor(info); return { bet, displayStep:Math.max(1,(Number(info.step)||1)-1), displayNet:(bet*8)-(Number(info.prevLoss)||0) }; }
 
 function renderBoards(){
@@ -209,7 +175,9 @@ function renderBoards(){
     const host=q(side==='Y'?'boardY':'boardK'); if(!host) return; host.innerHTML='';
     for(let i=1;i<=10;i++){
       const n=i===10?0:i; const info=n===0?null:(state?.numbers?.[side]?.[n] || freshNumber());
-      const btn=document.createElement('button'); const code=n===0?'0':statusCode(info); const metaClass=info?.step?`step${Math.min(info.step,6)}`:'';
+      const btn=document.createElement('button'); 
+      const code = n === 0 ? null : statusCode(info); 
+      const metaClass = info?.step ? `step${Math.min(info.step, 6)}` : '';
       btn.type='button'; btn.className=`tile ${n===0?'zero':''} ${info?'state-'+info.status:''}`.trim(); btn.dataset.side=side; btn.dataset.num=String(n);
       
       let decoyContent = '';
@@ -218,12 +186,14 @@ function renderBoards(){
       else if (n !== 0) decoyContent = `<div class="decoy-symbol">${puzzleSymbols[Math.floor(Math.random() * puzzleSymbols.length)]}</div>`;
       else decoyContent = `<div class="decoy-symbol">🌀</div>`; 
       
-      btn.innerHTML=`<div class="num">${n}</div>${decoyContent}<div class="meta ${metaClass}">${code}</div>`; host.appendChild(btn);
+      // If code is null, NO .meta tag is generated. Tiny box is gone!
+      const metaHtml = code ? `<div class="meta ${metaClass}">${code}</div>` : '';
+      btn.innerHTML=`<div class="num">${n}</div>${decoyContent}${metaHtml}`; host.appendChild(btn);
     }
   });
 }
 
-function renderVyuha(){ ['Y','K'].forEach(side=>{ const host=q(side==='Y'?'vyuhaY':'vyuhaK'); if(!host) return; host.innerHTML=''; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const d=document.createElement('div'); d.className='state-cell'; d.innerHTML=`<div class="num" style="font-size:24px;">[ ${n} ]</div><div class="meta">${statusCode(info)}</div>`; host.appendChild(d);} }); }
+function renderVyuha(){ ['Y','K'].forEach(side=>{ const host=q(side==='Y'?'vyuhaY':'vyuhaK'); if(!host) return; host.innerHTML=''; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const d=document.createElement('div'); d.className='state-cell'; d.innerHTML=`<div class="num" style="font-size:24px;">[ ${n} ]</div><div class="meta">${statusCode(info)||'Idle'}</div>`; host.appendChild(d);} }); }
 function formatNextAhuti(side){ const groups=new Map(); for(let n=1;n<=9;n++){ const preview=previewNextAhutiFor(state.numbers[side][n]); if(preview){ if(!groups.has(preview.bet)) groups.set(preview.bet,[]); groups.get(preview.bet).push(`[ ${n} ] (Lv${preview.stepLabel.replace('T', '')})`); } } const parts=[...groups.entries()].sort((a,b)=>b[0]-a[0]).map(([bet,arr])=>`+ ${bet} ➔ ${arr.join(' & ')}`); return `${side === 'Y' ? 'YAKSHA' : 'KINNARA'}: ${parts.join(' | ') || 'Idle'}`; }
 
 function renderSangram(){ 
@@ -233,18 +203,12 @@ function renderSangram(){
     if(q('nextK')) q('nextK').textContent=formatNextAhuti('K'); 
     if(q('nextT')) q('nextT').textContent=`Total Queue: + ${nextPreviewExposureTotal()}`; 
     const lastRow=currentKumbh()?.rows?.at(-1); 
-    const displayY = (lastRow && lastRow.y !== '-' && lastRow.y != null) ? `[ ${romanMap[lastRow.y]} ]` : '➖';
-    const displayK = (lastRow && lastRow.k !== '-' && lastRow.k != null) ? `[ ${romanMap[lastRow.k]} ]` : '➖';
+    const displayY = (lastRow && lastRow.y !== '-' && lastRow.y != null) ? `${romanMap[lastRow.y]}` : '➖';
+    const displayK = (lastRow && lastRow.k !== '-' && lastRow.k != null) ? `${romanMap[lastRow.k]}` : '➖';
     if(q('lastResultValue')) q('lastResultValue').textContent=`${displayY}  |  ${displayK}`; 
 }
 
-function sideStatsSummary(counts){ 
-  const entries = Object.entries(counts).filter(([n])=>n!=='0'); 
-  return { 
-    hot: entries.filter(([,v])=>v>=4).map(([n,v])=> `${n}(${v})`), 
-    cool: entries.filter(([,v])=>v<4).map(([n,v])=> `${n}(${v})`) 
-  }; 
-}
+function sideStatsSummary(counts){ const entries = Object.entries(counts).filter(([n])=>n!=='0'); return { hot: entries.filter(([,v])=>v>=4).map(([n,v])=> `${n}(${v})`), cool: entries.filter(([,v])=>v<4).map(([n,v])=> `${n}(${v})`) }; }
 function formatRoundInfoEntries(entries){ return entries.length ? entries.join(' | ') : '-'; }
 
 function kumbhInsights(rows){
@@ -259,13 +223,8 @@ function kumbhInsights(rows){
     const num = Number(value); if(!Number.isFinite(num) || num < 1 || num > 9) return;
     counts[side][String(num)] += 1;
     const life = lifecycle[side][String(num)];
-    if(life.selectedRound === null){ 
-        life.selectedRound = chakra; meta[`${side==='Y'?'y':'k'}SelCode`] = `T1`; 
-    } else if(life.hitRound === null){ 
-        const travel = chakra - life.selectedRound; life.hitRound = chakra; 
-        meta[`${side==='Y'?'y':'k'}HitCode`] = `T${travel}`; 
-        details[side].push({ side, number: num, selectedRound: life.selectedRound, hitRound: chakra, travelSteps: travel, selectCode: `T1`, hitCode: `T${travel}` }); 
-    }
+    if(life.selectedRound === null){ life.selectedRound = chakra; meta[`${side==='Y'?'y':'k'}SelCode`] = `T1`; } 
+    else if(life.hitRound === null){ const travel = chakra - life.selectedRound; life.hitRound = chakra; meta[`${side==='Y'?'y':'k'}HitCode`] = `T${travel}`; details[side].push({ side, number: num, selectedRound: life.selectedRound, hitRound: chakra, travelSteps: travel, selectCode: `T1`, hitCode: `T${travel}` }); }
   }
   for(const row of sortedRows){
     const chakra = Number(row.chakra)||0;
@@ -302,8 +261,17 @@ function renderMedha(){ const active=[]; const cap=[]; ['Y','K'].forEach(side=>{
 function renderActiveTab(){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===`screen-${state.activeTab}`)); document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.target===state.activeTab)); if(q('screenTitle')) q('screenTitle').textContent=titles[state.activeTab]||titles.sangram; }
 function renderAll(){ applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten'); renderActiveTab(); renderBoards(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderSopana(); renderYantra(); renderMedha(); saveState(); }
 
-function startPrayoga(){ if(state.currentChakra===0 && !(currentKumbh()?.rows?.length)){ state.liveBankroll = state.settings.bankroll; } else if(state.currentChakra!==0 || currentKumbh()?.rows?.length){ state.currentKumbhId=null; state.liveBankroll = state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; } const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID STARTED', `Entering Zone #${String(kumbh.id).padStart(2,'0')}`); }
-async function clearCurrentSession(){ if(!(await askClearKumbh())) return; state.liveBankroll=state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; state.currentKumbhId=null; const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID ABANDONED',`Reset to Zone #${String(kumbh.id).padStart(2,'0')}`); }
+function startPrayoga(){ 
+    setRandomGridBg(); 
+    if(state.currentChakra===0 && !(currentKumbh()?.rows?.length)){ state.liveBankroll = state.settings.bankroll; } else if(state.currentChakra!==0 || currentKumbh()?.rows?.length){ state.currentKumbhId=null; state.liveBankroll = state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; } const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID STARTED', `Entering Zone #${String(kumbh.id).padStart(2,'0')}`); 
+}
+
+async function clearCurrentSession(){ 
+    if(!(await askClearKumbh())) return; 
+    setRandomGridBg(); 
+    state.liveBankroll=state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; state.currentKumbhId=null; const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID ABANDONED',`Reset to Zone #${String(kumbh.id).padStart(2,'0')}`); 
+}
+
 function recordSnapshot(){ historyStack.push(historySnapshot()); if(historyStack.length>20) historyStack.shift(); redoStack = []; }
 function undoLast(){ const prev=historyStack.pop(); if(!prev) return; redoStack.push(historySnapshot()); restoreSnapshot(prev); renderAll(); showToast('TIME REVERSED','Wave reverted'); }
 function redoLast(){ const next=redoStack.pop(); if(!next) return; historyStack.push(historySnapshot()); restoreSnapshot(next); renderAll(); showToast('TIMELINE RESTORED','Wave restored'); }
@@ -318,16 +286,15 @@ async function resolveNumber(side,num,notes,rowEvents){
   if(info.status==='W'){ info.watchCount = Number(info.watchCount||0) + 1; if(info.watchCount >= threshold){ activateTrackedNumber(info); } return; }
   
   const bet=currentBetFor(info); const totalReturn=bet*9; const net=(bet*8)-info.prevLoss;
-  state.liveBankroll += totalReturn; info.winningBet=bet; info.lastNet=net; 
-  pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'LOOTED' });
+  state.liveBankroll += totalReturn; info.winningBet=bet; info.lastNet=net; pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'LOOTED' });
   if(rowEvents) rowEvents.np.push(`${side}${num} ${net >= 0 ? '+' : ''}${net}`);
   
   const vd=vijayDarshanaDisplay(info);
   info.status='L'; 
   
-  // 🔥 FIRE ANIMATIONS & SOUNDS
   playSound('win');
   spawnButtonParticles(side, num, 'win'); 
+  triggerStagePopup(vd.displayStep);
   const btn = document.querySelector(`button.tile[data-side="${side}"][data-num="${num}"]`);
   if(btn) triggerCandyCrushPop(btn);
   
@@ -341,13 +308,11 @@ async function advanceAfterLoss(side,notes,rowEvents,winningNum=null){
     const bet=currentBetFor(info); info.prevLoss += bet; info.step += 1; 
     if(info.ladder===1){ 
       if(await askCapDecision(side,n,info)){ 
-        playSound('stun'); // 🔥 STUN SOUND
-        info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:info.step, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'STUNNED' }); 
+        playSound('stun'); info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:info.step, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'STUNNED' }); 
         if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); } 
         spawnButtonParticles(side, n, 'sad'); notes.push({title:'STUNNED', text:`${n} is stunned`, kind:'warn'}); 
       } else if(info.step>state.settings.maxSteps){ 
-        playSound('stun'); // 🔥 STUN SOUND
-        info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:state.settings.maxSteps, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'STUNNED' }); 
+        playSound('stun'); info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:state.settings.maxSteps, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'STUNNED' }); 
         if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); } 
         spawnButtonParticles(side, n, 'sad'); notes.push({title:'STUNNED', text:`${n} is stunned`, kind:'warn'}); 
       } else { info.status='A'; }
@@ -367,7 +332,7 @@ async function processIndividual(side,num){ recordSnapshot(); state.currentChakr
 function flashLockedKey(el){ if(!el) return; el.classList.add('key-locked-flash'); setTimeout(()=>el.classList.remove('key-locked-flash'), 220); }
 
 async function handleTap(side,num,el){
-  initAudio(); // 🔥 Unlock audio on first tap
+  initAudio(); 
   if(keypadBusy) return;
   const isLockedTap = num!==0 && state?.numbers?.[side]?.[num]?.status==='L';
   keypadBusy = true;
@@ -413,12 +378,6 @@ function refreshFirstLadderPreview(){
 }
 function refreshLinkedLadderCalculations(){ syncFirstLadderFromInputs(); refreshFirstLadderPreview(); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderMedha(); saveState(); }
 
-function shouldCapNowSilent(side,num,info){
-  const stopLossPerNumber = Number(state.settings.stopLossPerNumber);
-  if(state.settings.capRule==='on' && info.ladder===1 && Number.isFinite(stopLossPerNumber)){ if(soldierStepNetProfit(info) <= stopLossPerNumber) return true; }
-  return info.ladder===1 && info.step>state.settings.maxSteps;
-}
-
 // ============================================================================
 // 🔥 BULLETPROOF CSV/XLSX IMPORT ENGINE 🔥
 // ============================================================================
@@ -460,45 +419,44 @@ function processDataImport(text) {
         } catch(e) { console.error(e); showToast('IMPORT FAILED', 'Invalid JSON structure', 'warn'); }
     } else {
         try {
-            const lines = trimmed.split('\n').map(l => l.trim()).filter(Boolean);
-            let dataLines = lines;
-            if(lines.length && (lines[0].toLowerCase().includes('kumbhid') || lines[0].toLowerCase().includes('chakra'))) {
-                dataLines = lines.slice(1);
+            const lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            let startIndex = 0;
+            if(lines.length > 0 && (lines[0].toLowerCase().includes('kumbhid') || lines[0].toLowerCase().includes('chakra'))) {
+                startIndex = 1; 
             }
             
             const grouped = new Map();
-            dataLines.forEach(line => {
-                const cols = line.split(',');
-                if(cols.length < 3) return;
+            for (let i = startIndex; i < lines.length; i++) {
+                const cols = lines[i].split(',').map(s => s.trim());
+                if (cols.length < 3) continue;
                 
-                const kumbhId = parseInt(cols[0].replace(/\D/g, ''));
-                const chakra = parseInt(cols[1].replace(/\D/g, ''));
-                if(isNaN(kumbhId) || isNaN(chakra)) return;
+                // Aggressive digit extraction to bypass any formatting issues
+                const rawKumbh = String(cols[0]).replace(/[^\d]/g, '');
+                const rawChakra = String(cols[1]).replace(/[^\d]/g, '');
+                const kumbhId = Number(rawKumbh);
+                const chakra = Number(rawChakra);
                 
-                if(!grouped.has(kumbhId)) grouped.set(kumbhId, { id: kumbhId, rows: [] });
+                if (!kumbhId || !chakra) continue;
+                
+                if (!grouped.has(kumbhId)) grouped.set(kumbhId, { id: kumbhId, rows: [] });
                 const target = grouped.get(kumbhId);
                 
+                const yRaw = cols[2] ? String(cols[2]).replace(/[^\d]/g, '') : '';
+                const kRaw = cols[5] ? String(cols[5]).replace(/[^\d]/g, '') : '';
+                
                 if(!target.rows.some(r => Number(r.chakra) === chakra)) {
-                    const yRaw = cols[2] ? cols[2].replace(/[^0-9]/g, '') : '';
-                    const kRaw = cols[5] ? cols[5].replace(/[^0-9]/g, '') : '';
-                    
-                    const safeSplit = (str) => {
-                        if(!str || str === '-') return [];
-                        return str.replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean);
-                    };
-                    
                     target.rows.push({
-                        chakra: chakra,
+                        chakra,
                         y: yRaw ? Number(yRaw) : '-',
                         k: kRaw ? Number(kRaw) : '-',
-                        cap: safeSplit(cols[8]),
-                        ret: safeSplit(cols[9]),
-                        np: safeSplit(cols[10]),
-                        ahuti: parseInt((cols[11]||'').replace(/[^\d-]/g, '')) || 0,
-                        axyapatra: parseInt((cols[12]||'').replace(/[^\d-]/g, '')) || 0
+                        cap: cols[8] ? cols[8].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
+                        ret: cols[9] ? cols[9].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
+                        np: cols[10] ? cols[10].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
+                        ahuti: parseInt(String(cols[11]||'').replace(/[^\d-]/g, '')) || 0,
+                        axyapatra: parseInt(String(cols[12]||'').replace(/[^\d-]/g, '')) || 0
                     });
                 }
-            });
+            }
             
             if (grouped.size === 0) throw new Error("No data found");
             state.granth = [...grouped.values()].sort((a,b) => a.id - b.id); 
