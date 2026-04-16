@@ -203,10 +203,10 @@ function renderBoards(){
   });
 }
 
-// 🔥 ROMAN NUMERAL INJECTIONS FOR UI CLARITY 🔥
 function renderVyuha(){ ['Y','K'].forEach(side=>{ const host=q(side==='Y'?'vyuhaY':'vyuhaK'); if(!host) return; host.innerHTML=''; for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; const d=document.createElement('div'); d.className='state-cell'; d.innerHTML=`<div class="num" style="font-size:24px; color:var(--gold); text-shadow:0 2px 4px #000;">[ ${romanMap[Number(n)]} ]</div><div class="meta">${statusCode(info)||'Idle'}</div>`; host.appendChild(d);} }); }
 function formatNextAhuti(side){ const groups=new Map(); for(let n=1;n<=9;n++){ const preview=previewNextAhutiFor(state.numbers[side][n]); if(preview){ if(!groups.has(preview.bet)) groups.set(preview.bet,[]); groups.get(preview.bet).push(`[ ${romanMap[Number(n)]} ] (Lv${preview.stepLabel.replace('T', '')})`); } } const parts=[...groups.entries()].sort((a,b)=>b[0]-a[0]).map(([bet,arr])=>`+ ${bet} ➔ ${arr.join(' & ')}`); return `${side === 'Y' ? 'YAKSHA' : 'KINNARA'}: ${parts.join(' | ') || 'Idle'}`; }
 
+// 🔥 SNOOKER BALL RENDERING 🔥
 function renderSangram(){ 
     if(q('bankValue')) q('bankValue').textContent=fmtMoney(state.liveBankroll); 
     if(q('chakraValue')) q('chakraValue').textContent=`Wave : ${state.currentChakra}`; 
@@ -215,21 +215,24 @@ function renderSangram(){
     if(q('nextT')) q('nextT').textContent=`Total Queue: + ${nextPreviewExposureTotal()}`; 
     
     const lastRow = currentKumbh()?.rows?.at(-1); 
-    let displayY = '➖'; let displayK = '➖';
+    let displayY = '<div class="billiard-ball ball-empty">-</div>'; 
+    let displayK = '<div class="billiard-ball ball-empty">-</div>';
     
     if (lastRow) {
         if (lastRow.y !== '-' && lastRow.y !== '' && lastRow.y != null) {
             const yNum = Number(lastRow.y);
-            displayY = (yNum >= 0 && yNum <= 9) ? romanMap[yNum] : lastRow.y;
+            const rom = (yNum >= 0 && yNum <= 9) ? romanMap[yNum] : lastRow.y;
+            displayY = `<div class="billiard-ball ball-${yNum}">${rom}</div>`;
         }
         if (lastRow.k !== '-' && lastRow.k !== '' && lastRow.k != null) {
             const kNum = Number(lastRow.k);
-            displayK = (kNum >= 0 && kNum <= 9) ? romanMap[kNum] : lastRow.k;
+            const rom = (kNum >= 0 && kNum <= 9) ? romanMap[kNum] : lastRow.k;
+            displayK = `<div class="billiard-ball ball-${kNum}">${rom}</div>`;
         }
     }
     
     if(q('lastResultValue')) {
-        q('lastResultValue').innerHTML = `<span style="color:var(--gold);">[ ${displayY} ]</span> &nbsp;|&nbsp; <span style="color:var(--gold);">[ ${displayK} ]</span>`; 
+        q('lastResultValue').innerHTML = `<div style="display:flex; gap:16px; align-items:center; padding: 4px 0;">${displayY} <span style="color:var(--gold); font-weight:900; font-size:16px;">VS</span> ${displayK}</div>`; 
     }
 }
 
@@ -256,7 +259,6 @@ function kumbhInsights(rows){
     processSide('Y', row.y, chakra, meta); processSide('K', row.k, chakra, meta); rowMeta.set(chakra, meta);
   }
   
-  // Roman Mappings for Summaries
   const yStats = Object.entries(counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`<span class="pill">[${romanMap[Number(n)]}]: ${c}</span>`);
   const kStats = Object.entries(counts.K).filter(([n])=>n!=='0').map(([n,c])=>`<span class="pill">[${romanMap[Number(n)]}]: ${c}</span>`);
   return { rowMeta, counts, details, yRptHTML: yStats.join(' '), kRptHTML: kStats.join(' ') };
@@ -712,6 +714,12 @@ function safeBind(id, fn, event = 'click') {
             });
         }
     } catch (err) { console.error(`Failed to attach event to ${id}:`, err); }
+}
+
+function readYantraSettings(){
+  const current = clone(state.settings); const bankrollRaw = Number(q('setBankroll')?.value); current.bankroll = Number.isFinite(bankrollRaw) && bankrollRaw >= 0 ? bankrollRaw : defaultSettings.bankroll;
+  current.targetDollar = Number(q('setTargetDollar')?.value)||500; current.targetPercent = Number(q('setTargetPercent')?.value)||1.67; current.stopLoss = Number(q('setStopLoss')?.value)||30000; current.min = Number(q('setMin')?.value)||200; current.max = Number(q('setMax')?.value)||3000; current.coin = Number(q('setCoin')?.value)||100; current.targetNum = Number(q('setTargetNum')?.value)||1000; current.doubleLadder = q('setDoubleLadder')?.value || 'on'; current.keypadMode = q('setKeypadMode')?.value || 'combined'; current.maxSteps = Number(q('setMaxSteps')?.value)||30; current.reserve = Number(q('setReserve')?.value)||20000; current.capRule = q('setCapRule')?.value || 'on';
+  if(q('setAttackMode')) current.attackMode = q('setAttackMode').value || 'classic'; current.theme = q('setTheme')?.value || 'warhunt'; current.vaultBg = q('setVaultBg')?.value || 'bg-molten'; const stopLossPerNumberValue = Number(q('setStopLossPerNumber')?.value); current.stopLossPerNumber = Number.isFinite(stopLossPerNumberValue) ? stopLossPerNumberValue : -100; return current;
 }
 
 async function applyYantraSettings() { 
