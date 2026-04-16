@@ -3,7 +3,7 @@ const STORAGE_KEY = 'kubera-warhunt-v5pro-final-locked';
 const puzzleSymbols = ['💎', '🔥', '⚡', '🌟', '🔮', '🎲', '🌙', '☀️', '💠', '🔱', '🧿', '🧩'];
 const romanMap = ['🌀', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 
-// 🔥 UPDATED DEFAULT SETTINGS
+// 🔥 DEFAULT SETTINGS
 const defaultSettings = {
   bankroll: 0,
   targetDollar: 500,
@@ -63,55 +63,6 @@ function spawnButtonParticles(side, num, type) {
       document.body.appendChild(p); setTimeout(() => p.remove(), 1200);
   }
 }
-
-// ============================================================================
-// 🔥 MISSING CSV & XLSX HELPER FUNCTIONS ADDED HERE 🔥
-// ============================================================================
-function escapeCsvValue(val) {
-    if (val === null || val === undefined) return '';
-    const str = String(val);
-    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-        return '"' + str.replace(/"/g, '""') + '"';
-    }
-    return str;
-}
-
-function xmlEscape(str) {
-    if (str === null || str === undefined) return '';
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
-}
-
-function sheetNameSafe(name, fallback) {
-    if (!name) return fallback;
-    const safe = String(name).replace(/[\\/?*[\]]/g, '').substring(0, 31);
-    return safe || fallback;
-}
-
-function xlsxCellRef(cIdx, rIdx) {
-    let colStr = ''; let c = cIdx;
-    while (c >= 0) { colStr = String.fromCharCode(65 + (c % 26)) + colStr; c = Math.floor(c / 26) - 1; }
-    return `${colStr}${rIdx + 1}`;
-}
-
-function ladderCsvContent() {
-    let csv = 'Ladder,Step,Bet\n';
-    state.ladder.forEach((r, i) => { csv += `L1,${r.step},${r.bet}\n`; });
-    for (let i = 1; i <= Math.min(state.settings.maxSteps, 15); i++) { csv += `L2,T${i},${secondLadderBet(i)}\n`; }
-    return csv;
-}
-
-function parseCsvToGrid(text){
-  const lines=String(text||'').trim().split(/\r?\n/).filter(Boolean);
-  return lines.map(line=>{
-    const out=[]; let cur=''; let inQuotes=false;
-    for(let i=0;i<line.length;i++){
-      const ch=line[i];
-      if(ch==='"'){ if(inQuotes && line[i+1]==='"'){ cur+='"'; i++; } else inQuotes=!inQuotes; } 
-      else if(ch===',' && !inQuotes){ out.push(cur); cur=''; } else cur+=ch;
-    } out.push(cur); return out;
-  });
-}
-// ============================================================================
 
 let deferredPrompt = null; let historyStack = []; let redoStack = []; let pending = { Y: null, K: null }; let keypadBusy = false;
 const q = id => document.getElementById(id);
@@ -409,6 +360,74 @@ function shouldCapNowSilent(side,num,info){
   return info.ladder===1 && info.step>state.settings.maxSteps;
 }
 
+// ============================================================================
+// 🔥 MOBILE-SAFE CSV/XLSX HELPERS 🔥
+// ============================================================================
+function escapeCsvValue(val) {
+    if (val === null || val === undefined) return '';
+    const str = String(val);
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) return '"' + str.replace(/"/g, '""') + '"';
+    return str;
+}
+function xmlEscape(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+function sheetNameSafe(name, fallback) {
+    if (!name) return fallback;
+    return String(name).replace(/[\\/?*[\]]/g, '').substring(0, 31) || fallback;
+}
+function xlsxCellRef(cIdx, rIdx) {
+    let colStr = ''; let c = cIdx;
+    while (c >= 0) { colStr = String.fromCharCode(65 + (c % 26)) + colStr; c = Math.floor(c / 26) - 1; }
+    return `${colStr}${rIdx + 1}`;
+}
+function ladderCsvContent() {
+    let csv = 'Ladder,Step,Bet\n';
+    state.ladder.forEach((r, i) => { csv += `L1,${r.step},${r.bet}\n`; });
+    for (let i = 1; i <= Math.min(state.settings.maxSteps, 15); i++) { csv += `L2,T${i},${secondLadderBet(i)}\n`; }
+    return csv;
+}
+function parseCsvToGrid(text){
+  const lines=String(text||'').trim().split(/\r?\n/).filter(Boolean);
+  return lines.map(line=>{
+    const out=[]; let cur=''; let inQuotes=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){ if(inQuotes && line[i+1]==='"'){ cur+='"'; i++; } else inQuotes=!inQuotes; } 
+      else if(ch===',' && !inQuotes){ out.push(cur); cur=''; } else cur+=ch;
+    } out.push(cur); return out;
+  });
+}
+
+// ============================================================================
+// 🔥 100% BULLETPROOF MOBILE FILE I/O (IMPORTS / EXPORTS) 🔥
+// ============================================================================
+function downloadData(name, content, type) {
+    const blob = (content instanceof Blob) ? content : new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a); // CRITICAL for mobile browsers
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+}
+
+function doExportData(format) {
+    let content, type, ext;
+    if(format === 'csv') { 
+        content = granthCsvContent(); type = 'text/csv'; ext = '.csv'; 
+    } else if(format === 'xlsx') { 
+        content = buildXlsxWorkbook(granthWorkbookSheets()); type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; ext = '.xlsx'; 
+    } else { 
+        content = JSON.stringify(exportPayload(), null, 2); type = 'application/json'; ext = '.json'; 
+    }
+    downloadData(`Kubera_V5Pro_Final_locked${ext}`, content, type);
+    showToast('EXPORT SUCCESS', `${format.toUpperCase()} saved`);
+}
+
 async function readUploadedFile(file) {
   const name = file.name.toLowerCase();
   if (name.endsWith('.xlsx')) {
@@ -430,8 +449,6 @@ async function readUploadedFile(file) {
 
 function processDataImport(text) {
     const trimmed = String(text || '').trim();
-    
-    // SAFE CHECK: If it looks like JSON, parse as JSON
     if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
         try {
             const parsed=JSON.parse(trimmed);
@@ -439,22 +456,11 @@ function processDataImport(text) {
             else if(parsed && parsed.granth){ state = reviveState({ ...freshState(), granth: parsed.granth, currentKumbhId: parsed.granth.at(-1)?.id||null, settings: parsed.settings || state.settings }); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings(); }
             else { state = reviveState(parsed); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; }
             renderAll(); showToast('GRANTH LOADED','JSON imported successfully');
-        } catch(e) {
-            console.error(e);
-            showToast('IMPORT FAILED', 'Invalid JSON structure', 'warn');
-        }
-    } 
-    // OTHERWISE: Treat as CSV / XLSX
-    else {
+        } catch(e) { console.error(e); showToast('IMPORT FAILED', 'Invalid JSON structure', 'warn'); }
+    } else {
         try {
-            const grouped=new Map();
-            const grid = parseCsvToGrid(trimmed);
-            
-            // Skip header if it is present
-            let dataRows = grid;
-            if (grid.length > 0 && grid[0].length > 0 && String(grid[0][0]).includes('KumbhId')) {
-                dataRows = grid.slice(1);
-            }
+            const grouped=new Map(); const grid = parseCsvToGrid(trimmed);
+            let dataRows = grid; if (grid.length > 0 && grid[0].length > 0 && String(grid[0][0]).includes('KumbhId')) dataRows = grid.slice(1);
             
             dataRows.forEach(cols=>{ 
                 const kumbhId=Number(cols[0])||0; const chakra=Number(cols[1])||0; if(!kumbhId || !chakra) return; 
@@ -462,76 +468,18 @@ function processDataImport(text) {
                 const target=grouped.get(kumbhId); 
                 if(!target.rows.some(r=>Number(r.chakra)===chakra)) target.rows.push({ chakra, y:(cols[2]==='-'?'':(Number(cols[2])||cols[2])), k:(cols[5]==='-'?'':(Number(cols[5])||cols[5])), cap: cols[8] && cols[8] !== '-' ? cols[8].split(' | ') : [], ret: cols[9] && cols[9] !== '-' ? cols[9].split(' | ') : [], np: cols[10] && cols[10] !== '-' ? cols[10].split(' | ') : [], ahuti:Number(cols[11])||0, axyapatra:Number(cols[12])||0 }); 
             });
-            
             if(grouped.size === 0) throw new Error("No data found");
-            
             state.granth=[...grouped.values()].sort((a,b)=>a.id-b.id); 
             state.currentKumbhId=state.granth.at(-1)?.id||null; 
             pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings();
             renderAll(); showToast('GRANTH LOADED','Spreadsheet imported successfully');
-        } catch(e) {
-            console.error(e);
-            showToast('IMPORT FAILED', 'Could not read CSV/XLSX data', 'warn');
-        }
+        } catch(e) { console.error(e); showToast('IMPORT FAILED', 'Could not read CSV/XLSX data', 'warn'); }
     }
 }
 
-async function importGranthJson(e){ 
-  const file=e.target.files[0]; if(!file) return; 
-  try { const text = await readUploadedFile(file); processDataImport(text); } 
-  catch(err) { console.error(err); showToast('IMPORT FAILED', 'Could not read file', 'warn'); } 
-  finally { e.target.value=''; }
-}
-
-function resolveNumberSilent(side,num,rowEvents,shouldReturnFromCap=false){
-  const info=state.numbers[side][num];
-  if(!info || info.status==='L') return;
-  if(info.status==='C'){ if(!shouldReturnFromCap) return; info.status='B'; info.ladder=2; info.step=1; info.pendingSecond=false; if(rowEvents) rowEvents.ret.push(`${side}${num}`); return; }
-  const mode = getAttackMode(); const threshold = attackThresholdForMode(mode);
-  if(info.status==='I'){ if(threshold===1){ activateTrackedNumber(info); } else { info.status='W'; info.watchCount = 1; info.activeAt = null; info.prevLoss = 0; info.step = 0; info.ladder = 1; } return; }
-  if(info.status==='W'){ info.watchCount = Number(info.watchCount||0) + 1; if(info.watchCount >= threshold){ activateTrackedNumber(info); } return; }
-  const bet=currentBetFor(info); const totalReturn=bet*9; const net=(bet*8)-info.prevLoss;
-  state.liveBankroll += totalReturn; info.winningBet=bet; info.lastNet=net; pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'LOOTED' });
-  if(rowEvents) rowEvents.np.push(`${side}${num} ${net >= 0 ? '+' : ''}${net}`); info.status='L';
-}
-function advanceAfterLossSilent(side,rowEvents,winningNum=null){
-  for(let n=1;n<=9;n++){
-    if(winningNum!==null && Number(winningNum)===n) continue;
-    const info=state.numbers[side][n]; if(info.status!=='A' && info.status!=='B') continue;
-    const bet=currentBetFor(info); info.prevLoss += bet; info.step += 1;
-    if(info.ladder===1){
-      if(shouldCapNowSilent(side,n,info)){
-        const cappedAt = info.step>state.settings.maxSteps ? state.settings.maxSteps : info.step;
-        info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:cappedAt, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'STUNNED' }); if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); }
-      } else { info.status='A'; }
-    } else { if(info.step>15) info.step=15; info.status='B'; }
-  }
-}
-
-function replayKumbhRowsWithCurrentSettings(kumbh){
-  state.liveBankroll = state.settings.bankroll; state.currentChakra = 0; state.numbers = { Y: createSide(), K: createSide() }; state.drishti = []; state.summary = { totalAhuti: 0, maxExposure: 0 };
-  const rows = [...(kumbh?.rows || [])].sort((a,b)=>Number(a.chakra)-Number(b.chakra));
-  for(const row of rows){
-    if(state.settings.keypadMode === 'combined'){
-      const y = Number(row.y); const k = Number(row.k); state.currentChakra += 1; const exposure = nextExposureTotal(); state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const rowEvents={cap:[],ret:[],np:[]}; const priorRet = Array.isArray(row.ret) ? row.ret.slice() : (row.ret ? [row.ret] : []);
-      if(y===0) advanceAfterLossSilent('Y',rowEvents); else { advanceAfterLossSilent('Y',rowEvents,y); resolveNumberSilent('Y', y,rowEvents, priorRet.includes(`Y${y}`)); }
-      if(k===0) advanceAfterLossSilent('K',rowEvents); else { advanceAfterLossSilent('K',rowEvents,k); resolveNumberSilent('K', k,rowEvents, priorRet.includes(`K${k}`)); }
-      row.chakra = state.currentChakra; row.cap = rowEvents.cap; row.ret = rowEvents.ret; row.np = rowEvents.np; row.ahuti = exposure; row.axyapatra = state.liveBankroll;
-    } else {
-      const hasY = row.y !== '-' && row.y !== undefined && row.y !== null; const hasK = row.k !== '-' && row.k !== undefined && row.k !== null;
-      if(hasY){ const y = Number(row.y); state.currentChakra += 1; let exposure = 0; for(let n=1;n<=9;n++){ const info = state.numbers.Y[n]; if(info.status==='A'||info.status==='B') exposure += currentBetFor(info); } state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const rowEvents={cap:[],ret:[],np:[]}; const priorRet = Array.isArray(row.ret) ? row.ret.slice() : (row.ret ? [row.ret] : []); if(y===0) advanceAfterLossSilent('Y',rowEvents); else { advanceAfterLossSilent('Y',rowEvents,y); resolveNumberSilent('Y', y,rowEvents, priorRet.includes(`Y${y}`)); } row.chakra = state.currentChakra; row.cap = rowEvents.cap; row.ret = rowEvents.ret; row.np = rowEvents.np; row.ahuti = exposure; row.axyapatra = state.liveBankroll; }
-      if(hasK){ const k = Number(row.k); state.currentChakra += 1; let exposure = 0; for(let n=1;n<=9;n++){ const info = state.numbers.K[n]; if(info.status==='A'||info.status==='B') exposure += currentBetFor(info); } state.liveBankroll -= exposure; state.summary.totalAhuti += exposure; state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure); const rowEvents={cap:[],ret:[],np:[]}; const priorRet = Array.isArray(row.ret) ? row.ret.slice() : (row.ret ? [row.ret] : []); if(k===0) advanceAfterLossSilent('K',rowEvents); else { advanceAfterLossSilent('K',rowEvents,k); resolveNumberSilent('K', k,rowEvents, priorRet.includes(`K${k}`)); } row.chakra = state.currentChakra; row.cap = rowEvents.cap; row.ret = rowEvents.ret; row.np = rowEvents.np; row.ahuti = exposure; row.axyapatra = state.liveBankroll; }
-    }
-  }
-}
-function replayAllKumbhsWithCurrentSettings(){
-  const preserved = { granth: clone(state.granth), currentKumbhId: state.currentKumbhId, activeTab: state.activeTab }; let activeSnapshot = null;
-  for(const kumbh of preserved.granth){ replayKumbhRowsWithCurrentSettings(kumbh); if(kumbh.id === preserved.currentKumbhId){ activeSnapshot = { liveBankroll: state.liveBankroll, currentChakra: state.currentChakra, numbers: clone(state.numbers), drishti: clone(state.drishti), summary: clone(state.summary) }; } }
-  state.granth = preserved.granth; state.activeTab = preserved.activeTab; state.currentKumbhId = preserved.currentKumbhId;
-  if(activeSnapshot){ state.liveBankroll = activeSnapshot.liveBankroll; state.currentChakra = activeSnapshot.currentChakra; state.numbers = activeSnapshot.numbers; state.drishti = activeSnapshot.drishti; state.summary = activeSnapshot.summary; } 
-  else { state.liveBankroll = state.settings.bankroll; state.currentChakra = 0; state.numbers = { Y: createSide(), K: createSide() }; state.drishti = []; state.summary = { totalAhuti: 0, maxExposure: 0 }; }
-}
-
+// ============================================================================
+// 🔥 BUILD EXCEL WORKBOOK 🔥
+// ============================================================================
 function buildSheetXml(rows){
   const sheetRows=rows.map((row,rIdx)=>{
     const cells=row.map((value,cIdx)=>{
@@ -544,9 +492,10 @@ function buildSheetXml(rows){
   }).join('');
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`;
 }
+
 function buildXlsxWorkbook(kumbhs){
   const enc=new TextEncoder(); const files=[]; const add=(name,content)=>files.push({name,data:enc.encode(content)});
-  const rawRows = parseCsvToGrid(granthCsvContent()); // 🔥 FIXED TO INCLUDE HEADER IN EXCEL
+  const rawRows = parseCsvToGrid(granthCsvContent());
   const sheetEntries = (kumbhs||[]).length ? [...kumbhs, {name:'SystemData', rows: rawRows}] : [{name:'SystemData', rows:[['No data']]}];
   const wbSheets=sheetEntries.map((s,i)=>`<sheet name="${xmlEscape(sheetNameSafe(s.name,`Sheet${i+1}`))}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('');
   const wbRels=sheetEntries.map((s,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('');
@@ -600,92 +549,49 @@ function granthCsvContent(){
     });
   }); return header + rows.join('\n');
 }
-
-// ============================================================================
-// 🔥 BULLETPROOF EXPORT WITH IMMEDIATE PATH PICKER 🔥
-// ============================================================================
 function exportPayload(){ return { app:'Kubera_V5Pro Final locked', version:'Kubera_V5Pro Final locked', exportedAt:new Date().toISOString(), state, pending, historyStack, redoStack }; }
 
-async function runExport(format) {
-    let handle = null;
-    let fileName = 'Kubera_V5Pro_Final_locked.' + format;
-    let fileType = ''; let mimeType = '';
-    
-    if (format === 'json') { fileType = 'JSON Files'; mimeType = 'application/json'; }
-    else if (format === 'csv') { fileType = 'CSV Files'; mimeType = 'text/csv'; }
-    else if (format === 'xlsx') { fileType = 'Excel Files'; mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; }
+function resolveNumberSilent(side,num,rowEvents,shouldReturnFromCap=false){
+  const info=state.numbers[side][num];
+  if(!info || info.status==='L') return;
+  if(info.status==='C'){ if(!shouldReturnFromCap) return; info.status='B'; info.ladder=2; info.step=1; info.pendingSecond=false; if(rowEvents) rowEvents.ret.push(`${side}${num}`); return; }
+  const mode = getAttackMode(); const threshold = attackThresholdForMode(mode);
+  if(info.status==='I'){ if(threshold===1){ activateTrackedNumber(info); } else { info.status='W'; info.watchCount = 1; info.activeAt = null; info.prevLoss = 0; info.step = 0; info.ladder = 1; } return; }
+  if(info.status==='W'){ info.watchCount = Number(info.watchCount||0) + 1; if(info.watchCount >= threshold){ activateTrackedNumber(info); } return; }
+  const bet=currentBetFor(info); const totalReturn=bet*9; const net=(bet*8)-info.prevLoss;
+  state.liveBankroll += totalReturn; info.winningBet=bet; info.lastNet=net; pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'LOOTED' });
+  if(rowEvents) rowEvents.np.push(`${side}${num} ${net >= 0 ? '+' : ''}${net}`); info.status='L';
+}
+function advanceAfterLossSilent(side,rowEvents,winningNum=null){
+  for(let n=1;n<=9;n++){
+    if(winningNum!==null && Number(winningNum)===n) continue;
+    const info=state.numbers[side][n]; if(info.status!=='A' && info.status!=='B') continue;
+    const bet=currentBetFor(info); info.prevLoss += bet; info.step += 1;
+    if(info.ladder===1){
+      if(shouldCapNowSilent(side,n,info)){
+        const cappedAt = info.step>state.settings.maxSteps ? state.settings.maxSteps : info.step;
+        info.status='C'; pushDrishti({ side, number:n, activationChakra:info.activeAt ?? '-', winChakra:'-', steps:cappedAt, prevLoss:info.prevLoss, winBet:'-', net:soldierStepNetProfit(info), status:'STUNNED' }); if(rowEvents){ rowEvents.cap.push(`${side}${n}`); rowEvents.np.push(`${side}${n} ${soldierStepNetProfit(info) >= 0 ? '+' : ''}${soldierStepNetProfit(info)}`); }
+      } else { info.status='A'; }
+    } else { if(info.step>15) info.step=15; info.status='B'; }
+  }
+}
 
-    // 1. Instantly trigger the File Picker BEFORE any heavy processing (Requires user gesture)
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (!isMobile && window.showSaveFilePicker) {
-        try {
-            handle = await window.showSaveFilePicker({
-                suggestedName: fileName,
-                types: [{ description: fileType, accept: { [mimeType]: ['.' + format] } }]
+// ============================================================================
+// 🔥 BULLETPROOF SAFE BINDING LOGIC 🔥
+// ============================================================================
+function safeBind(id, fn, event = 'click') {
+    try {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener(event, async function(e) {
+                try { await fn(e); } 
+                catch (err) { console.error(`Error executing action on ${id}:`, err); showToast('ERROR', 'Action failed', 'warn'); }
             });
-        } catch (err) {
-            if (err.name === 'AbortError') return; // User closed the save dialog
-            console.warn('Picker blocked, falling back to instant download.', err);
         }
+    } catch (err) {
+        console.error(`Failed to attach event to ${id}:`, err);
     }
-
-    // 2. Do the heavy file generation safely AFTER the path is chosen
-    showToast('EXPORTING...', 'Generating file data...', 'warn');
-    await new Promise(r => setTimeout(r, 10)); // Give UI a micro-tick to breathe
-
-    let content;
-    if (format === 'json') { content = JSON.stringify(exportPayload(), null, 2); } 
-    else if (format === 'csv') { content = granthCsvContent(); } 
-    else if (format === 'xlsx') { content = buildXlsxWorkbook(granthWorkbookSheets()); }
-
-    // 3. Save the data to the path
-    if (handle) {
-        try {
-            const writable = await handle.createWritable();
-            await writable.write(content);
-            await writable.close();
-            showToast('GRANTH EXPORTED', `${format.toUpperCase()} saved successfully`);
-            return;
-        } catch(e) {
-            console.error('File write failed', e);
-        }
-    }
-
-    // Fallback: If File Picker failed, just download it to the default folder
-    const blob = (content instanceof Blob) ? content : new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 500);
-    showToast('GRANTH EXPORTED', `${format.toUpperCase()} downloaded`);
 }
-
-async function exportLadderCsv(){ 
-    syncFirstLadderFromInputs(); 
-    const content = ladderCsvContent(); 
-    let handle = null;
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    if (!isMobile && window.showSaveFilePicker) {
-        try { handle = await window.showSaveFilePicker({ suggestedName: 'sopana-ladder.csv', types: [{ description: 'CSV Files', accept: { 'text/csv': ['.csv'] } }] }); } 
-        catch (err) { if (err.name === 'AbortError') return; }
-    }
-    
-    if (handle) {
-        const writable = await handle.createWritable();
-        await writable.write(content); await writable.close();
-        showToast('SOPANA EXPORTED','Ladder CSV saved'); return;
-    }
-    
-    const blob = new Blob([content], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'sopana-ladder.csv'; a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 500); showToast('SOPANA EXPORTED','Ladder CSV saved');
-}
-
-function setupInstall(){ window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(q('installBtn')) q('installBtn').classList.remove('hidden'); }); if(q('installBtn')) q('installBtn').onclick = async()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; if(q('installBtn')) q('installBtn').classList.add('hidden'); }; }
 
 function readYantraSettings(){
   const current = clone(state.settings); const bankrollRaw = Number(q('setBankroll')?.value); current.bankroll = Number.isFinite(bankrollRaw) && bankrollRaw >= 0 ? bankrollRaw : defaultSettings.bankroll;
@@ -694,46 +600,119 @@ function readYantraSettings(){
 }
 async function applyYantraSettings(){ if(!(await askApplyYantra())) return; state.settings = readYantraSettings(); applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten'); state.ladder = buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows){ replayAllKumbhsWithCurrentSettings(); } else { state.liveBankroll = state.settings.bankroll; } renderAll(); showToast('YANTRA APPLIED','Settings updated'); }
 
-function bindClick(id, fn) { const el = q(id); if(el) el.onclick = fn; }
 
-function setupControls(){
-  bindClick('prayogaBtn', startPrayoga);
-  bindClick('kumbhaBtn', clearCurrentSession);
-  bindClick('undoBtn', undoLast);
-  bindClick('redoBtn', redoLast);
+function setupControls() {
+  safeBind('prayogaBtn', startPrayoga);
+  safeBind('kumbhaBtn', clearCurrentSession);
+  safeBind('undoBtn', undoLast);
+  safeBind('redoBtn', redoLast);
   
-  const sd = q('setTargetDollar'); if(sd) sd.oninput = ()=>recalcTargetLink('dollar');
-  const sp = q('setTargetPercent'); if(sp) sp.oninput = ()=>recalcTargetLink('percent');
-  const sb = q('setBankroll'); if(sb) sb.oninput = ()=>recalcTargetLink('dollar');
+  safeBind('setTargetDollar', ()=>recalcTargetLink('dollar'), 'input');
+  safeBind('setTargetPercent', ()=>recalcTargetLink('percent'), 'input');
+  safeBind('setBankroll', ()=>recalcTargetLink('dollar'), 'input');
   
-  bindClick('applyYantraBtn', applyYantraSettings);
-  bindClick('saveLadderBtn', ()=>{ document.querySelectorAll('[data-ladder-index]').forEach(inp=>{ inp.value=normalizeLadderBet(inp.value); }); syncFirstLadderFromInputs(); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA SAVED','Editable ladder updated'); });
-  bindClick('exportLadderBtn', exportLadderCsv);
-  bindClick('loadLadderBtn', ()=>q('loadLadderFile').click());
-  const llf = q('loadLadderFile'); if(llf) llf.onchange = importLadderCsv;
-  bindClick('resetLadderBtn', ()=>{ state.ladder=buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA RESET','Default ladder restored'); });
+  safeBind('applyYantraBtn', applyYantraSettings);
   
-  document.addEventListener('input', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; refreshLinkedLadderCalculations(); });
-  document.addEventListener('keydown', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; if(e.key==='Enter'){ e.preventDefault(); const current=Number(el.dataset.ladderIndex); const next=document.querySelector(`[data-ladder-index="${current+1}"]`); if(next){ next.focus(); next.select(); } else { el.blur(); } } });
-  document.addEventListener('focusin', e=>{ const el=e.target; if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(()=>el.select(),0); });
+  safeBind('saveLadderBtn', () => { 
+      document.querySelectorAll('[data-ladder-index]').forEach(inp => { inp.value = normalizeLadderBet(inp.value); }); 
+      syncFirstLadderFromInputs(); 
+      const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); 
+      if (hasRecordedRows) replayAllKumbhsWithCurrentSettings(); 
+      renderAll(); 
+      showToast('SOPANA SAVED', 'Editable ladder updated'); 
+  });
   
-  if (typeof exportDrishtiCsv === 'function') { bindClick('exportCsvBtn', exportDrishtiCsv); } else { bindClick('exportCsvBtn', () => showToast('INFO', 'Drishti CSV export not available', 'warn')); }
-  if (typeof exportDrishtiPdf === 'function') { bindClick('exportPdfBtn', exportDrishtiPdf); } else { bindClick('exportPdfBtn', () => showToast('INFO', 'PDF export not available', 'warn')); }
+  safeBind('exportLadderBtn', () => {
+      syncFirstLadderFromInputs(); 
+      downloadData('sopana-ladder.csv', ladderCsvContent(), 'text/csv');
+      showToast('SOPANA EXPORTED','Ladder CSV saved'); 
+  });
   
-  bindClick('loadCsvBtn', ()=>q('loadCsvFile').click()); 
-  const lcf = q('loadCsvFile'); if(lcf) lcf.onchange = importDrishtiCsv;
+  safeBind('loadLadderBtn', () => q('loadLadderFile').click());
   
-  // 🔥 FIRE THE NEW BULLETPROOF EXPORT FUNCTION
-  bindClick('exportGranthBtn', () => {
+  safeBind('loadLadderFile', async (e) => {
+      const file = e.target.files[0]; if(!file) return;
+      try {
+          const text = await readUploadedFile(file);
+          const lines = text.trim().split(/\r?\n/).slice(1).filter(Boolean); 
+          let cumulative1=0, cumulative2=0; 
+          lines.forEach(line => { 
+              const [ladder,stepLabel,betRaw] = line.split(','); 
+              const idx = Math.max(0, Number(String(stepLabel).replace(/\D/g,''))-1); 
+              const bet = Number(betRaw)||0; 
+              if (String(ladder).trim().toUpperCase()==='L2') { cumulative2 += bet; } 
+              else { cumulative1 += bet; state.ladder[idx] = { step:`T${idx+1}`, bet, winReturn:bet*9, netProfit:(bet*9)-cumulative1, ifLoseTotal:-cumulative1 }; } 
+          }); 
+          if(state.granth.some(k => Array.isArray(k.rows) && k.rows.length)) replayAllKumbhsWithCurrentSettings(); 
+          renderAll(); 
+          showToast('SOPANA LOADED','Ladder loaded'); 
+      } finally { e.target.value = ''; }
+  }, 'change');
+
+  safeBind('resetLadderBtn', () => { 
+      state.ladder = buildLadder(state.settings); 
+      if (state.granth.some(k => Array.isArray(k.rows) && k.rows.length)) replayAllKumbhsWithCurrentSettings(); 
+      renderAll(); 
+      showToast('SOPANA RESET', 'Default ladder restored'); 
+  });
+  
+  document.addEventListener('input', e => { 
+      const el = e.target; 
+      if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) refreshLinkedLadderCalculations(); 
+  });
+  document.addEventListener('keydown', e => { 
+      const el = e.target; 
+      if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]') && e.key === 'Enter') { 
+          e.preventDefault(); 
+          const current = Number(el.dataset.ladderIndex); 
+          const next = document.querySelector(`[data-ladder-index="${current+1}"]`); 
+          if(next){ next.focus(); next.select(); } else { el.blur(); } 
+      } 
+  });
+  document.addEventListener('focusin', e => { 
+      const el = e.target; 
+      if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(() => el.select(), 0); 
+  });
+  
+  safeBind('exportCsvBtn', () => {
+      if (typeof exportDrishtiCsv === 'function') exportDrishtiCsv(); else showToast('INFO', 'Drishti CSV export not available', 'warn');
+  });
+  safeBind('exportPdfBtn', () => {
+      if (typeof exportDrishtiPdf === 'function') exportDrishtiPdf(); else showToast('INFO', 'PDF export not available', 'warn');
+  });
+  
+  safeBind('loadCsvBtn', () => q('loadCsvFile').click()); 
+  
+  safeBind('loadCsvFile', async (e) => {
+      const file = e.target.files[0]; if(!file) return; 
+      try {
+          const text = await readUploadedFile(file);
+          state.drishti = text.trim().split(/\r?\n/).slice(1).filter(Boolean).map(line => { 
+              const [side,number,activationChakra,winChakra,steps,prevLoss,winBet,net,status] = line.split(','); 
+              return {side,number,activationChakra,winChakra,steps,prevLoss,winBet,net,status}; 
+          }); 
+          renderAll(); showToast('DRISHTI LOADED','File imported'); 
+      } finally { e.target.value = ''; }
+  }, 'change');
+  
+  // 🔥 THE COMPLETELY FIXED GRANTH BINDINGS 🔥
+  safeBind('exportGranthBtn', () => {
     const fmt = q('granthExportFormat')?.value || 'json';
-    runExport(fmt);
+    doExportData(fmt);
   });
 
-  bindClick('importGranthBtn', () => q('importGranthFile').click());
-  const igf = q('importGranthFile');
-  if (igf) igf.onchange = importGranthJson;
+  safeBind('importGranthBtn', () => q('importGranthFile').click());
+  
+  safeBind('importGranthFile', async (e) => {
+      const file = e.target.files[0]; if(!file) return; 
+      try { 
+          const text = await readUploadedFile(file); 
+          processDataImport(text); 
+      } catch(err) { console.error(err); showToast('IMPORT FAILED', 'Could not read file', 'warn'); } 
+      finally { e.target.value = ''; }
+  }, 'change');
 
-  bindClick('deleteGranthBtn', async () => {
+  safeBind('deleteGranthBtn', async () => {
     const sel = q('deleteKumbhSelect');
     const id = Number(sel?.value || 0);
     if (id) {
@@ -749,8 +728,10 @@ function setupControls(){
     renderAll(); showToast('GRANTH PURGED', 'All Raid history removed');
   });
   
-  if (typeof undoLast === 'function') { bindClick('historyUndoBtn', undoLast); }
+  safeBind('historyUndoBtn', () => { if(typeof undoLast === 'function') undoLast(); });
 }
+
+function setupInstall(){ window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(q('installBtn')) q('installBtn').classList.remove('hidden'); }); if(q('installBtn')) q('installBtn').onclick = async()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; if(q('installBtn')) q('installBtn').classList.add('hidden'); }; }
 
 function initApp() {
     try { setupTabs(); } catch(e) { console.error('setupTabs failed:', e); }
