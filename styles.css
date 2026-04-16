@@ -111,35 +111,26 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 .treasure-grid .tile .num { display: none !important; }
 
 /* ========================================================================
-   🔥 FIXED "T1" TEXT (NO BOXES! Pure floating outlined text)
+   🔥 FIXED "T1" TEXT (No boxes, pure text with outline on edge)
    ======================================================================== */
 .treasure-grid .tile .meta {
     position: absolute;
     bottom: 3px;
     right: 5px;
-    background: transparent !important; /* Forces NO BACKGROUND BOX */
-    border: none !important;            /* REMOVES BORDERS */
-    box-shadow: none !important;        /* REMOVES SHADOW BOX */
+    background: transparent !important; 
+    border: none !important;
+    box-shadow: none !important;
     padding: 0 !important;
     font-size: 14px !important; 
     font-weight: 900 !important;
     color: #FFFFFF !important;
-    
-    /* Heavy black text-shadow creates a clean outline to ensure visibility */
-    text-shadow: 
-        -1px -1px 0 #000,  
-         1px -1px 0 #000,
-        -1px  1px 0 #000,
-         1px  1px 0 #000,
-         0    2px 4px rgba(0,0,0,0.9) !important;
-         
+    text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 4px rgba(0,0,0,0.9) !important;
     z-index: 10;
     text-align: right;
     opacity: 1 !important;
     pointer-events: none;
 }
 
-/* T1, T2 colors (Text changes color, outline stays black) */
 .tile .meta.step1 { color: #40b46b !important; } 
 .tile .meta.step2 { color: #42b7c8 !important; } 
 .tile .meta.step3 { color: #4f83d3 !important; } 
@@ -156,35 +147,24 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 }
 @keyframes shufflePop { 0% { transform: scale(0.5) rotate(15deg); opacity: 0; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
 
-/* 🔥 WIN SCORE TEXT - NO BOXES! Pure floating text. */
+/* 🔥 WIN SCORE TEXT - NO BOXES! */
 .decoy-score {
-    font-size: 17px; 
-    font-weight: 900; 
-    color: #111 !important; 
-    background: transparent !important; /* REMOVED BOX */
-    border: none !important;            /* REMOVED BOX */
-    padding: 0 !important; 
+    font-size: 17px; font-weight: 900; color: #111 !important; 
+    background: transparent !important; border: none !important; padding: 0 !important; 
     text-shadow: 0 0 5px #FFF, 0 0 10px #FFF, 0 0 15px var(--gold); 
-    z-index: 5;
-    animation: winPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 5; animation: winPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 @keyframes winPop { 0% { transform: scale(0.1) rotate(-10deg); } 50% { transform: scale(1.3) rotate(5deg); } 100% { transform: scale(1.1) rotate(0deg); } }
 
-/* 🔥 GLOWING GOLD LOOT KEY 🔥 */
+/* Loot & Stun Keys */
 .tile.state-L {
-    background: linear-gradient(145deg, #f6c66b, #d9853a) !important;
-    border: 2px solid #FFF !important;
-    color: #000 !important; 
-    box-shadow: inset 0 0 15px rgba(255,255,255,0.8), 0 0 20px var(--gold) !important;
-    transform: scale(1.02);
-    z-index: 5;
+    background: linear-gradient(145deg, #f6c66b, #d9853a) !important; border: 2px solid #FFF !important;
+    color: #000 !important; box-shadow: inset 0 0 15px rgba(255,255,255,0.8), 0 0 20px var(--gold) !important;
+    transform: scale(1.02); z-index: 5;
 }
-
-/* Stun Key Red Tone */
 .treasure-grid .tile.state-C {
     background: linear-gradient(145deg, rgba(139, 0, 0, 0.6), rgba(40, 10, 10, 0.9)) !important;
-    border: 1px solid #ff4d4d !important;
-    box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.4), 0 5px 8px rgba(0,0,0,0.6) !important;
+    border: 1px solid #ff4d4d !important; box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.4), 0 5px 8px rgba(0,0,0,0.6) !important;
 }
 
 .decoy-stun {
@@ -197,11 +177,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
     position: fixed; pointer-events: none; z-index: 9999; font-size: 32px;
     animation: explodeParticle 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
-@keyframes explodeParticle {
-    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-    80% { opacity: 1; }
-    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.5) rotate(45deg); opacity: 0; }
-}
+@keyframes explodeParticle { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; } 80% { opacity: 1; } 100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.5) rotate(45deg); opacity: 0; } }
 
 /* Stage Cleared Popup */
 .stage-popup {
@@ -215,15 +191,46 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
     animation: popupAnim 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 .stage-popup span { font-size: 46px; display: block; margin-top: -5px; letter-spacing: 2px; }
-@keyframes popupAnim {
-    0% { transform: translate(-50%, -50%) scale(0.1) rotate(-15deg); opacity: 0; }
-    15% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); opacity: 1; }
-    80% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
-}
+@keyframes popupAnim { 0% { transform: translate(-50%, -50%) scale(0.1) rotate(-15deg); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); opacity: 1; } 80% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } }
 
 /* ========================================================================
-   🔥 UI CARDS, TABLES & DASHBOARD CONTROLS
+   🔥 SNOOKER BALL CSS (FOR ENCOUNTERS)
+   ======================================================================== */
+.billiard-ball {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 14px;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    box-shadow: inset -5px -5px 10px rgba(0,0,0,0.6), inset 2px 2px 8px rgba(255,255,255,0.7), 0 4px 6px rgba(0,0,0,0.5);
+    border: 1px solid rgba(0,0,0,0.5);
+    position: relative;
+    letter-spacing: 0;
+}
+.billiard-ball::before {
+    content: ''; position: absolute;
+    top: 4px; left: 8px; width: 10px; height: 6px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 50%;
+    transform: rotate(-45deg);
+}
+
+.ball-0 { background: radial-gradient(circle at 30% 30%, #ffffff, #d4d4d4); color:#000; text-shadow:none;}
+.ball-1 { background: radial-gradient(circle at 30% 30%, #f9e79f, #f1c40f 60%, #9c7e00); color:#000; text-shadow:none; }
+.ball-2 { background: radial-gradient(circle at 30% 30%, #5dade2, #2980b9 60%, #154360); }
+.ball-3 { background: radial-gradient(circle at 30% 30%, #f5b7b1, #e74c3c 60%, #641e16); }
+.ball-4 { background: radial-gradient(circle at 30% 30%, #d7bde2, #8e44ad 60%, #4a235a); }
+.ball-5 { background: radial-gradient(circle at 30% 30%, #f5cba7, #e67e22 60%, #6e2c00); }
+.ball-6 { background: radial-gradient(circle at 30% 30%, #a9dfbf, #27ae60 60%, #145a32); }
+.ball-7 { background: radial-gradient(circle at 30% 30%, #d98880, #922b21 60%, #4a1510); }
+.ball-8 { background: radial-gradient(circle at 30% 30%, #555555, #111111 60%, #000000); }
+.ball-9 { background: radial-gradient(circle at 30% 30%, #a3e4d7, #1abc9c 60%, #0e6251); }
+.ball-empty { background: #333; box-shadow: inset 0 0 10px #000; color: #777; text-shadow: none; }
+.ball-empty::before { display: none; }
+
+/* ========================================================================
+   🔥 UI CARDS & TABLES
    ======================================================================== */
 .bankroll-card{margin-top:4px !important;} 
 .card, .compact-card, .chakra-card, .yantra-card {
@@ -263,14 +270,12 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 .action-strip{display:flex;gap:8px;flex-wrap:wrap}
 .strip-btn{flex:1 1 0;min-width:0; padding: 12px 6px !important; font-weight: 900 !important; font-size: 20px !important;}
 
-/* 🔥 FIXED GRANTH TABLE */
 .table-wrap{margin-top:8px;overflow-x:auto;border-radius:12px;border:1px solid var(--gold);-webkit-overflow-scrolling:touch; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);}
 table{width:100%;border-collapse:collapse;min-width:600px;background:rgba(0,0,0,0.6);table-layout:auto;}
 th,td{padding:10px 8px;border-bottom:1px solid rgba(255,255,255,.1);text-align:left;font-size:13px;white-space:nowrap;}
 th{position:sticky;top:0;background:var(--panel-2);color:var(--gold); font-weight: 900;}
 .stat-value{font-size:24px;font-weight:900;margin-top:4px;color:var(--gold); text-shadow: 0 0 10px var(--gold);}
 
-/* Summary Section CSS Fix */
 .granth-summary { margin-top: 12px; font-size: 13px; line-height: 1.5; }
 .summary-row { margin-bottom: 6px; }
 .summary-label { color: var(--gold); font-weight: bold; margin-right: 8px; display: inline-block; width: 60px; }
@@ -287,7 +292,7 @@ th{position:sticky;top:0;background:var(--panel-2);color:var(--gold); font-weigh
 .medha-item{padding:12px;border:1px solid var(--gold);border-radius:12px;background:rgba(0,0,0,0.6); font-size: 14px;}
 
 /* ========================================================================
-   🔥 BULLETPROOF MODALS
+   🔥 BULLETPROOF MODALS & MYTHOLOGY TOASTS
    ======================================================================== */
 .modal-overlay{position:fixed;inset:0;z-index:99999;background:rgba(6,4,3,.85); backdrop-filter: blur(8px); display:flex;align-items:center;justify-content:center;padding:16px; pointer-events: auto;}
 .modal-card{width:min(92vw,420px);background:var(--card-grad);border:2px solid var(--gold);border-radius:20px;padding:20px;box-shadow:0 24px 54px rgba(0,0,0,.9),0 0 40px var(--gold); animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);}
@@ -298,48 +303,10 @@ th{position:sticky;top:0;background:var(--panel-2);color:var(--gold); font-weigh
 .modal-actions button{min-width:90px;border-radius:12px;padding:12px 16px;background:var(--btn-bg);color:#FFF;border:1px solid var(--gold); font-weight: 900; font-size: 14px;}
 .modal-actions button.warn{background:linear-gradient(180deg, #8B0000, #5a1d24);border-color:#ff4d4d; box-shadow: 0 0 15px rgba(255,0,0,0.4);}
 
-/* ========================================================================
-   🔥 MYTHOLOGY GAME-STYLE TOAST NOTIFICATIONS 🔥
-   ======================================================================== */
-.toast-layer {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(94vw, 400px);
-    z-index: 99999;
-    display: grid;
-    gap: 10px;
-    pointer-events: none;
-}
-.toast {
-    background: linear-gradient(135deg, rgba(25, 12, 5, 0.98), rgba(40, 20, 10, 0.98));
-    border: 2px solid var(--gold);
-    border-left: 6px solid var(--gold); 
-    color: #fff;
-    padding: 14px 18px;
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(217,166,77,0.3);
-    font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
-    animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), toastOut 0.4s ease 3s forwards;
-    display: flex;
-    flex-direction: column;
-}
-.toast .title {
-    font-size: 14px;
-    color: var(--gold);
-    font-weight: 900;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-}
-.toast.warn {
-    border-color: #cf4c3c;
-    border-left-color: #ff4d4d;
-    background: linear-gradient(135deg, rgba(40, 10, 10, 0.98), rgba(20, 5, 5, 0.98));
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(207,76,60,0.4);
-}
+.toast-layer { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: min(94vw, 400px); z-index: 99999; display: grid; gap: 10px; pointer-events: none; }
+.toast { background: linear-gradient(135deg, rgba(25, 12, 5, 0.98), rgba(40, 20, 10, 0.98)); border: 2px solid var(--gold); border-left: 6px solid var(--gold); color: #fff; padding: 14px 18px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(217,166,77,0.3); font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif; animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), toastOut 0.4s ease 3s forwards; display: flex; flex-direction: column; }
+.toast .title { font-size: 14px; color: var(--gold); font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+.toast.warn { border-color: #cf4c3c; border-left-color: #ff4d4d; background: linear-gradient(135deg, rgba(40, 10, 10, 0.98), rgba(20, 5, 5, 0.98)); box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(207,76,60,0.4); }
 .toast.warn .title { color: #ff8585; }
 @keyframes toastIn{from{opacity:0;transform:translateY(-20px) scale(.9)}to{opacity:1;transform:none}}
 @keyframes toastOut{to{opacity:0;transform:translateY(-10px) scale(.95)}}
