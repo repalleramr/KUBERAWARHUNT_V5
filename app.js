@@ -1,8 +1,21 @@
 const STORAGE_KEY = 'kubera-warhunt-v5pro-final-locked';
 
-// 🔥 RESTORED 30+ DECOY SYMBOLS 
 const puzzleSymbols = ['💎','🔥','⚡','🌟','🔮','🎲','🌙','☀️','💠','🔱','🧿','🧩','👑','🏺','🗿','📜','🗡️','🛡️','🪙','🐉','🐲','👹','👺','📿','⚕️','🪬','🎐','🏮','🎭','🎴'];
 const romanMap = ['🌀', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
+
+// 🔥 HD BACKGROUNDS FOR CANDY CRUSH GRID (Randomized on New Raid)
+const gridBackgrounds = [
+  'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=800&auto=format&fit=crop'
+];
+
+function setRandomGridBg() {
+    const bg = gridBackgrounds[Math.floor(Math.random() * gridBackgrounds.length)];
+    document.documentElement.style.setProperty('--grid-bg', `url('${bg}')`);
+}
 
 // 🔥 NATIVE AUDIO SYNTHESIZER
 let audioCtx = null;
@@ -45,6 +58,13 @@ function triggerStagePopup(stage) {
     setTimeout(() => popup.remove(), 1800);
 }
 
+function triggerCandyCrushPop(btn) {
+    if(!btn) return;
+    btn.style.animation = 'none';
+    void btn.offsetWidth; // Reflow
+    btn.style.animation = 'candyCrushPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+}
+
 const defaultSettings = { bankroll: 0, targetDollar: 500, targetPercent: 1.67, stopLoss: 30000, min: 200, max: 3000, coin: 100, targetNum: 1000, doubleLadder: 'on', keypadMode: 'combined', maxSteps: 30, reserve: 20000, capRule: 'on', stopLossPerNumber: -100, attackMode: 'classic', theme: 'warhunt', vaultBg: 'bg-molten' };
 const titles = { sangram:'⚔ SANGRAM', vyuha:'🛡 VYUHA', granth:'📜 GRANTH', drishti:'👁 DRISHTI', sopana:'🪜 SOPANA', yantra:'⚙ YANTRA', medha:'🧠 MEDHA' };
 const themePalette = { warhunt: { themeColor:'#120a05' }, temple: { themeColor:'#2a1408' }, vault: { themeColor:'#0f1a12' }, oracle: { themeColor:'#0b1024' }, crimson: { themeColor:'#2a0a0d' }, onyx: { themeColor:'#0b0b0d' }, sapphire: { themeColor:'#07182d' }, emerald: { themeColor:'#071f17' }, moon: { themeColor:'#161526' }, thunder: { themeColor:'#10131f' } };
@@ -70,8 +90,6 @@ function spawnButtonParticles(side, num, type) {
 let deferredPrompt = null; let historyStack = []; let redoStack = []; let pending = { Y: null, K: null }; let keypadBusy = false;
 const q = id => document.getElementById(id);
 const fmtMoney = n => '💎 ' + Number(n || 0).toLocaleString('en-IN');
-
-// 🔥 CRASH PROOF CLONER: Fixes "Action failed" bug
 const clone = obj => (obj === undefined) ? undefined : JSON.parse(JSON.stringify(obj));
 
 function getAttackMode(){ return state?.settings?.attackMode || 'classic'; }
@@ -153,7 +171,7 @@ function loadState(){
         historyStack = []; redoStack = []; 
     } catch(err) { state = freshState(); historyStack = []; redoStack = []; } 
 }
-let state = freshState(); loadState(); applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten');
+let state = freshState(); loadState(); applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten'); setRandomGridBg();
 
 function saveState(){ try{ localStorage.setItem(STORAGE_KEY, persistedSnapshot()); } catch(err){} }
 function currentKumbh(){ return state.granth.find(k => k.id === state.currentKumbhId) || null; }
@@ -171,6 +189,7 @@ function nextPreviewExposureTotal(){ let total=0; ['Y','K'].forEach(side=>{ for(
 function showToast(title,text,kind=''){ const layer=q('toastLayer'); if(!layer) return; const el=document.createElement('div'); el.className=`toast ${kind}`; el.innerHTML=`<div class="title">${title}</div><div>${text}</div>`; layer.appendChild(el); setTimeout(()=>el.remove(),3600); }
 function glowKey(el){ if(!el) return; el.classList.remove('key-glow'); void el.offsetWidth; el.classList.add('key-glow'); setTimeout(()=>el.classList.remove('key-glow'),220); }
 
+// 🔥 NO TINY BOXES: Only returns active tags (T1, W2)
 function statusCode(info){ 
     if(!info) return null; 
     if(info.status === 'A' || info.status === 'B') return `T${Math.max(1, Number(info.step)||1)}`; 
@@ -213,11 +232,11 @@ function renderSangram(){
     const lastRow=currentKumbh()?.rows?.at(-1); 
     const displayY = (lastRow && lastRow.y !== '-' && lastRow.y != null) ? `${romanMap[lastRow.y]}` : '➖';
     const displayK = (lastRow && lastRow.k !== '-' && lastRow.k != null) ? `${romanMap[lastRow.k]}` : '➖';
-    if(q('lastResultValue')) q('lastResultValue').textContent=`${displayY}  |  ${displayK}`; 
+    if(q('lastResultValue')) q('lastResultValue').textContent=`[ ${displayY} ] | [ ${displayK} ]`; 
 }
 
-function sideStatsSummary(counts){ const entries = Object.entries(counts).filter(([n])=>n!=='0'); return { hot: entries.filter(([,v])=>v>=4).map(([n,v])=> `${n}(${v})`), cool: entries.filter(([,v])=>v<4).map(([n,v])=> `${n}(${v})`) }; }
-function formatRoundInfoEntries(entries){ return entries.length ? entries.join(' | ') : '-'; }
+// 🔥 FIXED GRANTH TABLE FORMATTING
+function formatRoundInfoEntries(entries){ return entries.length ? entries.join(', ') : '-'; }
 
 function kumbhInsights(rows){
   const sortedRows = [...(rows||[])].sort((a,b)=>(Number(a.chakra)||0)-(Number(b.chakra)||0));
@@ -239,7 +258,12 @@ function kumbhInsights(rows){
     const meta = { ySelCode:'-', yHitCode:'-', kSelCode:'-', kHitCode:'-', capped:Array.isArray(row.cap) ? row.cap : [], returned:Array.isArray(row.ret) ? row.ret : [] };
     processSide('Y', row.y, chakra, meta); processSide('K', row.k, chakra, meta); rowMeta.set(chakra, meta);
   }
-  return { rowMeta, counts, details, yStats: sideStatsSummary(counts.Y), kStats: sideStatsSummary(counts.K) };
+  
+  // Format summary as HTML pills directly so they space perfectly
+  const yStats = Object.entries(counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`<span class="pill">[${n}]: ${c}</span>`);
+  const kStats = Object.entries(counts.K).filter(([n])=>n!=='0').map(([n,c])=>`<span class="pill">[${n}]: ${c}</span>`);
+  
+  return { rowMeta, counts, details, yRptHTML: yStats.join(' '), kRptHTML: kStats.join(' ') };
 }
 
 function renderGranth(){
@@ -254,10 +278,8 @@ function renderGranth(){
       const meta=insight.rowMeta.get(Number(r.chakra)) || { ySelCode:'-', yHitCode:'-', kSelCode:'-', kHitCode:'-', capped:[], returned:[] };
       return `<tr><td>${r.chakra}</td><td>${r.y==='-'?'-':r.y}</td><td>${r.k==='-'?'-':r.k}</td><td>${meta.ySelCode}</td><td>${meta.yHitCode}</td><td>${meta.kSelCode}</td><td>${meta.kHitCode}</td><td>${formatRoundInfoEntries(meta.capped)}</td><td>${formatRoundInfoEntries(meta.returned)}</td><td>${formatRoundInfoEntries(Array.isArray(r.np)?r.np:(r.np?[r.np]:[]))}</td><td>${r.axyapatra ?? '-'}</td></tr>`;
     }).join('');
-    const yRpt=Object.entries(insight.counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`<span class="repeat-pill">${n}:${c}</span>`).join('');
-    const kRpt=Object.entries(insight.counts.K).filter(([n])=>n!=='0').map(([n,c])=>`<span class="repeat-pill">${n}:${c}</span>`).join('');
     const travelRows = [...insight.details.Y, ...insight.details.K].sort((a,b)=>a.hitRound-b.hitRound).map(d=>`<tr><td>${d.side}</td><td><span style="font-size:16px">${d.number}</span></td><td>${d.selectedRound}</td><td>${d.hitRound}</td><td>${d.travelSteps}</td></tr>`).join('') || '<tr><td colspan="5">No completed travel yet.</td></tr>';
-    wrap.innerHTML=`<div class="label">#${String(k.id).padStart(2,'0')} Raid Log</div><div class="table-wrap compact-table"><table><thead><tr><th>Wave</th><th>Y</th><th>K</th><th>YSel</th><th>YHit</th><th>KSel</th><th>KHit</th><th>Stun</th><th>Revive</th><th>Net XP</th><th>Stash</th></tr></thead><tbody>${rows}</tbody></table></div><div class="granth-summary"><div class="summary-row"><span class="summary-label">Y Hot</span><span>${insight.yStats.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">Y Cool</span><span>${insight.yStats.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">Y Rpt</span><div class="repeat-grid">${yRpt}</div></div><div class="summary-row"><span class="summary-label">K Hot</span><span>${insight.kStats.hot.join(' | ') || '-'}</span></div><div class="summary-row"><span class="summary-label">K Cool</span><span>${insight.kStats.cool.join(' | ') || '-'}</span></div><div class="summary-row summary-repeat"><span class="summary-label">K Rpt</span><div class="repeat-grid">${kRpt}</div></div></div><div class="table-wrap compact-table"><table><thead><tr><th>Faction</th><th>Summon</th><th>ActiveWave</th><th>LootWave</th><th>Tiers</th></tr></thead><tbody>${travelRows}</tbody></table></div>`;
+    wrap.innerHTML=`<div class="label">#${String(k.id).padStart(2,'0')} Raid Log</div><div class="table-wrap compact-table"><table><thead><tr><th>Wave</th><th>Y</th><th>K</th><th>YSel</th><th>YHit</th><th>KSel</th><th>KHit</th><th>Stun</th><th>Revive</th><th>Net XP</th><th>Stash</th></tr></thead><tbody>${rows}</tbody></table></div><div class="granth-summary"><div class="summary-row"><span class="summary-label">Y Freq:</span>${insight.yRptHTML}</div><div class="summary-row"><span class="summary-label">K Freq:</span>${insight.kRptHTML}</div></div><div class="table-wrap compact-table"><table><thead><tr><th>Faction</th><th>Summon</th><th>ActiveWave</th><th>LootWave</th><th>Tiers</th></tr></thead><tbody>${travelRows}</tbody></table></div>`;
     host.appendChild(wrap);
   });
 }
@@ -269,8 +291,15 @@ function renderMedha(){ const active=[]; const cap=[]; ['Y','K'].forEach(side=>{
 function renderActiveTab(){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===`screen-${state.activeTab}`)); document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.target===state.activeTab)); if(q('screenTitle')) q('screenTitle').textContent=titles[state.activeTab]||titles.sangram; }
 function renderAll(){ applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten'); renderActiveTab(); renderBoards(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderSopana(); renderYantra(); renderMedha(); saveState(); }
 
-function startPrayoga(){ if(state.currentChakra===0 && !(currentKumbh()?.rows?.length)){ state.liveBankroll = state.settings.bankroll; } else if(state.currentChakra!==0 || currentKumbh()?.rows?.length){ state.currentKumbhId=null; state.liveBankroll = state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; } const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID STARTED', `Entering Zone #${String(kumbh.id).padStart(2,'0')}`); }
-async function clearCurrentSession(){ if(!(await askClearKumbh())) return; state.liveBankroll=state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; state.currentKumbhId=null; const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID ABANDONED',`Reset to Zone #${String(kumbh.id).padStart(2,'0')}`); }
+function startPrayoga(){ 
+    setRandomGridBg(); 
+    if(state.currentChakra===0 && !(currentKumbh()?.rows?.length)){ state.liveBankroll = state.settings.bankroll; } else if(state.currentChakra!==0 || currentKumbh()?.rows?.length){ state.currentKumbhId=null; state.liveBankroll = state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; } const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID STARTED', `Entering Zone #${String(kumbh.id).padStart(2,'0')}`); 
+}
+async function clearCurrentSession(){ 
+    if(!(await askClearKumbh())) return; 
+    setRandomGridBg(); 
+    state.liveBankroll=state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; state.currentKumbhId=null; const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID ABANDONED',`Reset to Zone #${String(kumbh.id).padStart(2,'0')}`); 
+}
 function recordSnapshot(){ historyStack.push(historySnapshot()); if(historyStack.length>20) historyStack.shift(); redoStack = []; }
 function undoLast(){ const prev=historyStack.pop(); if(!prev) return; redoStack.push(historySnapshot()); restoreSnapshot(prev); renderAll(); showToast('TIME REVERSED','Wave reverted'); }
 function redoLast(){ const next=redoStack.pop(); if(!next) return; historyStack.push(historySnapshot()); restoreSnapshot(next); renderAll(); showToast('TIMELINE RESTORED','Wave restored'); }
@@ -295,6 +324,8 @@ async function resolveNumber(side,num,notes,rowEvents){
   playSound('win');
   spawnButtonParticles(side, num, 'win'); 
   triggerStagePopup(vd.displayStep);
+  const btn = document.querySelector(`button.tile[data-side="${side}"][data-num="${num}"]`);
+  if(btn) triggerCandyCrushPop(btn);
   
   notes.push({title:'LOOT SECURED', text:`${num} T${vd.displayStep} Magic : +${vd.displayNet} XP`}); 
 }
@@ -375,7 +406,6 @@ function refreshFirstLadderPreview(){
   });
 }
 
-// 🔥 CRASH PROOF RECALCULATION ENGINE
 function replayKumbhRowsWithCurrentSettings(kumbh){
   state.liveBankroll = state.settings.bankroll; state.currentChakra = 0; state.numbers = { Y: createSide(), K: createSide() }; state.drishti = []; state.summary = { totalAhuti: 0, maxExposure: 0 };
   const rows = [...(kumbh?.rows || [])].sort((a,b)=>Number(a.chakra)-Number(b.chakra));
@@ -413,12 +443,7 @@ function replayKumbhRowsWithCurrentSettings(kumbh){
         else if(kVal !== null) { advanceAfterLossSilent('K', rowEvents, kVal); resolveNumberSilent('K', kVal, rowEvents, priorRet.includes(`K${kVal}`)); }
     }
 
-    row.chakra = state.currentChakra;
-    row.cap = rowEvents.cap;
-    row.ret = rowEvents.ret;
-    row.np = rowEvents.np;
-    row.ahuti = exposure;
-    row.axyapatra = state.liveBankroll;
+    row.chakra = state.currentChakra; row.cap = rowEvents.cap; row.ret = rowEvents.ret; row.np = rowEvents.np; row.ahuti = exposure; row.axyapatra = state.liveBankroll;
   }
 }
 
@@ -427,18 +452,10 @@ function replayAllKumbhsWithCurrentSettings(){
   const preserved = { granth: clone(state.granth), currentKumbhId: state.currentKumbhId, activeTab: state.activeTab }; let activeSnapshot = null;
   for(const kumbh of preserved.granth){ 
       replayKumbhRowsWithCurrentSettings(kumbh); 
-      if(kumbh.id === preserved.currentKumbhId){ 
-          activeSnapshot = { liveBankroll: state.liveBankroll, currentChakra: state.currentChakra, numbers: clone(state.numbers), drishti: clone(state.drishti), summary: clone(state.summary) }; 
-      } 
+      if(kumbh.id === preserved.currentKumbhId){ activeSnapshot = { liveBankroll: state.liveBankroll, currentChakra: state.currentChakra, numbers: clone(state.numbers), drishti: clone(state.drishti), summary: clone(state.summary) }; } 
   }
   state.granth = preserved.granth; state.activeTab = preserved.activeTab; state.currentKumbhId = preserved.currentKumbhId;
-  if(activeSnapshot){ 
-      state.liveBankroll = activeSnapshot.liveBankroll; 
-      state.currentChakra = activeSnapshot.currentChakra; 
-      state.numbers = activeSnapshot.numbers || { Y: createSide(), K: createSide() }; 
-      state.drishti = activeSnapshot.drishti || []; 
-      state.summary = activeSnapshot.summary || { totalAhuti: 0, maxExposure: 0 }; 
-  } 
+  if(activeSnapshot){ state.liveBankroll = activeSnapshot.liveBankroll; state.currentChakra = activeSnapshot.currentChakra; state.numbers = activeSnapshot.numbers || { Y: createSide(), K: createSide() }; state.drishti = activeSnapshot.drishti || []; state.summary = activeSnapshot.summary || { totalAhuti: 0, maxExposure: 0 }; } 
   else { state.liveBankroll = state.settings.bankroll; state.currentChakra = 0; state.numbers = { Y: createSide(), K: createSide() }; state.drishti = []; state.summary = { totalAhuti: 0, maxExposure: 0 }; }
 }
 
@@ -450,6 +467,9 @@ function shouldCapNowSilent(side,num,info){
   return info.ladder===1 && info.step>state.settings.maxSteps;
 }
 
+// ============================================================================
+// 🔥 BUG FREE CSV/XLSX IMPORTER & EXPORTER 🔥
+// ============================================================================
 function escapeCsvValue(val) {
     if (val === null || val === undefined) return '';
     const str = String(val);
@@ -475,16 +495,90 @@ function ladderCsvContent() {
     for (let i = 1; i <= Math.min(state.settings.maxSteps, 15); i++) { csv += `L2,T${i},${secondLadderBet(i)}\n`; }
     return csv;
 }
-function parseCsvToGrid(text){
-  const lines=String(text||'').trim().split(/\r?\n/).filter(Boolean);
-  return lines.map(line=>{
-    const out=[]; let cur=''; let inQuotes=false;
-    for(let i=0;i<line.length;i++){
-      const ch=line[i];
-      if(ch==='"'){ if(inQuotes && line[i+1]==='"'){ cur+='"'; i++; } else inQuotes=!inQuotes; } 
-      else if(ch===',' && !inQuotes){ out.push(cur); cur=''; } else cur+=ch;
-    } out.push(cur); return out;
-  });
+
+function processDataImport(text) {
+    const trimmed = String(text || '').trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+            const parsed=JSON.parse(trimmed);
+            if(parsed && parsed.state){ restoreSnapshot(parsed); }
+            else if(parsed && parsed.granth){ state = reviveState({ ...freshState(), granth: parsed.granth, currentKumbhId: parsed.granth.at(-1)?.id||null, settings: parsed.settings || state.settings }); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings(); }
+            else { state = reviveState(parsed); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; }
+            renderAll(); showToast('GRANTH LOADED','JSON imported successfully');
+        } catch(e) { console.error(e); showToast('IMPORT FAILED', 'Invalid JSON structure', 'warn'); }
+    } else {
+        try {
+            const lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            let startIndex = 0;
+            if(lines.length > 0 && (lines[0].toLowerCase().includes('kumbhid') || lines[0].toLowerCase().includes('chakra'))) {
+                startIndex = 1; 
+            }
+            
+            const grouped = new Map();
+            for (let i = startIndex; i < lines.length; i++) {
+                const cols = lines[i].split(',').map(s => s.trim());
+                if (cols.length < 3) continue;
+                
+                const rawKumbh = String(cols[0]).replace(/[^\d]/g, '');
+                const rawChakra = String(cols[1]).replace(/[^\d]/g, '');
+                const kumbhId = Number(rawKumbh);
+                const chakra = Number(rawChakra);
+                
+                if (!kumbhId || !chakra) continue;
+                
+                if (!grouped.has(kumbhId)) grouped.set(kumbhId, { id: kumbhId, rows: [] });
+                const target = grouped.get(kumbhId);
+                
+                const yRaw = cols[2] ? String(cols[2]).replace(/[^\d]/g, '') : '';
+                const kRaw = cols[5] ? String(cols[5]).replace(/[^\d]/g, '') : '';
+                
+                if(!target.rows.some(r => Number(r.chakra) === chakra)) {
+                    target.rows.push({
+                        chakra,
+                        y: yRaw ? Number(yRaw) : '-',
+                        k: kRaw ? Number(kRaw) : '-',
+                        cap: cols[8] ? cols[8].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
+                        ret: cols[9] ? cols[9].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
+                        np: cols[10] ? cols[10].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
+                        ahuti: parseInt(String(cols[11]||'').replace(/[^\d-]/g, '')) || 0,
+                        axyapatra: parseInt(String(cols[12]||'').replace(/[^\d-]/g, '')) || 0
+                    });
+                }
+            }
+            
+            if (grouped.size === 0) throw new Error("No data found");
+            state.granth = [...grouped.values()].sort((a,b) => a.id - b.id); 
+            state.currentKumbhId = state.granth.at(-1)?.id || null; 
+            pending = {Y: null, K: null}; historyStack = []; redoStack = []; 
+            replayAllKumbhsWithCurrentSettings();
+            renderAll(); 
+            showToast('GRANTH LOADED', 'Spreadsheet imported successfully');
+        } catch(e) { 
+            console.error('Import parse error:', e); 
+            showToast('IMPORT FAILED', 'Could not read CSV/XLSX data', 'warn'); 
+        }
+    }
+}
+
+async function readUploadedFile(file) {
+  const name = file.name.toLowerCase();
+  if (name.endsWith('.xlsx')) {
+    if (typeof XLSX === 'undefined') {
+      try {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+          s.onload = res; s.onerror = () => rej(new Error("No internet for Excel."));
+          document.head.appendChild(s);
+        });
+      } catch(e) { throw new Error("XLSX_NETWORK_ERROR"); }
+    }
+    const data = new Uint8Array(await file.arrayBuffer());
+    const workbook = XLSX.read(data, {type: 'array'});
+    if (workbook.Sheets['SystemData']) return XLSX.utils.sheet_to_csv(workbook.Sheets['SystemData']);
+    return XLSX.utils.sheet_to_csv(workbook.Sheets[workbook.SheetNames[0]]);
+  }
+  return await file.text();
 }
 
 async function saveWithPickerOrDownload(fileName, content, mimeType, fileDesc, ext) {
@@ -509,83 +603,6 @@ async function doExportData(format) {
     showToast('EXPORTING...', 'Preparing file...');
     const success = await saveWithPickerOrDownload(`Kubera_V5Pro_Final_locked${ext}`, content, type, desc, ext);
     if (success) showToast('EXPORT SUCCESS', `${format.toUpperCase()} saved`);
-}
-
-async function readUploadedFile(file) {
-  const name = file.name.toLowerCase();
-  if (name.endsWith('.xlsx')) {
-    if (typeof XLSX === 'undefined') {
-      try {
-        await new Promise((res, rej) => {
-          const s = document.createElement('script');
-          s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
-          s.onload = res; s.onerror = () => rej(new Error("No internet for Excel."));
-          document.head.appendChild(s);
-        });
-      } catch(e) { throw new Error("XLSX_NETWORK_ERROR"); }
-    }
-    const data = new Uint8Array(await file.arrayBuffer());
-    const workbook = XLSX.read(data, {type: 'array'});
-    if (workbook.Sheets['SystemData']) return XLSX.utils.sheet_to_csv(workbook.Sheets['SystemData']);
-    return XLSX.utils.sheet_to_csv(workbook.Sheets[workbook.SheetNames[0]]);
-  }
-  return await file.text();
-}
-
-function processDataImport(text) {
-    const trimmed = String(text || '').trim();
-    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-        try {
-            const parsed=JSON.parse(trimmed);
-            if(parsed && parsed.state){ restoreSnapshot(parsed); }
-            else if(parsed && parsed.granth){ state = reviveState({ ...freshState(), granth: parsed.granth, currentKumbhId: parsed.granth.at(-1)?.id||null, settings: parsed.settings || state.settings }); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings(); }
-            else { state = reviveState(parsed); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; }
-            renderAll(); showToast('GRANTH LOADED','JSON imported successfully');
-        } catch(e) { console.error(e); showToast('IMPORT FAILED', 'Invalid JSON structure', 'warn'); }
-    } else {
-        try {
-            const lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-            let startIndex = 0;
-            if(lines.length > 0 && (lines[0].toLowerCase().includes('kumbhid') || lines[0].toLowerCase().includes('chakra'))) { startIndex = 1; }
-            
-            const grouped = new Map();
-            for (let i = startIndex; i < lines.length; i++) {
-                const cols = lines[i].split(',').map(s => s.trim());
-                if (cols.length < 3) continue;
-                
-                const rawKumbh = String(cols[0]).replace(/[^\d]/g, '');
-                const rawChakra = String(cols[1]).replace(/[^\d]/g, '');
-                const kumbhId = Number(rawKumbh);
-                const chakra = Number(rawChakra);
-                
-                if (!kumbhId || !chakra) continue;
-                if (!grouped.has(kumbhId)) grouped.set(kumbhId, { id: kumbhId, rows: [] });
-                const target = grouped.get(kumbhId);
-                
-                const yRaw = cols[2] ? String(cols[2]).replace(/[^\d]/g, '') : '';
-                const kRaw = cols[5] ? String(cols[5]).replace(/[^\d]/g, '') : '';
-                
-                if(!target.rows.some(r => Number(r.chakra) === chakra)) {
-                    target.rows.push({
-                        chakra,
-                        y: yRaw ? Number(yRaw) : '-',
-                        k: kRaw ? Number(kRaw) : '-',
-                        cap: cols[8] ? cols[8].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
-                        ret: cols[9] ? cols[9].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
-                        np: cols[10] ? cols[10].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
-                        ahuti: parseInt(String(cols[11]||'').replace(/[^\d-]/g, '')) || 0,
-                        axyapatra: parseInt(String(cols[12]||'').replace(/[^\d-]/g, '')) || 0
-                    });
-                }
-            }
-            if (grouped.size === 0) throw new Error("No data found");
-            state.granth = [...grouped.values()].sort((a,b) => a.id - b.id); 
-            state.currentKumbhId = state.granth.at(-1)?.id || null; 
-            pending = {Y: null, K: null}; historyStack = []; redoStack = []; 
-            replayAllKumbhsWithCurrentSettings();
-            renderAll(); showToast('GRANTH LOADED', 'Spreadsheet imported successfully');
-        } catch(e) { console.error('Import parse error:', e); showToast('IMPORT FAILED', 'Could not read CSV/XLSX data', 'warn'); }
-    }
 }
 
 function buildSheetXml(rows){
@@ -688,9 +705,6 @@ function advanceAfterLossSilent(side,rowEvents,winningNum=null){
   }
 }
 
-// ============================================================================
-// 🔥 BULLETPROOF SAFE BINDING WITH ERROR RECOVERY 🔥
-// ============================================================================
 function safeBind(id, fn, event = 'click') {
     try {
         const el = document.getElementById(id);
@@ -701,12 +715,6 @@ function safeBind(id, fn, event = 'click') {
             });
         }
     } catch (err) { console.error(`Failed to attach event to ${id}:`, err); }
-}
-
-function readYantraSettings(){
-  const current = clone(state.settings); const bankrollRaw = Number(q('setBankroll')?.value); current.bankroll = Number.isFinite(bankrollRaw) && bankrollRaw >= 0 ? bankrollRaw : defaultSettings.bankroll;
-  current.targetDollar = Number(q('setTargetDollar')?.value)||500; current.targetPercent = Number(q('setTargetPercent')?.value)||1.67; current.stopLoss = Number(q('setStopLoss')?.value)||30000; current.min = Number(q('setMin')?.value)||200; current.max = Number(q('setMax')?.value)||3000; current.coin = Number(q('setCoin')?.value)||100; current.targetNum = Number(q('setTargetNum')?.value)||1000; current.doubleLadder = q('setDoubleLadder')?.value || 'on'; current.keypadMode = q('setKeypadMode')?.value || 'combined'; current.maxSteps = Number(q('setMaxSteps')?.value)||30; current.reserve = Number(q('setReserve')?.value)||20000; current.capRule = q('setCapRule')?.value || 'on';
-  if(q('setAttackMode')) current.attackMode = q('setAttackMode').value || 'classic'; current.theme = q('setTheme')?.value || 'warhunt'; current.vaultBg = q('setVaultBg')?.value || 'bg-molten'; const stopLossPerNumberValue = Number(q('setStopLossPerNumber')?.value); current.stopLossPerNumber = Number.isFinite(stopLossPerNumberValue) ? stopLossPerNumberValue : -100; return current;
 }
 
 async function applyYantraSettings() { 
