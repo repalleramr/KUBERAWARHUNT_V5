@@ -1,24 +1,10 @@
 const STORAGE_KEY = 'kubera-warhunt-v5pro-final-locked';
 
-// 🔥 EXPANDED DECOY SYMBOLS 
-const puzzleSymbols = ['💎','🔥','⚡','🌟','🔮','🎲','🌙','☀️','💠','🔱','🧿','🧩','👑','🏺','🗿','📜','🗡️','🛡️','🪙','🐉','🐲','👹','👺','📿','⚕️'];
+// 🔥 RESTORED 30+ DECOY SYMBOLS 
+const puzzleSymbols = ['💎','🔥','⚡','🌟','🔮','🎲','🌙','☀️','💠','🔱','🧿','🧩','👑','🏺','🗿','📜','🗡️','🛡️','🪙','🐉','🐲','👹','👺','📿','⚕️','🪬','🎐','🏮','🎭','🎴'];
 const romanMap = ['🌀', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 
-// 🔥 HD BACKGROUNDS FOR CANDY CRUSH GRID (Randomized on New Raid)
-const gridBackgrounds = [
-  'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=800&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=800&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=800&auto=format&fit=crop'
-];
-
-function setRandomGridBg() {
-    const bg = gridBackgrounds[Math.floor(Math.random() * gridBackgrounds.length)];
-    document.documentElement.style.setProperty('--grid-bg', `url('${bg}')`);
-}
-
-// 🔥 NATIVE AUDIO SYNTHESIZER (Plays retro sounds without downloading MP3s)
+// 🔥 NATIVE AUDIO SYNTHESIZER
 let audioCtx = null;
 function initAudio() {
     if (!audioCtx) {
@@ -30,8 +16,7 @@ function initAudio() {
 function playTone(freq, type, duration, vol, delay=0) {
     try {
         if(!audioCtx) return;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
         gain.gain.setValueAtTime(vol, audioCtx.currentTime + delay);
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + duration);
@@ -42,30 +27,22 @@ function playTone(freq, type, duration, vol, delay=0) {
 function playSound(event) {
     initAudio();
     if(event === 'win') {
-        playTone(523.25, 'sine', 0.1, 0.1, 0);      // C5
-        playTone(659.25, 'sine', 0.1, 0.1, 0.1);    // E5
-        playTone(783.99, 'sine', 0.15, 0.1, 0.2);   // G5
-        playTone(1046.50, 'sine', 0.3, 0.15, 0.3);  // C6 (Triumphant)
+        playTone(523.25, 'sine', 0.1, 0.1, 0);      
+        playTone(659.25, 'sine', 0.1, 0.1, 0.1);    
+        playTone(783.99, 'sine', 0.15, 0.1, 0.2);   
+        playTone(1046.50, 'sine', 0.3, 0.15, 0.3);  
     } else if (event === 'stun') {
-        playTone(250, 'sawtooth', 0.2, 0.1, 0);     // Low buzz
+        playTone(250, 'sawtooth', 0.2, 0.1, 0);     
         playTone(200, 'sawtooth', 0.3, 0.1, 0.15);  
     }
 }
 
-// 🔥 MASSIVE CANDY CRUSH POPUP
 function triggerStagePopup(stage) {
     const popup = document.createElement('div');
     popup.className = 'stage-popup';
     popup.innerHTML = `STAGE ${stage}<br><span>CLEARED!</span>`;
     document.body.appendChild(popup);
     setTimeout(() => popup.remove(), 1800);
-}
-
-function triggerCandyCrushPop(btn) {
-    if(!btn) return;
-    btn.style.animation = 'none';
-    void btn.offsetWidth; // Reflow
-    btn.style.animation = 'candyCrushPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
 }
 
 const defaultSettings = { bankroll: 0, targetDollar: 500, targetPercent: 1.67, stopLoss: 30000, min: 200, max: 3000, coin: 100, targetNum: 1000, doubleLadder: 'on', keypadMode: 'combined', maxSteps: 30, reserve: 20000, capRule: 'on', stopLossPerNumber: -100, attackMode: 'classic', theme: 'warhunt', vaultBg: 'bg-molten' };
@@ -93,7 +70,9 @@ function spawnButtonParticles(side, num, type) {
 let deferredPrompt = null; let historyStack = []; let redoStack = []; let pending = { Y: null, K: null }; let keypadBusy = false;
 const q = id => document.getElementById(id);
 const fmtMoney = n => '💎 ' + Number(n || 0).toLocaleString('en-IN');
-const clone = obj => JSON.parse(JSON.stringify(obj));
+
+// 🔥 CRASH PROOF CLONER: Fixes "Action failed" bug
+const clone = obj => (obj === undefined) ? undefined : JSON.parse(JSON.stringify(obj));
 
 function getAttackMode(){ return state?.settings?.attackMode || 'classic'; }
 function attackThresholdForMode(mode){ return mode==='thirdstrike' ? 2 : mode==='fourthstrike' ? 3 : 1; }
@@ -137,14 +116,44 @@ function buildLadder(settings){
 
 function freshState(){ const settings = { ...defaultSettings }; return { settings, liveBankroll: settings.bankroll, currentChakra: 0, numbers: { Y: createSide(), K: createSide() }, drishti: [], granth: [], currentKumbhId: null, summary: { totalAhuti: 0, maxExposure: 0 }, ladder: buildLadder(settings), activeTab: 'sangram' }; }
 function validateState(st) { if (!st || !st.numbers || !st.numbers.Y || !st.numbers.K) return false; if (!st.numbers.Y[1] || typeof st.numbers.Y[1] !== 'object') return false; return true; }
-function reviveState(raw){ const base = freshState(); const settings={...base.settings,...(raw.settings||{})}; if(!Number.isFinite(Number(settings.stopLoss)) || Number(settings.stopLoss)<=0) settings.stopLoss = base.settings.stopLoss; if(!Number.isFinite(Number(settings.stopLossPerNumber))) settings.stopLossPerNumber = base.settings.stopLossPerNumber; if(!settings.doubleLadder) settings.doubleLadder = 'on'; if(!settings.theme || !themePalette[settings.theme]) settings.theme = base.settings.theme; if(!settings.vaultBg) settings.vaultBg = base.settings.vaultBg; return {...base,...raw,settings,numbers:raw.numbers||base.numbers,summary:{...base.summary,...(raw.summary||{})},ladder:Array.isArray(raw.ladder)&&raw.ladder.length?raw.ladder:buildLadder(settings),activeTab:raw.activeTab||'sangram'}; }
+
+function reviveState(raw){ 
+    const base = freshState(); 
+    const settings={...base.settings,...(raw.settings||{})}; 
+    if(!Number.isFinite(Number(settings.stopLoss)) || Number(settings.stopLoss)<=0) settings.stopLoss = base.settings.stopLoss; 
+    if(!Number.isFinite(Number(settings.stopLossPerNumber))) settings.stopLossPerNumber = base.settings.stopLossPerNumber; 
+    if(!settings.doubleLadder) settings.doubleLadder = 'on'; 
+    if(!settings.theme || !themePalette[settings.theme]) settings.theme = base.settings.theme; 
+    if(!settings.vaultBg) settings.vaultBg = base.settings.vaultBg; 
+    return {
+        ...base,
+        ...raw,
+        settings,
+        numbers: raw.numbers || base.numbers,
+        summary: { ...base.summary, ...(raw.summary||{}) },
+        ladder: Array.isArray(raw.ladder) && raw.ladder.length ? raw.ladder : buildLadder(settings),
+        granth: Array.isArray(raw.granth) ? raw.granth : [], 
+        drishti: Array.isArray(raw.drishti) ? raw.drishti : [], 
+        activeTab: raw.activeTab || 'sangram'
+    }; 
+}
 function coreSnapshot(){ return { state: clone(state), pending: clone(pending) }; }
 function historySnapshot(){ return JSON.stringify(coreSnapshot()); }
 function persistedSnapshot(){ return JSON.stringify(coreSnapshot()); }
 function restoreSnapshot(payload){ const snap = typeof payload==='string' ? JSON.parse(payload) : payload; state = reviveState(snap.state || snap); pending = snap.pending || {Y:null,K:null}; if(!Array.isArray(historyStack)) historyStack = []; if(!Array.isArray(redoStack)) redoStack = []; }
 
-function loadState(){ try { const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return state = freshState(); restoreSnapshot(JSON.parse(raw)); if (!validateState(state)) state = freshState(); historyStack = []; redoStack = []; } catch(err) { state = freshState(); historyStack = []; redoStack = []; } }
-let state = freshState(); loadState(); applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten'); setRandomGridBg();
+function loadState(){ 
+    try { 
+        const raw = localStorage.getItem(STORAGE_KEY); 
+        if(!raw) return state = freshState(); 
+        restoreSnapshot(JSON.parse(raw)); 
+        if (!validateState(state)) state = freshState(); 
+        if (!Array.isArray(state.granth)) state.granth = []; 
+        if (!Array.isArray(state.drishti)) state.drishti = []; 
+        historyStack = []; redoStack = []; 
+    } catch(err) { state = freshState(); historyStack = []; redoStack = []; } 
+}
+let state = freshState(); loadState(); applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten');
 
 function saveState(){ try{ localStorage.setItem(STORAGE_KEY, persistedSnapshot()); } catch(err){} }
 function currentKumbh(){ return state.granth.find(k => k.id === state.currentKumbhId) || null; }
@@ -162,10 +171,10 @@ function nextPreviewExposureTotal(){ let total=0; ['Y','K'].forEach(side=>{ for(
 function showToast(title,text,kind=''){ const layer=q('toastLayer'); if(!layer) return; const el=document.createElement('div'); el.className=`toast ${kind}`; el.innerHTML=`<div class="title">${title}</div><div>${text}</div>`; layer.appendChild(el); setTimeout(()=>el.remove(),3600); }
 function glowKey(el){ if(!el) return; el.classList.remove('key-glow'); void el.offsetWidth; el.classList.add('key-glow'); setTimeout(()=>el.classList.remove('key-glow'),220); }
 
-// 🔥 ONLY RETURN TEXT IF THE BUTTON IS ACTIVE (Destroys tiny boxes for idle states)
 function statusCode(info){ 
     if(!info) return null; 
-    if(info.status === 'A') return `T${Math.max(1, Number(info.step)||1)}`; 
+    if(info.status === 'A' || info.status === 'B') return `T${Math.max(1, Number(info.step)||1)}`; 
+    if(info.status === 'W') return (state?.settings?.attackMode==='thirdstrike'?'W2':state?.settings?.attackMode==='fourthstrike'?'W3':'W'); 
     return null; 
 }
 function vijayDarshanaDisplay(info){ const bet=currentBetFor(info); return { bet, displayStep:Math.max(1,(Number(info.step)||1)-1), displayNet:(bet*8)-(Number(info.prevLoss)||0) }; }
@@ -186,7 +195,6 @@ function renderBoards(){
       else if (n !== 0) decoyContent = `<div class="decoy-symbol">${puzzleSymbols[Math.floor(Math.random() * puzzleSymbols.length)]}</div>`;
       else decoyContent = `<div class="decoy-symbol">🌀</div>`; 
       
-      // If code is null, NO .meta tag is generated. Tiny box is gone!
       const metaHtml = code ? `<div class="meta ${metaClass}">${code}</div>` : '';
       btn.innerHTML=`<div class="num">${n}</div>${decoyContent}${metaHtml}`; host.appendChild(btn);
     }
@@ -237,9 +245,9 @@ function kumbhInsights(rows){
 function renderGranth(){
   const host=q('granthList'); if(!host) return; host.innerHTML='';
   const sel=q('deleteKumbhSelect');
-  if(sel){ sel.innerHTML='<option value=>Select Raid</option>'; state.granth.forEach(k=>{ const op=document.createElement('option'); op.value=String(k.id); op.textContent=`#${String(k.id).padStart(2,'0')} Raid Log`; sel.appendChild(op); }); }
+  if(sel){ sel.innerHTML='<option value=>Select Raid</option>'; if(Array.isArray(state.granth)) state.granth.forEach(k=>{ const op=document.createElement('option'); op.value=String(k.id); op.textContent=`#${String(k.id).padStart(2,'0')} Raid Log`; sel.appendChild(op); }); }
+  if(!Array.isArray(state.granth) || !state.granth.length){ host.innerHTML='<div class="kumbh">No Raid history yet.</div>'; return; }
   const items=[...state.granth].reverse();
-  if(!items.length){ host.innerHTML='<div class="kumbh">No Raid history yet.</div>'; return; }
   items.forEach(k=>{
     const wrap=document.createElement('div'); wrap.className='kumbh'; const insight=kumbhInsights(k.rows||[]);
     const rows=[...(k.rows||[])].reverse().map(r=>{
@@ -254,28 +262,19 @@ function renderGranth(){
   });
 }
 
-function renderDrishti(){ if(q('sumChakras')) q('sumChakras').textContent=Math.max(0,state.currentChakra); if(q('sumAhuti')) q('sumAhuti').textContent=state.summary.totalAhuti; if(q('sumProfit')) q('sumProfit').textContent=state.liveBankroll-state.settings.bankroll; if(q('sumExposure')) q('sumExposure').textContent=state.summary.maxExposure; const dt=q('drishtiTable'); if(!dt) return; const tbody=dt.querySelector('tbody'); if(!tbody) return; tbody.innerHTML=''; [...state.drishti].reverse().forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.side}</td><td><span style="font-size:16px">${r.number}</span></td><td>${r.activationChakra}</td><td>${r.winChakra}</td><td>${r.steps}</td><td>${r.prevLoss}</td><td>${r.winBet}</td><td>${r.net}</td><td>${r.status}</td>`; tbody.appendChild(tr); }); }
+function renderDrishti(){ if(q('sumChakras')) q('sumChakras').textContent=Math.max(0,state.currentChakra); if(q('sumAhuti')) q('sumAhuti').textContent=state.summary.totalAhuti; if(q('sumProfit')) q('sumProfit').textContent=state.liveBankroll-state.settings.bankroll; if(q('sumExposure')) q('sumExposure').textContent=state.summary.maxExposure; const dt=q('drishtiTable'); if(!dt) return; const tbody=dt.querySelector('tbody'); if(!tbody) return; tbody.innerHTML=''; if(Array.isArray(state.drishti)) [...state.drishti].reverse().forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.side}</td><td><span style="font-size:16px">${r.number}</span></td><td>${r.activationChakra}</td><td>${r.winChakra}</td><td>${r.steps}</td><td>${r.prevLoss}</td><td>${r.winBet}</td><td>${r.net}</td><td>${r.status}</td>`; tbody.appendChild(tr); }); }
 function renderSopana(){ const lt=q('ladderTable'); if(!lt) return; const tbody=lt.querySelector('tbody'); if(!tbody) return; tbody.innerHTML=''; state.ladder.forEach((row,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.step}</td><td><input class="ladder-bet-input" type="number" data-ladder-index="${idx}" inputmode="numeric" enterkeyhint="next" value="${row.bet}"></td><td>${row.winReturn}</td><td>${row.netProfit}</td><td>${row.ifLoseTotal}</td>`; tbody.appendChild(tr); }); const secondTable=q('secondLadderTable'); if(secondTable){ const tbody2=secondTable.querySelector('tbody'); if(tbody2) { tbody2.innerHTML=''; let prevLoss=0; for(let i=1;i<=Math.min(state.settings.maxSteps,15);i++){ const bet=secondLadderBet(i); const winReturn=bet*9; prevLoss += bet; const tr=document.createElement('tr'); tr.innerHTML=`<td>T${i}</td><td><input class="ladder-bet-input" type="number" data-second-ladder-index="${i-1}" inputmode="numeric" enterkeyhint="next" value="${bet}"></td><td>${winReturn}</td><td>${winReturn - prevLoss}</td><td>${-prevLoss}</td>`; tbody2.appendChild(tr); } } } }
 function renderYantra(){ const s=state.settings; if(q('setBankroll')) q('setBankroll').value=s.bankroll; if(q('setTargetDollar')) q('setTargetDollar').value=s.targetDollar; if(q('setTargetPercent')) q('setTargetPercent').value=s.targetPercent; if(q('setStopLoss')) q('setStopLoss').value=s.stopLoss; if(q('setMin')) q('setMin').value=s.min; if(q('setMax')) q('setMax').value=s.max; if(q('setCoin')) q('setCoin').value=s.coin; if(q('setTargetNum')) q('setTargetNum').value=s.targetNum; if(q('setDoubleLadder')) q('setDoubleLadder').value=s.doubleLadder||'on'; if(q('setKeypadMode')) q('setKeypadMode').value=s.keypadMode; if(q('setMaxSteps')) q('setMaxSteps').value=s.maxSteps; if(q('setReserve')) q('setReserve').value=s.reserve; if(q('setCapRule')) q('setCapRule').value=s.capRule; if(q('setAttackMode')) q('setAttackMode').value=s.attackMode || 'classic'; if(q('setTheme')) q('setTheme').value=s.theme || 'warhunt'; if(q('setVaultBg')) q('setVaultBg').value=s.vaultBg || 'bg-molten'; if(q('setStopLossPerNumber')) q('setStopLossPerNumber').value=s.stopLossPerNumber ?? -100; }
 function renderMedha(){ const active=[]; const cap=[]; ['Y','K'].forEach(side=>{ for(let n=1;n<=9;n++){ const info=state.numbers[side][n]; if(info.status==='A'||info.status==='B') active.push(`${side}${n} T${info.step}`); if(info.status==='C') cap.push(`${side}${n}`);} }); if(q('medhaPanel')) q('medhaPanel').innerHTML=`<div class="medha-item"><div class="label">Active Summons</div><div style="font-size:16px">${active.join(' | ') || 'None'}</div></div><div class="medha-item"><div class="label">Stunned Summons</div><div style="font-size:16px">${cap.join(' | ') || 'None'}</div></div>`; }
 function renderActiveTab(){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===`screen-${state.activeTab}`)); document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.target===state.activeTab)); if(q('screenTitle')) q('screenTitle').textContent=titles[state.activeTab]||titles.sangram; }
 function renderAll(){ applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten'); renderActiveTab(); renderBoards(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderSopana(); renderYantra(); renderMedha(); saveState(); }
 
-function startPrayoga(){ 
-    setRandomGridBg(); 
-    if(state.currentChakra===0 && !(currentKumbh()?.rows?.length)){ state.liveBankroll = state.settings.bankroll; } else if(state.currentChakra!==0 || currentKumbh()?.rows?.length){ state.currentKumbhId=null; state.liveBankroll = state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; } const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID STARTED', `Entering Zone #${String(kumbh.id).padStart(2,'0')}`); 
-}
-
-async function clearCurrentSession(){ 
-    if(!(await askClearKumbh())) return; 
-    setRandomGridBg(); 
-    state.liveBankroll=state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; state.currentKumbhId=null; const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID ABANDONED',`Reset to Zone #${String(kumbh.id).padStart(2,'0')}`); 
-}
-
+function startPrayoga(){ if(state.currentChakra===0 && !(currentKumbh()?.rows?.length)){ state.liveBankroll = state.settings.bankroll; } else if(state.currentChakra!==0 || currentKumbh()?.rows?.length){ state.currentKumbhId=null; state.liveBankroll = state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; } const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID STARTED', `Entering Zone #${String(kumbh.id).padStart(2,'0')}`); }
+async function clearCurrentSession(){ if(!(await askClearKumbh())) return; state.liveBankroll=state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; state.currentKumbhId=null; const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID ABANDONED',`Reset to Zone #${String(kumbh.id).padStart(2,'0')}`); }
 function recordSnapshot(){ historyStack.push(historySnapshot()); if(historyStack.length>20) historyStack.shift(); redoStack = []; }
 function undoLast(){ const prev=historyStack.pop(); if(!prev) return; redoStack.push(historySnapshot()); restoreSnapshot(prev); renderAll(); showToast('TIME REVERSED','Wave reverted'); }
 function redoLast(){ const next=redoStack.pop(); if(!next) return; historyStack.push(historySnapshot()); restoreSnapshot(next); renderAll(); showToast('TIMELINE RESTORED','Wave restored'); }
-function pushDrishti(rec){ state.drishti.push(rec); }
+function pushDrishti(rec){ if(!Array.isArray(state.drishti)) state.drishti = []; state.drishti.push(rec); }
 
 async function resolveNumber(side,num,notes,rowEvents){ 
   const info=state.numbers[side][num]; 
@@ -286,7 +285,8 @@ async function resolveNumber(side,num,notes,rowEvents){
   if(info.status==='W'){ info.watchCount = Number(info.watchCount||0) + 1; if(info.watchCount >= threshold){ activateTrackedNumber(info); } return; }
   
   const bet=currentBetFor(info); const totalReturn=bet*9; const net=(bet*8)-info.prevLoss;
-  state.liveBankroll += totalReturn; info.winningBet=bet; info.lastNet=net; pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'LOOTED' });
+  state.liveBankroll += totalReturn; info.winningBet=bet; info.lastNet=net; 
+  pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'LOOTED' });
   if(rowEvents) rowEvents.np.push(`${side}${num} ${net >= 0 ? '+' : ''}${net}`);
   
   const vd=vijayDarshanaDisplay(info);
@@ -295,8 +295,6 @@ async function resolveNumber(side,num,notes,rowEvents){
   playSound('win');
   spawnButtonParticles(side, num, 'win'); 
   triggerStagePopup(vd.displayStep);
-  const btn = document.querySelector(`button.tile[data-side="${side}"][data-num="${num}"]`);
-  if(btn) triggerCandyCrushPop(btn);
   
   notes.push({title:'LOOT SECURED', text:`${num} T${vd.displayStep} Magic : +${vd.displayNet} XP`}); 
 }
@@ -376,11 +374,82 @@ function refreshFirstLadderPreview(){
     if(cells[2]) cells[2].textContent=String(bet*9); if(cells[3]) cells[3].textContent=String((bet*9)-cumulative); if(cells[4]) cells[4].textContent=String(-cumulative);
   });
 }
-function refreshLinkedLadderCalculations(){ syncFirstLadderFromInputs(); refreshFirstLadderPreview(); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderMedha(); saveState(); }
 
-// ============================================================================
-// 🔥 BULLETPROOF CSV/XLSX IMPORT ENGINE 🔥
-// ============================================================================
+// 🔥 CRASH PROOF RECALCULATION ENGINE
+function replayKumbhRowsWithCurrentSettings(kumbh){
+  state.liveBankroll = state.settings.bankroll; state.currentChakra = 0; state.numbers = { Y: createSide(), K: createSide() }; state.drishti = []; state.summary = { totalAhuti: 0, maxExposure: 0 };
+  const rows = [...(kumbh?.rows || [])].sort((a,b)=>Number(a.chakra)-Number(b.chakra));
+  
+  for(const row of rows){
+    const validY = (row.y !== '-' && row.y !== '' && row.y != null && !isNaN(Number(row.y)));
+    const validK = (row.k !== '-' && row.k !== '' && row.k != null && !isNaN(Number(row.k)));
+    const yVal = validY ? Number(row.y) : null;
+    const kVal = validK ? Number(row.k) : null;
+
+    state.currentChakra += 1;
+    let exposure = 0;
+
+    if(state.settings.keypadMode === 'combined' || validY) {
+        for(let n=1;n<=9;n++){ const info = state.numbers.Y[n]; if(info.status==='A'||info.status==='B') exposure += currentBetFor(info); }
+    }
+    if(state.settings.keypadMode === 'combined' || validK) {
+        for(let n=1;n<=9;n++){ const info = state.numbers.K[n]; if(info.status==='A'||info.status==='B') exposure += currentBetFor(info); }
+    }
+
+    state.liveBankroll -= exposure;
+    state.summary.totalAhuti += exposure;
+    state.summary.maxExposure = Math.max(state.summary.maxExposure, exposure);
+
+    const rowEvents = {cap:[], ret:[], np:[]};
+    const priorRet = Array.isArray(row.ret) ? row.ret.slice() : (row.ret ? [row.ret] : []);
+
+    if(state.settings.keypadMode === 'combined' || validY) {
+        if(yVal === 0) advanceAfterLossSilent('Y', rowEvents);
+        else if(yVal !== null) { advanceAfterLossSilent('Y', rowEvents, yVal); resolveNumberSilent('Y', yVal, rowEvents, priorRet.includes(`Y${yVal}`)); }
+    }
+
+    if(state.settings.keypadMode === 'combined' || validK) {
+        if(kVal === 0) advanceAfterLossSilent('K', rowEvents);
+        else if(kVal !== null) { advanceAfterLossSilent('K', rowEvents, kVal); resolveNumberSilent('K', kVal, rowEvents, priorRet.includes(`K${kVal}`)); }
+    }
+
+    row.chakra = state.currentChakra;
+    row.cap = rowEvents.cap;
+    row.ret = rowEvents.ret;
+    row.np = rowEvents.np;
+    row.ahuti = exposure;
+    row.axyapatra = state.liveBankroll;
+  }
+}
+
+function replayAllKumbhsWithCurrentSettings(){
+  if (!Array.isArray(state.granth)) state.granth = [];
+  const preserved = { granth: clone(state.granth), currentKumbhId: state.currentKumbhId, activeTab: state.activeTab }; let activeSnapshot = null;
+  for(const kumbh of preserved.granth){ 
+      replayKumbhRowsWithCurrentSettings(kumbh); 
+      if(kumbh.id === preserved.currentKumbhId){ 
+          activeSnapshot = { liveBankroll: state.liveBankroll, currentChakra: state.currentChakra, numbers: clone(state.numbers), drishti: clone(state.drishti), summary: clone(state.summary) }; 
+      } 
+  }
+  state.granth = preserved.granth; state.activeTab = preserved.activeTab; state.currentKumbhId = preserved.currentKumbhId;
+  if(activeSnapshot){ 
+      state.liveBankroll = activeSnapshot.liveBankroll; 
+      state.currentChakra = activeSnapshot.currentChakra; 
+      state.numbers = activeSnapshot.numbers || { Y: createSide(), K: createSide() }; 
+      state.drishti = activeSnapshot.drishti || []; 
+      state.summary = activeSnapshot.summary || { totalAhuti: 0, maxExposure: 0 }; 
+  } 
+  else { state.liveBankroll = state.settings.bankroll; state.currentChakra = 0; state.numbers = { Y: createSide(), K: createSide() }; state.drishti = []; state.summary = { totalAhuti: 0, maxExposure: 0 }; }
+}
+
+function refreshLinkedLadderCalculations(){ syncFirstLadderFromInputs(); refreshFirstLadderPreview(); if (!Array.isArray(state.granth)) state.granth = []; const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderMedha(); saveState(); }
+
+function shouldCapNowSilent(side,num,info){
+  const stopLossPerNumber = Number(state.settings.stopLossPerNumber);
+  if(state.settings.capRule==='on' && info.ladder===1 && Number.isFinite(stopLossPerNumber)){ if(soldierStepNetProfit(info) <= stopLossPerNumber) return true; }
+  return info.ladder===1 && info.step>state.settings.maxSteps;
+}
+
 function escapeCsvValue(val) {
     if (val === null || val === undefined) return '';
     const str = String(val);
@@ -406,70 +475,40 @@ function ladderCsvContent() {
     for (let i = 1; i <= Math.min(state.settings.maxSteps, 15); i++) { csv += `L2,T${i},${secondLadderBet(i)}\n`; }
     return csv;
 }
+function parseCsvToGrid(text){
+  const lines=String(text||'').trim().split(/\r?\n/).filter(Boolean);
+  return lines.map(line=>{
+    const out=[]; let cur=''; let inQuotes=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){ if(inQuotes && line[i+1]==='"'){ cur+='"'; i++; } else inQuotes=!inQuotes; } 
+      else if(ch===',' && !inQuotes){ out.push(cur); cur=''; } else cur+=ch;
+    } out.push(cur); return out;
+  });
+}
 
-function processDataImport(text) {
-    const trimmed = String(text || '').trim();
-    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+async function saveWithPickerOrDownload(fileName, content, mimeType, fileDesc, ext) {
+    const blob = (content instanceof Blob) ? content : new Blob([content], { type: mimeType });
+    if (window.showSaveFilePicker) {
         try {
-            const parsed=JSON.parse(trimmed);
-            if(parsed && parsed.state){ restoreSnapshot(parsed); }
-            else if(parsed && parsed.granth){ state = reviveState({ ...freshState(), granth: parsed.granth, currentKumbhId: parsed.granth.at(-1)?.id||null, settings: parsed.settings || state.settings }); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings(); }
-            else { state = reviveState(parsed); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; }
-            renderAll(); showToast('GRANTH LOADED','JSON imported successfully');
-        } catch(e) { console.error(e); showToast('IMPORT FAILED', 'Invalid JSON structure', 'warn'); }
-    } else {
-        try {
-            const lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-            let startIndex = 0;
-            if(lines.length > 0 && (lines[0].toLowerCase().includes('kumbhid') || lines[0].toLowerCase().includes('chakra'))) {
-                startIndex = 1; 
-            }
-            
-            const grouped = new Map();
-            for (let i = startIndex; i < lines.length; i++) {
-                const cols = lines[i].split(',').map(s => s.trim());
-                if (cols.length < 3) continue;
-                
-                // Aggressive digit extraction to bypass any formatting issues
-                const rawKumbh = String(cols[0]).replace(/[^\d]/g, '');
-                const rawChakra = String(cols[1]).replace(/[^\d]/g, '');
-                const kumbhId = Number(rawKumbh);
-                const chakra = Number(rawChakra);
-                
-                if (!kumbhId || !chakra) continue;
-                
-                if (!grouped.has(kumbhId)) grouped.set(kumbhId, { id: kumbhId, rows: [] });
-                const target = grouped.get(kumbhId);
-                
-                const yRaw = cols[2] ? String(cols[2]).replace(/[^\d]/g, '') : '';
-                const kRaw = cols[5] ? String(cols[5]).replace(/[^\d]/g, '') : '';
-                
-                if(!target.rows.some(r => Number(r.chakra) === chakra)) {
-                    target.rows.push({
-                        chakra,
-                        y: yRaw ? Number(yRaw) : '-',
-                        k: kRaw ? Number(kRaw) : '-',
-                        cap: cols[8] ? cols[8].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
-                        ret: cols[9] ? cols[9].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
-                        np: cols[10] ? cols[10].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
-                        ahuti: parseInt(String(cols[11]||'').replace(/[^\d-]/g, '')) || 0,
-                        axyapatra: parseInt(String(cols[12]||'').replace(/[^\d-]/g, '')) || 0
-                    });
-                }
-            }
-            
-            if (grouped.size === 0) throw new Error("No data found");
-            state.granth = [...grouped.values()].sort((a,b) => a.id - b.id); 
-            state.currentKumbhId = state.granth.at(-1)?.id || null; 
-            pending = {Y: null, K: null}; historyStack = []; redoStack = []; 
-            replayAllKumbhsWithCurrentSettings();
-            renderAll(); 
-            showToast('GRANTH LOADED', 'Spreadsheet imported successfully');
-        } catch(e) { 
-            console.error('Import parse error:', e); 
-            showToast('IMPORT FAILED', 'Could not read CSV/XLSX data', 'warn'); 
-        }
+            const handle = await window.showSaveFilePicker({ suggestedName: fileName, types: [{ description: fileDesc, accept: { [mimeType]: [ext] } }] });
+            const writable = await handle.createWritable(); await writable.write(blob); await writable.close(); return true; 
+        } catch (err) { if (err.name === 'AbortError') return null; console.warn('Path picker blocked, using direct download.', err); }
     }
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.style.display = 'none'; a.href = url; a.download = fileName;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500); return true; 
+}
+
+async function doExportData(format) {
+    let content, type, ext, desc;
+    if(format === 'csv') { content = granthCsvContent(); type = 'text/csv'; ext = '.csv'; desc = 'CSV Files'; } 
+    else if(format === 'xlsx') { content = buildXlsxWorkbook(granthWorkbookSheets()); type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; ext = '.xlsx'; desc = 'Excel Files'; } 
+    else { content = JSON.stringify(exportPayload(), null, 2); type = 'application/json'; ext = '.json'; desc = 'JSON Files'; }
+    showToast('EXPORTING...', 'Preparing file...');
+    const success = await saveWithPickerOrDownload(`Kubera_V5Pro_Final_locked${ext}`, content, type, desc, ext);
+    if (success) showToast('EXPORT SUCCESS', `${format.toUpperCase()} saved`);
 }
 
 async function readUploadedFile(file) {
@@ -493,30 +532,60 @@ async function readUploadedFile(file) {
   return await file.text();
 }
 
-async function saveWithPickerOrDownload(fileName, content, mimeType, fileDesc, ext) {
-    const blob = (content instanceof Blob) ? content : new Blob([content], { type: mimeType });
-
-    if (window.showSaveFilePicker) {
+function processDataImport(text) {
+    const trimmed = String(text || '').trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
         try {
-            const handle = await window.showSaveFilePicker({ suggestedName: fileName, types: [{ description: fileDesc, accept: { [mimeType]: [ext] } }] });
-            const writable = await handle.createWritable(); await writable.write(blob); await writable.close(); return true; 
-        } catch (err) { if (err.name === 'AbortError') return null; console.warn('Path picker blocked, using direct download.', err); }
+            const parsed=JSON.parse(trimmed);
+            if(parsed && parsed.state){ restoreSnapshot(parsed); }
+            else if(parsed && parsed.granth){ state = reviveState({ ...freshState(), granth: parsed.granth, currentKumbhId: parsed.granth.at(-1)?.id||null, settings: parsed.settings || state.settings }); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; replayAllKumbhsWithCurrentSettings(); }
+            else { state = reviveState(parsed); pending={Y:null,K:null}; historyStack=[]; redoStack=[]; }
+            renderAll(); showToast('GRANTH LOADED','JSON imported successfully');
+        } catch(e) { console.error(e); showToast('IMPORT FAILED', 'Invalid JSON structure', 'warn'); }
+    } else {
+        try {
+            const lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            let startIndex = 0;
+            if(lines.length > 0 && (lines[0].toLowerCase().includes('kumbhid') || lines[0].toLowerCase().includes('chakra'))) { startIndex = 1; }
+            
+            const grouped = new Map();
+            for (let i = startIndex; i < lines.length; i++) {
+                const cols = lines[i].split(',').map(s => s.trim());
+                if (cols.length < 3) continue;
+                
+                const rawKumbh = String(cols[0]).replace(/[^\d]/g, '');
+                const rawChakra = String(cols[1]).replace(/[^\d]/g, '');
+                const kumbhId = Number(rawKumbh);
+                const chakra = Number(rawChakra);
+                
+                if (!kumbhId || !chakra) continue;
+                if (!grouped.has(kumbhId)) grouped.set(kumbhId, { id: kumbhId, rows: [] });
+                const target = grouped.get(kumbhId);
+                
+                const yRaw = cols[2] ? String(cols[2]).replace(/[^\d]/g, '') : '';
+                const kRaw = cols[5] ? String(cols[5]).replace(/[^\d]/g, '') : '';
+                
+                if(!target.rows.some(r => Number(r.chakra) === chakra)) {
+                    target.rows.push({
+                        chakra,
+                        y: yRaw ? Number(yRaw) : '-',
+                        k: kRaw ? Number(kRaw) : '-',
+                        cap: cols[8] ? cols[8].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
+                        ret: cols[9] ? cols[9].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
+                        np: cols[10] ? cols[10].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
+                        ahuti: parseInt(String(cols[11]||'').replace(/[^\d-]/g, '')) || 0,
+                        axyapatra: parseInt(String(cols[12]||'').replace(/[^\d-]/g, '')) || 0
+                    });
+                }
+            }
+            if (grouped.size === 0) throw new Error("No data found");
+            state.granth = [...grouped.values()].sort((a,b) => a.id - b.id); 
+            state.currentKumbhId = state.granth.at(-1)?.id || null; 
+            pending = {Y: null, K: null}; historyStack = []; redoStack = []; 
+            replayAllKumbhsWithCurrentSettings();
+            renderAll(); showToast('GRANTH LOADED', 'Spreadsheet imported successfully');
+        } catch(e) { console.error('Import parse error:', e); showToast('IMPORT FAILED', 'Could not read CSV/XLSX data', 'warn'); }
     }
-
-    const url = URL.createObjectURL(blob); const a = document.createElement('a');
-    a.style.display = 'none'; a.href = url; a.download = fileName;
-    document.body.appendChild(a); a.click();
-    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500); return true; 
-}
-
-async function doExportData(format) {
-    let content, type, ext, desc;
-    if(format === 'csv') { content = granthCsvContent(); type = 'text/csv'; ext = '.csv'; desc = 'CSV Files'; } 
-    else if(format === 'xlsx') { content = buildXlsxWorkbook(granthWorkbookSheets()); type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; ext = '.xlsx'; desc = 'Excel Files'; } 
-    else { content = JSON.stringify(exportPayload(), null, 2); type = 'application/json'; ext = '.json'; desc = 'JSON Files'; }
-    showToast('EXPORTING...', 'Preparing file...');
-    const success = await saveWithPickerOrDownload(`Kubera_V5Pro_Final_locked${ext}`, content, type, desc, ext);
-    if (success) showToast('EXPORT SUCCESS', `${format.toUpperCase()} saved`);
 }
 
 function buildSheetXml(rows){
@@ -562,8 +631,10 @@ function buildXlsxWorkbook(kumbhs){
   const centralSize=central.reduce((n,a)=>n+a.length,0); const end=[]; pushU32(end,0x06054b50); pushU16(end,0); pushU16(end,0); pushU16(end,files.length); pushU16(end,files.length); pushU32(end,centralSize); pushU32(end,offset); pushU16(end,0);
   return new Blob([...parts,...central,Uint8Array.from(end)], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 }
+
 function granthWorkbookSheets(){
-  return (state.granth||[]).map(k=>{
+  if (!Array.isArray(state.granth)) state.granth = [];
+  return state.granth.map(k=>{
     const insight=kumbhInsights(k.rows||[]); const rows=[]; rows.push([`Kumbh #${String(k.id).padStart(2,'0')}`]); rows.push(['R','Y','K','YSel','YHit','KSel','KHit','Cap','Ret','NP','Ax']);
     (k.rows||[]).forEach(r=>{
       const meta=insight.rowMeta.get(Number(r.chakra)||0) || { ySelCode:'-', yHitCode:'-', kSelCode:'-', kHitCode:'-', capped:[], returned:[] };
@@ -579,6 +650,7 @@ function granthWorkbookSheets(){
 
 function granthCsvContent(){
   const header='KumbhId,Chakra,Y,YSel,YHit,K,KSel,KHit,Cap,Ret,NP,Ah,Ax,Side,Number,SelectedRound,HitRound,TravelSteps,SelectCode,HitCode\n'; const rows=[];
+  if (!Array.isArray(state.granth)) state.granth = [];
   state.granth.forEach(k=>{
     const insight=kumbhInsights(k.rows||[]); const detailMap=new Map();
     [...insight.details.Y, ...insight.details.K].forEach(d=>{ const key=`${d.side}-${d.hitRound}`; if(!detailMap.has(key)) detailMap.set(key, []); detailMap.get(key).push(d); });
@@ -617,7 +689,7 @@ function advanceAfterLossSilent(side,rowEvents,winningNum=null){
 }
 
 // ============================================================================
-// 🔥 BULLETPROOF SAFE BINDING LOGIC 🔥
+// 🔥 BULLETPROOF SAFE BINDING WITH ERROR RECOVERY 🔥
 // ============================================================================
 function safeBind(id, fn, event = 'click') {
     try {
@@ -628,9 +700,7 @@ function safeBind(id, fn, event = 'click') {
                 catch (err) { console.error(`Error executing action on ${id}:`, err); showToast('ERROR', 'Action failed', 'warn'); }
             });
         }
-    } catch (err) {
-        console.error(`Failed to attach event to ${id}:`, err);
-    }
+    } catch (err) { console.error(`Failed to attach event to ${id}:`, err); }
 }
 
 function readYantraSettings(){
@@ -638,7 +708,29 @@ function readYantraSettings(){
   current.targetDollar = Number(q('setTargetDollar')?.value)||500; current.targetPercent = Number(q('setTargetPercent')?.value)||1.67; current.stopLoss = Number(q('setStopLoss')?.value)||30000; current.min = Number(q('setMin')?.value)||200; current.max = Number(q('setMax')?.value)||3000; current.coin = Number(q('setCoin')?.value)||100; current.targetNum = Number(q('setTargetNum')?.value)||1000; current.doubleLadder = q('setDoubleLadder')?.value || 'on'; current.keypadMode = q('setKeypadMode')?.value || 'combined'; current.maxSteps = Number(q('setMaxSteps')?.value)||30; current.reserve = Number(q('setReserve')?.value)||20000; current.capRule = q('setCapRule')?.value || 'on';
   if(q('setAttackMode')) current.attackMode = q('setAttackMode').value || 'classic'; current.theme = q('setTheme')?.value || 'warhunt'; current.vaultBg = q('setVaultBg')?.value || 'bg-molten'; const stopLossPerNumberValue = Number(q('setStopLossPerNumber')?.value); current.stopLossPerNumber = Number.isFinite(stopLossPerNumberValue) ? stopLossPerNumberValue : -100; return current;
 }
-async function applyYantraSettings(){ if(!(await askApplyYantra())) return; state.settings = readYantraSettings(); applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten'); state.ladder = buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows){ replayAllKumbhsWithCurrentSettings(); } else { state.liveBankroll = state.settings.bankroll; } renderAll(); showToast('YANTRA APPLIED','Settings updated'); }
+
+async function applyYantraSettings() { 
+    if (!(await askApplyYantra())) return; 
+    try {
+        state.settings = readYantraSettings(); 
+        applyTheme(state.settings.theme || 'warhunt'); 
+        applyBackground(state.settings.vaultBg || 'bg-molten'); 
+        state.ladder = buildLadder(state.settings); 
+        
+        if (!Array.isArray(state.granth)) state.granth = [];
+        if (!Array.isArray(state.drishti)) state.drishti = [];
+
+        const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); 
+        
+        if (hasRecordedRows) { replayAllKumbhsWithCurrentSettings(); } 
+        else { state.liveBankroll = state.settings.bankroll; } 
+        renderAll(); 
+        showToast('YANTRA APPLIED', 'Settings updated'); 
+    } catch (error) {
+        console.error('Yantra settings error:', error);
+        showToast('ERROR', 'Could not apply settings', 'warn');
+    }
+}
 
 function setupControls() {
   safeBind('prayogaBtn', startPrayoga);
@@ -649,21 +741,19 @@ function setupControls() {
   safeBind('setTargetDollar', ()=>recalcTargetLink('dollar'), 'input');
   safeBind('setTargetPercent', ()=>recalcTargetLink('percent'), 'input');
   safeBind('setBankroll', ()=>recalcTargetLink('dollar'), 'input');
-  
   safeBind('applyYantraBtn', applyYantraSettings);
   
   safeBind('saveLadderBtn', () => { 
       document.querySelectorAll('[data-ladder-index]').forEach(inp => { inp.value = normalizeLadderBet(inp.value); }); 
       syncFirstLadderFromInputs(); 
+      if (!Array.isArray(state.granth)) state.granth = [];
       const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); 
       if (hasRecordedRows) replayAllKumbhsWithCurrentSettings(); 
-      renderAll(); 
-      showToast('SOPANA SAVED', 'Editable ladder updated'); 
+      renderAll(); showToast('SOPANA SAVED', 'Editable ladder updated'); 
   });
   
   safeBind('exportLadderBtn', async () => {
-      syncFirstLadderFromInputs(); 
-      const content = ladderCsvContent(); 
+      syncFirstLadderFromInputs(); const content = ladderCsvContent(); 
       const success = await saveWithPickerOrDownload('sopana-ladder.csv', content, 'text/csv', 'CSV Files', '.csv');
       if (success) showToast('SOPANA EXPORTED','Ladder CSV saved'); 
   });
@@ -683,44 +773,31 @@ function setupControls() {
               if (String(ladder).trim().toUpperCase()==='L2') { cumulative2 += bet; } 
               else { cumulative1 += bet; state.ladder[idx] = { step:`T${idx+1}`, bet, winReturn:bet*9, netProfit:(bet*9)-cumulative1, ifLoseTotal:-cumulative1 }; } 
           }); 
+          if (!Array.isArray(state.granth)) state.granth = [];
           if(state.granth.some(k => Array.isArray(k.rows) && k.rows.length)) replayAllKumbhsWithCurrentSettings(); 
-          renderAll(); 
-          showToast('SOPANA LOADED','Ladder loaded'); 
+          renderAll(); showToast('SOPANA LOADED','Ladder loaded'); 
       } finally { e.target.value = ''; }
   }, 'change');
 
   safeBind('resetLadderBtn', () => { 
       state.ladder = buildLadder(state.settings); 
+      if (!Array.isArray(state.granth)) state.granth = [];
       if (state.granth.some(k => Array.isArray(k.rows) && k.rows.length)) replayAllKumbhsWithCurrentSettings(); 
-      renderAll(); 
-      showToast('SOPANA RESET', 'Default ladder restored'); 
+      renderAll(); showToast('SOPANA RESET', 'Default ladder restored'); 
   });
   
-  document.addEventListener('input', e => { 
-      const el = e.target; 
-      if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) refreshLinkedLadderCalculations(); 
-  });
+  document.addEventListener('input', e => { const el = e.target; if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) refreshLinkedLadderCalculations(); });
   document.addEventListener('keydown', e => { 
       const el = e.target; 
       if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]') && e.key === 'Enter') { 
-          e.preventDefault(); 
-          const current = Number(el.dataset.ladderIndex); 
-          const next = document.querySelector(`[data-ladder-index="${current+1}"]`); 
+          e.preventDefault(); const current = Number(el.dataset.ladderIndex); const next = document.querySelector(`[data-ladder-index="${current+1}"]`); 
           if(next){ next.focus(); next.select(); } else { el.blur(); } 
       } 
   });
-  document.addEventListener('focusin', e => { 
-      const el = e.target; 
-      if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(() => el.select(), 0); 
-  });
+  document.addEventListener('focusin', e => { const el = e.target; if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(() => el.select(), 0); });
   
-  safeBind('exportCsvBtn', () => {
-      if (typeof exportDrishtiCsv === 'function') exportDrishtiCsv(); else showToast('INFO', 'Drishti CSV export not available', 'warn');
-  });
-  safeBind('exportPdfBtn', () => {
-      if (typeof exportDrishtiPdf === 'function') exportDrishtiPdf(); else showToast('INFO', 'PDF export not available', 'warn');
-  });
-  
+  safeBind('exportCsvBtn', () => { if (typeof exportDrishtiCsv === 'function') exportDrishtiCsv(); else showToast('INFO', 'Drishti CSV export not available', 'warn'); });
+  safeBind('exportPdfBtn', () => { if (typeof exportDrishtiPdf === 'function') exportDrishtiPdf(); else showToast('INFO', 'PDF export not available', 'warn'); });
   safeBind('loadCsvBtn', () => q('loadCsvFile').click()); 
   
   safeBind('loadCsvFile', async (e) => {
@@ -735,29 +812,23 @@ function setupControls() {
       } finally { e.target.value = ''; }
   }, 'change');
   
-  safeBind('exportGranthBtn', () => {
-    const fmt = q('granthExportFormat')?.value || 'json';
-    doExportData(fmt);
-  });
-
+  safeBind('exportGranthBtn', () => { const fmt = q('granthExportFormat')?.value || 'json'; doExportData(fmt); });
   safeBind('importGranthBtn', () => q('importGranthFile').click());
   
   safeBind('importGranthFile', async (e) => {
       const file = e.target.files[0]; if(!file) return; 
       try { 
-          const text = await readUploadedFile(file); 
-          processDataImport(text); 
+          const text = await readUploadedFile(file); processDataImport(text); 
       } catch(err) { 
           console.error(err); 
           if (err.message === "XLSX_NETWORK_ERROR") showToast('IMPORT FAILED', 'Internet required for Excel imports', 'warn');
           else showToast('IMPORT FAILED', 'Could not read file', 'warn'); 
-      } 
-      finally { e.target.value = ''; }
+      } finally { e.target.value = ''; }
   }, 'change');
 
   safeBind('deleteGranthBtn', async () => {
-    const sel = q('deleteKumbhSelect');
-    const id = Number(sel?.value || 0);
+    const sel = q('deleteKumbhSelect'); const id = Number(sel?.value || 0);
+    if (!Array.isArray(state.granth)) state.granth = [];
     if (id) {
       const ok = await askModal({ title: `DELETE RAID #${String(id).padStart(2, '0')}`, text: 'Remove this specific raid log?', okLabel: 'Delete', cancelLabel: 'Cancel', okClass: 'warn' });
       if (!ok) return;
@@ -784,8 +855,5 @@ function initApp() {
     try { renderAll(); } catch(e) { console.error('renderAll failed:', e); }
 }
 
-if('serviceWorker' in navigator){ 
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); 
-}
-
+if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); }
 if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initApp); } else { initApp(); }
