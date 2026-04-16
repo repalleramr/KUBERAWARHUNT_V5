@@ -68,7 +68,6 @@ function spawnButtonParticles(side, num, type) {
 let deferredPrompt = null; let historyStack = []; let redoStack = []; let pending = { Y: null, K: null }; let keypadBusy = false;
 const q = id => document.getElementById(id);
 const fmtMoney = n => '💎 ' + Number(n || 0).toLocaleString('en-IN');
-
 const clone = obj => { try { return obj === undefined ? undefined : JSON.parse(JSON.stringify(obj)); } catch(e){ return obj; } };
 
 function getAttackMode(){ return state?.settings?.attackMode || 'classic'; }
@@ -174,12 +173,12 @@ function nextPreviewExposureTotal(){ let total=0; ['Y','K'].forEach(side=>{ for(
 function showToast(title,text,kind=''){ const layer=q('toastLayer'); if(!layer) return; const el=document.createElement('div'); el.className=`toast ${kind}`; el.innerHTML=`<div class="title">${title}</div><div>${text}</div>`; layer.appendChild(el); setTimeout(()=>el.remove(),3600); }
 function glowKey(el){ if(!el) return; el.classList.remove('key-glow'); void el.offsetWidth; el.classList.add('key-glow'); setTimeout(()=>el.classList.remove('key-glow'),220); }
 
-// 🔥 REMOVES IDLE/0 BOXES
+// 🔥 KILLS THE TINY BOXES COMPLETELY: Only returns a string if it's active.
 function statusCode(info){ 
-    if(!info) return null; 
+    if(!info) return ''; 
     if(info.status === 'A' || info.status === 'B') return `T${Math.max(1, Number(info.step)||1)}`; 
     if(info.status === 'W') return (state?.settings?.attackMode==='thirdstrike'?'W2':state?.settings?.attackMode==='fourthstrike'?'W3':'W'); 
-    return null; 
+    return ''; // Strictly nothing for I, L, C
 }
 function vijayDarshanaDisplay(info){ const bet=currentBetFor(info); return { bet, displayStep:Math.max(1,(Number(info.step)||1)-1), displayNet:(bet*8)-(Number(info.prevLoss)||0) }; }
 
@@ -189,7 +188,7 @@ function renderBoards(){
     for(let i=1;i<=10;i++){
       const n=i===10?0:i; const info=n===0?null:(state?.numbers?.[side]?.[n] || freshNumber());
       const btn=document.createElement('button'); 
-      const code = n === 0 ? null : statusCode(info); 
+      const code = n === 0 ? '' : statusCode(info); 
       const metaClass = info?.step ? `step${Math.min(info.step, 6)}` : '';
       btn.type='button'; btn.className=`tile ${n===0?'zero':''} ${info?'state-'+info.status:''}`.trim(); btn.dataset.side=side; btn.dataset.num=String(n);
       
@@ -199,6 +198,7 @@ function renderBoards(){
       else if (n !== 0) decoyContent = `<div class="decoy-symbol">${puzzleSymbols[Math.floor(Math.random() * puzzleSymbols.length)]}</div>`;
       else decoyContent = `<div class="decoy-symbol">🌀</div>`; 
       
+      // If code is empty, it adds NO text block, completely destroying the empty box issue.
       const metaHtml = code ? `<div class="meta ${metaClass}">${code}</div>` : '';
       btn.innerHTML=`<div class="num">${n}</div>${decoyContent}${metaHtml}`; host.appendChild(btn);
     }
