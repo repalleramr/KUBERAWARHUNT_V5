@@ -173,7 +173,6 @@ function nextPreviewExposureTotal(){ let total=0; ['Y','K'].forEach(side=>{ for(
 function showToast(title,text,kind=''){ const layer=q('toastLayer'); if(!layer) return; const el=document.createElement('div'); el.className=`toast ${kind}`; el.innerHTML=`<div class="title">${title}</div><div>${text}</div>`; layer.appendChild(el); setTimeout(()=>el.remove(),3600); }
 function glowKey(el){ if(!el) return; el.classList.remove('key-glow'); void el.offsetWidth; el.classList.add('key-glow'); setTimeout(()=>el.classList.remove('key-glow'),220); }
 
-// 🔥 KILLS THE TINY BOXES COMPLETELY: Only returns a string if it's active.
 function statusCode(info){ 
     if(!info) return ''; 
     if(info.status === 'A' || info.status === 'B') return `T${Math.max(1, Number(info.step)||1)}`; 
@@ -494,12 +493,12 @@ function parseCsvToGrid(text){
 
 async function saveWithPickerOrDownload(fileName, content, mimeType, fileDesc, ext) {
     const blob = (content instanceof Blob) ? content : new Blob([content], { type: mimeType });
-    if (window.showSaveFilePicker) {
-        try {
+    try {
+        if (window.showSaveFilePicker) {
             const handle = await window.showSaveFilePicker({ suggestedName: fileName, types: [{ description: fileDesc, accept: { [mimeType]: [ext] } }] });
             const writable = await handle.createWritable(); await writable.write(blob); await writable.close(); return true; 
-        } catch (err) { if (err.name === 'AbortError') return null; console.warn('Path picker blocked, using direct download.', err); }
-    }
+        }
+    } catch (err) { if (err.name === 'AbortError') return null; console.warn('Path picker blocked, using direct download.', err); }
     const url = URL.createObjectURL(blob); const a = document.createElement('a');
     a.style.display = 'none'; a.href = url; a.download = fileName;
     document.body.appendChild(a); a.click();
@@ -507,13 +506,18 @@ async function saveWithPickerOrDownload(fileName, content, mimeType, fileDesc, e
 }
 
 async function doExportData(format) {
-    let content, type, ext, desc;
-    if(format === 'csv') { content = granthCsvContent(); type = 'text/csv'; ext = '.csv'; desc = 'CSV Files'; } 
-    else if(format === 'xlsx') { content = buildXlsxWorkbook(granthWorkbookSheets()); type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; ext = '.xlsx'; desc = 'Excel Files'; } 
-    else { content = JSON.stringify(exportPayload(), null, 2); type = 'application/json'; ext = '.json'; desc = 'JSON Files'; }
-    showToast('EXPORTING...', 'Preparing file...');
-    const success = await saveWithPickerOrDownload(`Kubera_V5Pro_Final_locked${ext}`, content, type, desc, ext);
-    if (success) showToast('EXPORT SUCCESS', `${format.toUpperCase()} saved`);
+    try {
+        let content, type, ext, desc;
+        if(format === 'csv') { content = granthCsvContent(); type = 'text/csv'; ext = '.csv'; desc = 'CSV Files'; } 
+        else if(format === 'xlsx') { content = buildXlsxWorkbook(granthWorkbookSheets()); type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; ext = '.xlsx'; desc = 'Excel Files'; } 
+        else { content = JSON.stringify(exportPayload(), null, 2); type = 'application/json'; ext = '.json'; desc = 'JSON Files'; }
+        showToast('EXPORTING...', 'Preparing file...');
+        const success = await saveWithPickerOrDownload(`Kubera_V5Pro_Final_locked${ext}`, content, type, desc, ext);
+        if (success) showToast('EXPORT SUCCESS', `${format.toUpperCase()} saved`);
+    } catch(err) {
+        console.error("Export error:", err);
+        showToast('EXPORT FAILED', err.message || 'Could not export file', 'warn');
+    }
 }
 
 async function readUploadedFile(file) {
@@ -711,6 +715,12 @@ function safeBind(id, fn, event = 'click') {
             });
         }
     } catch (err) { console.error(`Failed to attach event to ${id}:`, err); }
+}
+
+function readYantraSettings(){
+  const current = clone(state.settings); const bankrollRaw = Number(q('setBankroll')?.value); current.bankroll = Number.isFinite(bankrollRaw) && bankrollRaw >= 0 ? bankrollRaw : defaultSettings.bankroll;
+  current.targetDollar = Number(q('setTargetDollar')?.value)||500; current.targetPercent = Number(q('setTargetPercent')?.value)||1.67; current.stopLoss = Number(q('setStopLoss')?.value)||30000; current.min = Number(q('setMin')?.value)||200; current.max = Number(q('setMax')?.value)||3000; current.coin = Number(q('setCoin')?.value)||100; current.targetNum = Number(q('setTargetNum')?.value)||1000; current.doubleLadder = q('setDoubleLadder')?.value || 'on'; current.keypadMode = q('setKeypadMode')?.value || 'combined'; current.maxSteps = Number(q('setMaxSteps')?.value)||30; current.reserve = Number(q('setReserve')?.value)||20000; current.capRule = q('setCapRule')?.value || 'on';
+  if(q('setAttackMode')) current.attackMode = q('setAttackMode').value || 'classic'; current.theme = q('setTheme')?.value || 'warhunt'; current.vaultBg = q('setVaultBg')?.value || 'bg-molten'; const stopLossPerNumberValue = Number(q('setStopLossPerNumber')?.value); current.stopLossPerNumber = Number.isFinite(stopLossPerNumberValue) ? stopLossPerNumberValue : -100; return current;
 }
 
 async function applyYantraSettings() { 
