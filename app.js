@@ -3,21 +3,6 @@ const STORAGE_KEY = 'kubera-warhunt-v5pro-final-locked';
 const puzzleSymbols = ['💎','🔥','⚡','🌟','🔮','🎲','🌙','☀️','💠','🔱','🧿','🧩','👑','🏺','🗿','📜','🗡️','🛡️','🪙','🐉','🐲','👹','👺','📿','⚕️','🪬','🎐','🏮','🎭','🎴'];
 const romanMap = ['🌀', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 
-// 🔥 HD BACKGROUNDS FOR CANDY CRUSH GRID (Randomized on New Raid)
-const gridBackgrounds = [
-  'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=800&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=800&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=800&auto=format&fit=crop'
-];
-
-function setRandomGridBg() {
-    const bg = gridBackgrounds[Math.floor(Math.random() * gridBackgrounds.length)];
-    document.documentElement.style.setProperty('--grid-bg', `url('${bg}')`);
-}
-
-// 🔥 NATIVE AUDIO SYNTHESIZER
 let audioCtx = null;
 function initAudio() {
     if (!audioCtx) {
@@ -58,13 +43,6 @@ function triggerStagePopup(stage) {
     setTimeout(() => popup.remove(), 1800);
 }
 
-function triggerCandyCrushPop(btn) {
-    if(!btn) return;
-    btn.style.animation = 'none';
-    void btn.offsetWidth; // Reflow
-    btn.style.animation = 'candyCrushPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
-}
-
 const defaultSettings = { bankroll: 0, targetDollar: 500, targetPercent: 1.67, stopLoss: 30000, min: 200, max: 3000, coin: 100, targetNum: 1000, doubleLadder: 'on', keypadMode: 'combined', maxSteps: 30, reserve: 20000, capRule: 'on', stopLossPerNumber: -100, attackMode: 'classic', theme: 'warhunt', vaultBg: 'bg-molten' };
 const titles = { sangram:'⚔ SANGRAM', vyuha:'🛡 VYUHA', granth:'📜 GRANTH', drishti:'👁 DRISHTI', sopana:'🪜 SOPANA', yantra:'⚙ YANTRA', medha:'🧠 MEDHA' };
 const themePalette = { warhunt: { themeColor:'#120a05' }, temple: { themeColor:'#2a1408' }, vault: { themeColor:'#0f1a12' }, oracle: { themeColor:'#0b1024' }, crimson: { themeColor:'#2a0a0d' }, onyx: { themeColor:'#0b0b0d' }, sapphire: { themeColor:'#07182d' }, emerald: { themeColor:'#071f17' }, moon: { themeColor:'#161526' }, thunder: { themeColor:'#10131f' } };
@@ -90,7 +68,8 @@ function spawnButtonParticles(side, num, type) {
 let deferredPrompt = null; let historyStack = []; let redoStack = []; let pending = { Y: null, K: null }; let keypadBusy = false;
 const q = id => document.getElementById(id);
 const fmtMoney = n => '💎 ' + Number(n || 0).toLocaleString('en-IN');
-const clone = obj => (obj === undefined) ? undefined : JSON.parse(JSON.stringify(obj));
+
+const clone = obj => { try { return obj === undefined ? undefined : JSON.parse(JSON.stringify(obj)); } catch(e){ return obj; } };
 
 function getAttackMode(){ return state?.settings?.attackMode || 'classic'; }
 function attackThresholdForMode(mode){ return mode==='thirdstrike' ? 2 : mode==='fourthstrike' ? 3 : 1; }
@@ -115,7 +94,7 @@ function askClearKumbh(){ return askModal({ title:'ABANDON RAID', text:'End curr
 function askApplyYantra(){ return askModal({ title:'APPLY SETTINGS', text:'Lock in game settings?', okLabel:'Yes', cancelLabel:'No', okClass:'' }); }
 
 function createSide(){ const s={}; for(let i=1;i<=9;i++) s[i]=freshNumber(); return s; }
-function roundUpToCoin(value, coin){ return Math.max(coin, Math.ceil(value / coin) * coin); }
+function roundUpToCoin(value, coin){ const safeCoin = Math.max(1, Number(coin) || 100); return Math.max(safeCoin, Math.ceil(value / safeCoin) * safeCoin); }
 
 function buildLadder(settings){
   const rows = []; let previousLoss = 0; let bet = roundUpToCoin(settings.min, settings.coin); let currentLevel = bet;
@@ -126,7 +105,13 @@ function buildLadder(settings){
     if(step < settings.maxSteps){
       if(((bet * 8) - previousLoss) < settings.targetNum){
         if(settings.doubleLadder === 'on'){ currentLevel = Math.min(settings.max, roundUpToCoin(currentLevel * 2, settings.coin)); bet = currentLevel; } 
-        else { let probe = bet; while((((probe * 8) - previousLoss) < settings.targetNum) && probe < settings.max){ probe = Math.min(settings.max, roundUpToCoin(probe + settings.coin, settings.coin)); } bet = probe; currentLevel = bet; }
+        else { 
+            let probe = bet; let safeLoop = 0;
+            while((((probe * 8) - previousLoss) < settings.targetNum) && probe < settings.max && safeLoop < 1000){ 
+                probe = Math.min(settings.max, roundUpToCoin(probe + settings.coin, settings.coin)); safeLoop++;
+            } 
+            bet = probe; currentLevel = bet; 
+        }
       } else { bet = currentLevel; }
     }
   } return rows;
@@ -171,7 +156,7 @@ function loadState(){
         historyStack = []; redoStack = []; 
     } catch(err) { state = freshState(); historyStack = []; redoStack = []; } 
 }
-let state = freshState(); loadState(); applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten'); setRandomGridBg();
+let state = freshState(); loadState(); applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten');
 
 function saveState(){ try{ localStorage.setItem(STORAGE_KEY, persistedSnapshot()); } catch(err){} }
 function currentKumbh(){ return state.granth.find(k => k.id === state.currentKumbhId) || null; }
@@ -189,7 +174,7 @@ function nextPreviewExposureTotal(){ let total=0; ['Y','K'].forEach(side=>{ for(
 function showToast(title,text,kind=''){ const layer=q('toastLayer'); if(!layer) return; const el=document.createElement('div'); el.className=`toast ${kind}`; el.innerHTML=`<div class="title">${title}</div><div>${text}</div>`; layer.appendChild(el); setTimeout(()=>el.remove(),3600); }
 function glowKey(el){ if(!el) return; el.classList.remove('key-glow'); void el.offsetWidth; el.classList.add('key-glow'); setTimeout(()=>el.classList.remove('key-glow'),220); }
 
-// 🔥 NO TINY BOXES: Only returns active tags (T1, W2)
+// 🔥 REMOVES IDLE/0 BOXES
 function statusCode(info){ 
     if(!info) return null; 
     if(info.status === 'A' || info.status === 'B') return `T${Math.max(1, Number(info.step)||1)}`; 
@@ -235,7 +220,6 @@ function renderSangram(){
     if(q('lastResultValue')) q('lastResultValue').textContent=`[ ${displayY} ] | [ ${displayK} ]`; 
 }
 
-// 🔥 FIXED GRANTH TABLE FORMATTING
 function formatRoundInfoEntries(entries){ return entries.length ? entries.join(', ') : '-'; }
 
 function kumbhInsights(rows){
@@ -259,10 +243,8 @@ function kumbhInsights(rows){
     processSide('Y', row.y, chakra, meta); processSide('K', row.k, chakra, meta); rowMeta.set(chakra, meta);
   }
   
-  // Format summary as HTML pills directly so they space perfectly
   const yStats = Object.entries(counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`<span class="pill">[${n}]: ${c}</span>`);
   const kStats = Object.entries(counts.K).filter(([n])=>n!=='0').map(([n,c])=>`<span class="pill">[${n}]: ${c}</span>`);
-  
   return { rowMeta, counts, details, yRptHTML: yStats.join(' '), kRptHTML: kStats.join(' ') };
 }
 
@@ -291,15 +273,8 @@ function renderMedha(){ const active=[]; const cap=[]; ['Y','K'].forEach(side=>{
 function renderActiveTab(){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===`screen-${state.activeTab}`)); document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.target===state.activeTab)); if(q('screenTitle')) q('screenTitle').textContent=titles[state.activeTab]||titles.sangram; }
 function renderAll(){ applyTheme(state.settings.theme || 'warhunt'); applyBackground(state.settings.vaultBg || 'bg-molten'); renderActiveTab(); renderBoards(); renderVyuha(); renderSangram(); renderGranth(); renderDrishti(); renderSopana(); renderYantra(); renderMedha(); saveState(); }
 
-function startPrayoga(){ 
-    setRandomGridBg(); 
-    if(state.currentChakra===0 && !(currentKumbh()?.rows?.length)){ state.liveBankroll = state.settings.bankroll; } else if(state.currentChakra!==0 || currentKumbh()?.rows?.length){ state.currentKumbhId=null; state.liveBankroll = state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; } const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID STARTED', `Entering Zone #${String(kumbh.id).padStart(2,'0')}`); 
-}
-async function clearCurrentSession(){ 
-    if(!(await askClearKumbh())) return; 
-    setRandomGridBg(); 
-    state.liveBankroll=state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; state.currentKumbhId=null; const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID ABANDONED',`Reset to Zone #${String(kumbh.id).padStart(2,'0')}`); 
-}
+function startPrayoga(){ if(state.currentChakra===0 && !(currentKumbh()?.rows?.length)){ state.liveBankroll = state.settings.bankroll; } else if(state.currentChakra!==0 || currentKumbh()?.rows?.length){ state.currentKumbhId=null; state.liveBankroll = state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; } const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID STARTED', `Entering Zone #${String(kumbh.id).padStart(2,'0')}`); }
+async function clearCurrentSession(){ if(!(await askClearKumbh())) return; state.liveBankroll=state.settings.bankroll; state.currentChakra=0; state.numbers={Y:createSide(),K:createSide()}; state.drishti=[]; state.summary={totalAhuti:0,maxExposure:0}; pending={Y:null,K:null}; state.currentKumbhId=null; const kumbh=ensureKumbh(); state.activeTab='sangram'; renderAll(); showToast('RAID ABANDONED',`Reset to Zone #${String(kumbh.id).padStart(2,'0')}`); }
 function recordSnapshot(){ historyStack.push(historySnapshot()); if(historyStack.length>20) historyStack.shift(); redoStack = []; }
 function undoLast(){ const prev=historyStack.pop(); if(!prev) return; redoStack.push(historySnapshot()); restoreSnapshot(prev); renderAll(); showToast('TIME REVERSED','Wave reverted'); }
 function redoLast(){ const next=redoStack.pop(); if(!next) return; historyStack.push(historySnapshot()); restoreSnapshot(next); renderAll(); showToast('TIMELINE RESTORED','Wave restored'); }
@@ -324,8 +299,6 @@ async function resolveNumber(side,num,notes,rowEvents){
   playSound('win');
   spawnButtonParticles(side, num, 'win'); 
   triggerStagePopup(vd.displayStep);
-  const btn = document.querySelector(`button.tile[data-side="${side}"][data-num="${num}"]`);
-  if(btn) triggerCandyCrushPop(btn);
   
   notes.push({title:'LOOT SECURED', text:`${num} T${vd.displayStep} Magic : +${vd.displayNet} XP`}); 
 }
@@ -467,9 +440,6 @@ function shouldCapNowSilent(side,num,info){
   return info.ladder===1 && info.step>state.settings.maxSteps;
 }
 
-// ============================================================================
-// 🔥 BUG FREE CSV/XLSX IMPORTER & EXPORTER 🔥
-// ============================================================================
 function escapeCsvValue(val) {
     if (val === null || val === undefined) return '';
     const str = String(val);
@@ -494,6 +464,62 @@ function ladderCsvContent() {
     state.ladder.forEach((r, i) => { csv += `L1,${r.step},${r.bet}\n`; });
     for (let i = 1; i <= Math.min(state.settings.maxSteps, 15); i++) { csv += `L2,T${i},${secondLadderBet(i)}\n`; }
     return csv;
+}
+function parseCsvToGrid(text){
+  const lines=String(text||'').trim().split(/\r?\n/).filter(Boolean);
+  return lines.map(line=>{
+    const out=[]; let cur=''; let inQuotes=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){ if(inQuotes && line[i+1]==='"'){ cur+='"'; i++; } else inQuotes=!inQuotes; } 
+      else if(ch===',' && !inQuotes){ out.push(cur); cur=''; } else cur+=ch;
+    } out.push(cur); return out;
+  });
+}
+
+async function saveWithPickerOrDownload(fileName, content, mimeType, fileDesc, ext) {
+    const blob = (content instanceof Blob) ? content : new Blob([content], { type: mimeType });
+    if (window.showSaveFilePicker) {
+        try {
+            const handle = await window.showSaveFilePicker({ suggestedName: fileName, types: [{ description: fileDesc, accept: { [mimeType]: [ext] } }] });
+            const writable = await handle.createWritable(); await writable.write(blob); await writable.close(); return true; 
+        } catch (err) { if (err.name === 'AbortError') return null; console.warn('Path picker blocked, using direct download.', err); }
+    }
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.style.display = 'none'; a.href = url; a.download = fileName;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500); return true; 
+}
+
+async function doExportData(format) {
+    let content, type, ext, desc;
+    if(format === 'csv') { content = granthCsvContent(); type = 'text/csv'; ext = '.csv'; desc = 'CSV Files'; } 
+    else if(format === 'xlsx') { content = buildXlsxWorkbook(granthWorkbookSheets()); type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; ext = '.xlsx'; desc = 'Excel Files'; } 
+    else { content = JSON.stringify(exportPayload(), null, 2); type = 'application/json'; ext = '.json'; desc = 'JSON Files'; }
+    showToast('EXPORTING...', 'Preparing file...');
+    const success = await saveWithPickerOrDownload(`Kubera_V5Pro_Final_locked${ext}`, content, type, desc, ext);
+    if (success) showToast('EXPORT SUCCESS', `${format.toUpperCase()} saved`);
+}
+
+async function readUploadedFile(file) {
+  const name = file.name.toLowerCase();
+  if (name.endsWith('.xlsx')) {
+    if (typeof XLSX === 'undefined') {
+      try {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+          s.onload = res; s.onerror = () => rej(new Error("No internet for Excel."));
+          document.head.appendChild(s);
+        });
+      } catch(e) { throw new Error("XLSX_NETWORK_ERROR"); }
+    }
+    const data = new Uint8Array(await file.arrayBuffer());
+    const workbook = XLSX.read(data, {type: 'array'});
+    if (workbook.Sheets['SystemData']) return XLSX.utils.sheet_to_csv(workbook.Sheets['SystemData']);
+    return XLSX.utils.sheet_to_csv(workbook.Sheets[workbook.SheetNames[0]]);
+  }
+  return await file.text();
 }
 
 function processDataImport(text) {
@@ -558,51 +584,6 @@ function processDataImport(text) {
             showToast('IMPORT FAILED', 'Could not read CSV/XLSX data', 'warn'); 
         }
     }
-}
-
-async function readUploadedFile(file) {
-  const name = file.name.toLowerCase();
-  if (name.endsWith('.xlsx')) {
-    if (typeof XLSX === 'undefined') {
-      try {
-        await new Promise((res, rej) => {
-          const s = document.createElement('script');
-          s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
-          s.onload = res; s.onerror = () => rej(new Error("No internet for Excel."));
-          document.head.appendChild(s);
-        });
-      } catch(e) { throw new Error("XLSX_NETWORK_ERROR"); }
-    }
-    const data = new Uint8Array(await file.arrayBuffer());
-    const workbook = XLSX.read(data, {type: 'array'});
-    if (workbook.Sheets['SystemData']) return XLSX.utils.sheet_to_csv(workbook.Sheets['SystemData']);
-    return XLSX.utils.sheet_to_csv(workbook.Sheets[workbook.SheetNames[0]]);
-  }
-  return await file.text();
-}
-
-async function saveWithPickerOrDownload(fileName, content, mimeType, fileDesc, ext) {
-    const blob = (content instanceof Blob) ? content : new Blob([content], { type: mimeType });
-    if (window.showSaveFilePicker) {
-        try {
-            const handle = await window.showSaveFilePicker({ suggestedName: fileName, types: [{ description: fileDesc, accept: { [mimeType]: [ext] } }] });
-            const writable = await handle.createWritable(); await writable.write(blob); await writable.close(); return true; 
-        } catch (err) { if (err.name === 'AbortError') return null; console.warn('Path picker blocked, using direct download.', err); }
-    }
-    const url = URL.createObjectURL(blob); const a = document.createElement('a');
-    a.style.display = 'none'; a.href = url; a.download = fileName;
-    document.body.appendChild(a); a.click();
-    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500); return true; 
-}
-
-async function doExportData(format) {
-    let content, type, ext, desc;
-    if(format === 'csv') { content = granthCsvContent(); type = 'text/csv'; ext = '.csv'; desc = 'CSV Files'; } 
-    else if(format === 'xlsx') { content = buildXlsxWorkbook(granthWorkbookSheets()); type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; ext = '.xlsx'; desc = 'Excel Files'; } 
-    else { content = JSON.stringify(exportPayload(), null, 2); type = 'application/json'; ext = '.json'; desc = 'JSON Files'; }
-    showToast('EXPORTING...', 'Preparing file...');
-    const success = await saveWithPickerOrDownload(`Kubera_V5Pro_Final_locked${ext}`, content, type, desc, ext);
-    if (success) showToast('EXPORT SUCCESS', `${format.toUpperCase()} saved`);
 }
 
 function buildSheetXml(rows){
@@ -736,7 +717,7 @@ async function applyYantraSettings() {
         showToast('YANTRA APPLIED', 'Settings updated'); 
     } catch (error) {
         console.error('Yantra settings error:', error);
-        showToast('ERROR', 'Could not apply settings', 'warn');
+        showToast('ERROR', error.message || 'Could not apply settings', 'warn');
     }
 }
 
