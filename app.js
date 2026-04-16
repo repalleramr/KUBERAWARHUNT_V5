@@ -699,3 +699,90 @@ if (document.readyState === 'loading') {
 } else {
     initApp();
 }
+function setupControls(){
+  bindClick('prayogaBtn', startPrayoga);
+  bindClick('kumbhaBtn', clearCurrentSession);
+  bindClick('undoBtn', undoLast);
+  bindClick('redoBtn', redoLast);
+  
+  const sd = q('setTargetDollar'); if(sd) sd.oninput = ()=>recalcTargetLink('dollar');
+  const sp = q('setTargetPercent'); if(sp) sp.oninput = ()=>recalcTargetLink('percent');
+  const sb = q('setBankroll'); if(sb) sb.oninput = ()=>recalcTargetLink('dollar');
+  
+  bindClick('applyYantraBtn', applyYantraSettings);
+  bindClick('saveLadderBtn', ()=>{ document.querySelectorAll('[data-ladder-index]').forEach(inp=>{ inp.value=normalizeLadderBet(inp.value); }); syncFirstLadderFromInputs(); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA SAVED','Editable ladder updated'); });
+  bindClick('exportLadderBtn', exportLadderCsv);
+  bindClick('loadLadderBtn', ()=>q('loadLadderFile').click());
+  const llf = q('loadLadderFile'); if(llf) llf.onchange = importLadderCsv;
+  bindClick('resetLadderBtn', ()=>{ state.ladder=buildLadder(state.settings); const hasRecordedRows = state.granth.some(k => Array.isArray(k.rows) && k.rows.length); if(hasRecordedRows) replayAllKumbhsWithCurrentSettings(); renderAll(); showToast('SOPANA RESET','Default ladder restored'); });
+  
+  document.addEventListener('input', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; refreshLinkedLadderCalculations(); });
+  document.addEventListener('keydown', e=>{ const el=e.target; if(!(el instanceof HTMLInputElement)) return; if(!el.matches('[data-ladder-index]')) return; if(e.key==='Enter'){ e.preventDefault(); const current=Number(el.dataset.ladderIndex); const next=document.querySelector(`[data-ladder-index="${current+1}"]`); if(next){ next.focus(); next.select(); } else { el.blur(); } } });
+  document.addEventListener('focusin', e=>{ const el=e.target; if(el instanceof HTMLInputElement && el.matches('[data-ladder-index]')) setTimeout(()=>el.select(),0); });
+  
+  // 🔥 FIX: Check if Drishti exports exist before binding so it doesn't crash the script
+  if (typeof exportDrishtiCsv === 'function') {
+      bindClick('exportCsvBtn', exportDrishtiCsv); 
+  } else {
+      bindClick('exportCsvBtn', () => showToast('INFO', 'Drishti CSV export not available', 'warn'));
+  }
+  
+  if (typeof exportDrishtiPdf === 'function') {
+      bindClick('exportPdfBtn', exportDrishtiPdf); 
+  } else {
+      bindClick('exportPdfBtn', () => showToast('INFO', 'PDF export not available', 'warn'));
+  }
+  
+  bindClick('loadCsvBtn', ()=>q('loadCsvFile').click()); 
+  const lcf = q('loadCsvFile'); if(lcf) lcf.onchange = importDrishtiCsv;
+  
+  // 🔥 NOW THESE WILL ACTUALLY FIRE
+  bindClick('exportGranthBtn', () => {
+    const fmt = q('granthExportFormat')?.value || 'json';
+    if (fmt === 'csv') exportGranthCsv();
+    else if (fmt === 'xlsx') exportGranthXlsx();
+    else exportGranthJson();
+  });
+
+  bindClick('importGranthBtn', () => q('importGranthFile').click());
+  const igf = q('importGranthFile');
+  if (igf) igf.onchange = importGranthJson;
+
+  bindClick('deleteGranthBtn', async () => {
+    const sel = q('deleteKumbhSelect');
+    const id = Number(sel?.value || 0);
+    
+    if (id) {
+      const ok = await askModal({ 
+        title: `DELETE RAID #${String(id).padStart(2, '0')}`, 
+        text: 'Remove this specific raid log?', 
+        okLabel: 'Delete', 
+        cancelLabel: 'Cancel',
+        okClass: 'warn'
+      });
+      if (!ok) return;
+      state.granth = state.granth.filter(k => k.id !== id).map((k, idx) => ({ ...k, id: idx + 1 }));
+      state.currentKumbhId = state.granth.at(-1)?.id || null;
+      renderAll(); 
+      showToast('LOG DELETED', 'Selected Raid Log removed');
+      return;
+    } 
+    
+    const ok = await askModal({ 
+      title: 'PURGE ALL HISTORY', 
+      text: 'This will permanently erase the entire Granth.', 
+      okLabel: 'Purge All', 
+      cancelLabel: 'Cancel',
+      okClass: 'warn'
+    });
+    if (!ok) return;
+    state.granth = [];
+    state.currentKumbhId = null;
+    renderAll();
+    showToast('GRANTH PURGED', 'All Raid history removed');
+  });
+  
+  if (typeof undoLast === 'function') {
+      bindClick('historyUndoBtn', undoLast);
+  }
+}
