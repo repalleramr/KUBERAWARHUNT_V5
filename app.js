@@ -729,15 +729,15 @@ function processDataImport(text) {
         } catch(e) { console.error(e); showToast('IMPORT FAILED', 'Invalid JSON structure', 'warn'); }
     } else {
         try {
-            const lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            const grid = parseCsvToGrid(trimmed);
             let startIndex = 0;
-            if(lines.length > 0 && (lines[0].toLowerCase().includes('kumbhid') || lines[0].toLowerCase().includes('chakra'))) {
+            if(grid.length > 0 && grid[0].length > 0 && (String(grid[0][0]).toLowerCase().includes('kumbhid') || String(grid[0][1]).toLowerCase().includes('chakra'))) {
                 startIndex = 1; 
             }
             
             const grouped = new Map();
-            for (let i = startIndex; i < lines.length; i++) {
-                const cols = lines[i].split(',').map(s => s.trim());
+            for (let i = startIndex; i < grid.length; i++) {
+                const cols = grid[i].map(s => String(s).trim());
                 if (cols.length < 3) continue;
                 
                 const rawKumbh = String(cols[0]).replace(/[^\d]/g, '');
@@ -754,13 +754,14 @@ function processDataImport(text) {
                 const kRaw = cols[5] ? String(cols[5]).replace(/[^\d]/g, '') : '';
                 
                 if(!target.rows.some(r => Number(r.chakra) === chakra)) {
+                    const parseArr = val => val && val !== '-' ? String(val).split(',').map(s=>s.trim()).filter(Boolean) : [];
                     target.rows.push({
                         chakra,
                         y: yRaw ? Number(yRaw) : '-',
                         k: kRaw ? Number(kRaw) : '-',
-                        cap: cols[8] ? cols[8].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
-                        ret: cols[9] ? cols[9].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
-                        np: cols[10] ? cols[10].replace(/"/g, '').split('|').map(s=>s.trim()).filter(Boolean) : [],
+                        cap: parseArr(cols[8]),
+                        ret: parseArr(cols[9]),
+                        np: parseArr(cols[10]),
                         ahuti: parseInt(String(cols[11]||'').replace(/[^\d-]/g, '')) || 0,
                         axyapatra: parseInt(String(cols[12]||'').replace(/[^\d-]/g, '')) || 0
                     });
