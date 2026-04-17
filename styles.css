@@ -43,8 +43,9 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 @keyframes fadeInTab { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ========================================================================
-   🔥 CLASSIC GAMING BOARD LAYOUT
+   🔥 CLASSIC GAMING BOARD LAYOUT (Matches Screenshot perfectly)
    ======================================================================== */
+
 .boards-compact {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -81,8 +82,6 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
     box-shadow: none !important;
     min-height: 230px;
 }
-
-.treasure-grid .zero { grid-column: 2; }
 
 /* 🔥 The Classic Gold Keys 🔥 */
 .treasure-grid .tile {
@@ -128,7 +127,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
     position: absolute;
     bottom: 3px;
     right: 5px;
-    background: transparent !important; 
+    background: transparent !important; /* Forces NO BOX */
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
@@ -136,6 +135,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
     font-weight: 900 !important;
     color: #FFFFFF !important;
     
+    /* Heavy black text-shadow creates a clean outline instead of a box */
     text-shadow: 
         -1.5px -1.5px 0 #000,  
          1.5px -1.5px 0 #000,
@@ -149,6 +149,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
     pointer-events: none;
 }
 
+/* T1, T2 colors (Text changes color, outline stays black) */
 .tile .meta.step1 { color: #40b46b !important; } 
 .tile .meta.step2 { color: #42b7c8 !important; } 
 .tile .meta.step3 { color: #4f83d3 !important; } 
@@ -167,6 +168,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 }
 @keyframes shufflePop { 0% { transform: scale(0.5) rotate(15deg); opacity: 0; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
 
+/* 🔥 WIN SCORE TEXT - NO BOXES! Pure floating text. */
 .decoy-score {
     font-size: 17px; font-weight: 900; color: #111 !important; 
     background: transparent !important; border: none !important; padding: 0 !important; 
@@ -175,15 +177,21 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 }
 @keyframes winPop { 0% { transform: scale(0.1) rotate(-10deg); } 50% { transform: scale(1.3) rotate(5deg); } 100% { transform: scale(1.1) rotate(0deg); } }
 
-/* Loot & Stun Keys */
+/* 🔥 GLOWING GOLD LOOT KEY 🔥 */
 .tile.state-L {
-    background: linear-gradient(145deg, #f6c66b, #d9853a) !important; border: 2px solid #FFF !important;
-    color: #000 !important; box-shadow: inset 0 0 15px rgba(255,255,255,0.8), 0 0 20px var(--gold) !important;
-    transform: scale(1.02); z-index: 5;
+    background: linear-gradient(145deg, #f6c66b, #d9853a) !important;
+    border: 2px solid #FFF !important;
+    color: #000 !important; 
+    box-shadow: inset 0 0 15px rgba(255,255,255,0.8), 0 0 20px var(--gold) !important;
+    transform: scale(1.02);
+    z-index: 5;
 }
+
+/* Stun Key Red Tone */
 .treasure-grid .tile.state-C {
     background: linear-gradient(145deg, rgba(139, 0, 0, 0.6), rgba(40, 10, 10, 0.9)) !important;
-    border: 1px solid #ff4d4d !important; box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.4), 0 5px 8px rgba(0,0,0,0.6) !important;
+    border: 1px solid #ff4d4d !important;
+    box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.4), 0 5px 8px rgba(0,0,0,0.6) !important;
 }
 
 .decoy-stun {
@@ -196,8 +204,13 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
     position: fixed; pointer-events: none; z-index: 9999; font-size: 32px;
     animation: explodeParticle 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
-@keyframes explodeParticle { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; } 80% { opacity: 1; } 100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.5) rotate(45deg); opacity: 0; } }
+@keyframes explodeParticle {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.5) rotate(45deg); opacity: 0; }
+}
 
+/* Stage Cleared Popup */
 .stage-popup {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
     background: radial-gradient(circle, rgba(255,215,0,0.95) 0%, rgba(255,140,0,0.95) 100%);
@@ -209,7 +222,12 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
     animation: popupAnim 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 .stage-popup span { font-size: 46px; display: block; margin-top: -5px; letter-spacing: 2px; }
-@keyframes popupAnim { 0% { transform: translate(-50%, -50%) scale(0.1) rotate(-15deg); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); opacity: 1; } 80% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } }
+@keyframes popupAnim {
+    0% { transform: translate(-50%, -50%) scale(0.1) rotate(-15deg); opacity: 0; }
+    15% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); opacity: 1; }
+    80% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
 
 /* ========================================================================
    🔥 SNOOKER BALL CSS (FOR ENCOUNTERS)
