@@ -277,8 +277,8 @@ function kumbhInsights(rows){
     processSide('Y', row.y, chakra, meta); processSide('K', row.k, chakra, meta); rowMeta.set(chakra, meta);
   }
   
-  const yStats = Object.entries(counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`<span class="pill">[${n}]: ${c}</span>`);
-  const kStats = Object.entries(counts.K).filter(([n])=>n!=='0').map(([n,c])=>`<span class="pill">[${n}]: ${c}</span>`);
+  const yStats = Object.entries(counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`<span class="pill">[${romanMap[Number(n)]}]: ${c}</span>`);
+  const kStats = Object.entries(counts.K).filter(([n])=>n!=='0').map(([n,c])=>`<span class="pill">[${romanMap[Number(n)]}]: ${c}</span>`);
   
   return { 
       rowMeta, counts, details, 
@@ -319,17 +319,17 @@ function undoLast(){ const prev=historyStack.pop(); if(!prev) return; redoStack.
 function redoLast(){ const next=redoStack.pop(); if(!next) return; historyStack.push(historySnapshot()); restoreSnapshot(next); renderAll(); showToast('TIMELINE RESTORED','Wave restored'); }
 function pushDrishti(rec){ if(!Array.isArray(state.drishti)) state.drishti = []; state.drishti.push(rec); }
 
-async function resolveNumber(side,num,notes,rowEvents){ 
-  const info=state.numbers[side][num]; 
-  if(info.status==='L'){ return; }
-  if(info.status==='C'){ const shouldReturn = await askCapReturnDecision(side,num); if(!shouldReturn) return; info.status='B'; info.ladder=2; info.step=1; info.pendingSecond=false; if(rowEvents) rowEvents.ret.push(`${side}${num}`); notes.push({title:'SUMMON REVIVED',text:`${num} back in battle`,kind:'warn'}); return; }
+// 🔥 SILENT CALCULATOR FUNCTIONS (CRITICAL FOR IMPORTS & SETTINGS) 🔥
+function resolveNumberSilent(side,num,rowEvents,shouldReturnFromCap=false){
+  const info=state.numbers[side][num];
+  if(!info || info.status==='L') return;
+  if(info.status==='C'){ if(!shouldReturnFromCap) return; info.status='B'; info.ladder=2; info.step=1; info.pendingSecond=false; if(rowEvents) rowEvents.ret.push(`${side}${num}`); return; }
   const mode = getAttackMode(); const threshold = attackThresholdForMode(mode);
   if(info.status==='I'){ if(threshold===1){ activateTrackedNumber(info); } else { info.status='W'; info.watchCount = 1; info.activeAt = null; info.prevLoss = 0; info.step = 0; info.ladder = 1; } return; }
   if(info.status==='W'){ info.watchCount = Number(info.watchCount||0) + 1; if(info.watchCount >= threshold){ activateTrackedNumber(info); } return; }
   const bet=currentBetFor(info); const totalReturn=bet*9; const net=(bet*8)-info.prevLoss;
   state.liveBankroll += totalReturn; info.winningBet=bet; info.lastNet=net; pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'LOOTED' });
   if(rowEvents) rowEvents.np.push(`${side}${num} ${net >= 0 ? '+' : ''}${net}`); info.status='L';
-  playSound('win'); spawnButtonParticles(side, num, 'win'); triggerStagePopup(vijayDarshanaDisplay(info).displayStep); notes.push({title:'LOOT SECURED', text:`${num} T${vijayDarshanaDisplay(info).displayStep} Magic : +${vijayDarshanaDisplay(info).displayNet} XP`}); 
 }
 function advanceAfterLossSilent(side,rowEvents,winningNum=null){
   for(let n=1;n<=9;n++){
@@ -344,6 +344,20 @@ function advanceAfterLossSilent(side,rowEvents,winningNum=null){
     } else { if(info.step>15) info.step=15; info.status='B'; }
   }
 }
+
+async function resolveNumber(side,num,notes,rowEvents){ 
+  const info=state.numbers[side][num]; 
+  if(info.status==='L'){ return; }
+  if(info.status==='C'){ const shouldReturn = await askCapReturnDecision(side,num); if(!shouldReturn) return; info.status='B'; info.ladder=2; info.step=1; info.pendingSecond=false; if(rowEvents) rowEvents.ret.push(`${side}${num}`); notes.push({title:'SUMMON REVIVED',text:`${num} back in battle`,kind:'warn'}); return; }
+  const mode = getAttackMode(); const threshold = attackThresholdForMode(mode);
+  if(info.status==='I'){ if(threshold===1){ activateTrackedNumber(info); } else { info.status='W'; info.watchCount = 1; info.activeAt = null; info.prevLoss = 0; info.step = 0; info.ladder = 1; } return; }
+  if(info.status==='W'){ info.watchCount = Number(info.watchCount||0) + 1; if(info.watchCount >= threshold){ activateTrackedNumber(info); } return; }
+  const bet=currentBetFor(info); const totalReturn=bet*9; const net=(bet*8)-info.prevLoss;
+  state.liveBankroll += totalReturn; info.winningBet=bet; info.lastNet=net; pushDrishti({ side, number:num, activationChakra:info.activeAt ?? state.currentChakra, winChakra:state.currentChakra, steps:info.step, prevLoss:info.prevLoss, winBet:bet, net, status:'LOOTED' });
+  if(rowEvents) rowEvents.np.push(`${side}${num} ${net >= 0 ? '+' : ''}${net}`); info.status='L';
+  playSound('win'); spawnButtonParticles(side, num, 'win'); triggerStagePopup(vijayDarshanaDisplay(info).displayStep); notes.push({title:'LOOT SECURED', text:`${num} T${vijayDarshanaDisplay(info).displayStep} Magic : +${vijayDarshanaDisplay(info).displayNet} XP`}); 
+}
+
 async function advanceAfterLoss(side,notes,rowEvents,winningNum=null){ 
   for(let n=1;n<=9;n++){ 
     if(winningNum!==null && Number(winningNum)===n) continue; 
@@ -374,7 +388,6 @@ async function processIndividual(side,num){ recordSnapshot(); state.currentChakr
   renderAll(); notes.forEach(n=>showToast(n.title,n.text,n.kind||'')); }
 function flashLockedKey(el){ if(!el) return; el.classList.add('key-locked-flash'); setTimeout(()=>el.classList.remove('key-locked-flash'), 220); }
 
-// 🔥 HANDLE DUMMY KEYS: GLOW + SHUFFLE SYMBOLS 🔥
 async function handleTap(side,num,el){
   initAudio(); 
   if(keypadBusy) return;
@@ -516,8 +529,14 @@ function xlsxCellRef(cIdx, rIdx) {
     while (c >= 0) { colStr = String.fromCharCode(65 + (c % 26)) + colStr; c = Math.floor(c / 26) - 1; }
     return `${colStr}${rIdx + 1}`;
 }
+function ladderCsvContent() {
+    let csv = 'Ladder,Step,Bet\n';
+    state.ladder.forEach((r, i) => { csv += `L1,${r.step},${r.bet}\n`; });
+    for (let i = 1; i <= Math.min(state.settings.maxSteps, 15); i++) { csv += `L2,T${i},${secondLadderBet(i)}\n`; }
+    return csv;
+}
 
-// 🔥 BULLETPROOF CSV PARSER THAT PROTECTS INTERNAL COMMAS 🔥
+// 🔥 BULLETPROOF CSV PARSER FOR EXPORTS & IMPORTS 🔥
 function parseCsvToGrid(text) {
     let p = '', row = [''], ret = [row], i = 0, r = 0, s = !0, l;
     for (let c of text) {
@@ -639,7 +658,7 @@ function buildSheetXml(rows){
 function buildXlsxWorkbook(kumbhs){
   const enc=new TextEncoder(); const files=[]; const add=(name,content)=>files.push({name,data:enc.encode(content)});
   
-  // FIX: Using robust parser so inner commas don't corrupt the XLSX file!
+  // 🔥 EXCEL BUILDER NOW USES THE SAFE PARSER TO PROTECT INTERNAL COMMAS
   const rawRows = parseCsvToGrid(granthCsvContent());
   const sheetEntries = (kumbhs||[]).length ? [...kumbhs, {name:'SystemData', rows: rawRows}] : [{name:'SystemData', rows:[['No data']]}];
   
@@ -731,7 +750,7 @@ function processDataImport(text) {
         } catch(e) { console.error(e); showToast('IMPORT FAILED', 'Invalid JSON structure', 'warn'); }
     } else {
         try {
-            // 🔥 FIXED: Parses quotes properly so internal commas don't break columns
+            // 🔥 ADVANCED PARSER FOR SAFE CSV DATA IMPORT
             const grid = parseCsvToGrid(trimmed);
             let startIndex = 0;
             if(grid.length > 0 && grid[0].length > 0 && (String(grid[0][0]).toLowerCase().includes('kumbhid') || String(grid[0][1]).toLowerCase().includes('chakra'))) {
@@ -740,7 +759,7 @@ function processDataImport(text) {
             
             const grouped = new Map();
             for (let i = startIndex; i < grid.length; i++) {
-                const cols = grid[i].map(s => String(s).trim());
+                const cols = grid[i].map(s => String(s).trim().replace(/^"|"$/g, ''));
                 if (cols.length < 3) continue;
                 
                 const rawKumbh = String(cols[0]||'').replace(/[^\d]/g, '');
@@ -757,7 +776,6 @@ function processDataImport(text) {
                 const kRaw = cols[5] ? String(cols[5]).replace(/[^\d]/g, '') : '';
                 
                 if(!target.rows.some(r => Number(r.chakra) === chakra)) {
-                    // Safe split only splits elements that were parsed correctly
                     const parseArr = val => val && val !== '-' ? String(val).split(',').map(s=>s.trim()).filter(Boolean) : [];
                     target.rows.push({
                         chakra,
@@ -784,13 +802,6 @@ function processDataImport(text) {
             showToast('IMPORT FAILED', 'Could not read CSV/XLSX data', 'warn'); 
         }
     }
-}
-
-function ladderCsvContent() {
-    let csv = 'Ladder,Step,Bet\n';
-    state.ladder.forEach((r, i) => { csv += `L1,${r.step},${r.bet}\n`; });
-    for (let i = 1; i <= Math.min(state.settings.maxSteps, 15); i++) { csv += `L2,T${i},${secondLadderBet(i)}\n`; }
-    return csv;
 }
 
 function setupControls() {
