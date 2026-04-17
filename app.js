@@ -181,12 +181,9 @@ function statusCode(info){
 }
 function vijayDarshanaDisplay(info){ const bet=currentBetFor(info); return { bet, displayStep:Math.max(1,(Number(info.step)||1)-1), displayNet:(bet*8)-(Number(info.prevLoss)||0) }; }
 
-// 🔥 RENDER BOARDS WITH DUMMY KEYS & WATERMARKS 🔥
 function renderBoards(){
   ['Y','K'].forEach(side=>{
     const host=q(side==='Y'?'boardY':'boardK'); if(!host) return; host.innerHTML='';
-    
-    // 🔥 DUMMY KEYS NOW INJECTED INTO THE GRID PROPERLY
     const layout = [1, 2, 3, 4, 5, 6, 7, 8, 9, 'D1', 0, 'D2'];
     
     layout.forEach(n => {
@@ -251,6 +248,7 @@ function renderSangram(){
 
 function formatRoundInfoEntries(entries){ return entries.length ? entries.join(', ') : '-'; }
 
+// 🔥 CRASH-PROOF EXCEL EXPORT CALCULATORS
 function sideStatsSummary(counts){ 
     const entries = Object.entries(counts).filter(([n])=>n!=='0'); 
     return { 
@@ -377,11 +375,21 @@ async function processIndividual(side,num){ recordSnapshot(); state.currentChakr
   renderAll(); notes.forEach(n=>showToast(n.title,n.text,n.kind||'')); }
 function flashLockedKey(el){ if(!el) return; el.classList.add('key-locked-flash'); setTimeout(()=>el.classList.remove('key-locked-flash'), 220); }
 
-// 🔥 HANDLE DUMMY KEYS 🔥
+// 🔥 HANDLE DUMMY KEYS: GLOW + SHUFFLE SYMBOLS 🔥
 async function handleTap(side,num,el){
   initAudio(); 
   if(keypadBusy) return;
-  if (num === 'D1' || num === 'D2') { glowKey(el); return; }
+
+  if (num === 'D1' || num === 'D2') { 
+      glowKey(el);
+      document.querySelectorAll('.decoy-symbol').forEach(node => {
+          node.textContent = puzzleSymbols[Math.floor(Math.random() * puzzleSymbols.length)];
+          node.style.animation = 'none';
+          void node.offsetWidth; 
+          node.style.animation = 'shufflePop 0.3s ease-out';
+      });
+      return; 
+  }
   
   const isLockedTap = num!==0 && state?.numbers?.[side]?.[num]?.status==='L';
   keypadBusy = true;
@@ -724,6 +732,35 @@ function buildXlsxWorkbook(kumbhs){
   });
   const centralSize=central.reduce((n,a)=>n+a.length,0); const end=[]; pushU32(end,0x06054b50); pushU16(end,0); pushU16(end,0); pushU16(end,files.length); pushU16(end,files.length); pushU32(end,centralSize); pushU32(end,offset); pushU16(end,0);
   return new Blob([...parts,...central,Uint8Array.from(end)], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+
+function granthWorkbookSheets(){
+  if (!Array.isArray(state.granth)) state.granth = [];
+  return state.granth.map(k=>{
+    const insight=kumbhInsights(k.rows||[]); const rows=[]; rows.push([`Kumbh #${String(k.id).padStart(2,'0')}`]); rows.push(['R','Y','K','YSel','YHit','KSel','KHit','Cap','Ret','NP','Ax']);
+    (k.rows||[]).forEach(r=>{
+      const meta=insight.rowMeta.get(Number(r.chakra)||0) || { ySelCode:'-', yHitCode:'-', kSelCode:'-', kHitCode:'-', capped:[], returned:[] };
+      rows.push([Number(r.chakra)||0, r.y ?? '-', r.k ?? '-', meta.ySelCode, meta.yHitCode, meta.kSelCode, meta.kHitCode, formatRoundInfoEntries(meta.capped), formatRoundInfoEntries(meta.returned), formatRoundInfoEntries(Array.isArray(r.np)?r.np:(r.np?[r.np]:[])), Number(r.axyapatra)||0]);
+    });
+    rows.push([]); rows.push(['Travel Details']); rows.push(['Side','Number','SelectedRound','HitRound','TravelSteps']);
+    const details=[...insight.details.Y, ...insight.details.K].sort((a,b)=>a.hitRound-b.hitRound);
+    if(details.length) details.forEach(d=>rows.push([d.side,d.number,d.selectedRound,d.hitRound,d.travelSteps])); else rows.push(['No completed travel yet']);
+    
+    rows.push([]); 
+    const yHot = insight?.yStats?.hot?.join(' | ') || '-';
+    const yCool = insight?.yStats?.cool?.join(' | ') || '-';
+    const kHot = insight?.kStats?.hot?.join(' | ') || '-';
+    const kCool = insight?.kStats?.cool?.join(' | ') || '-';
+    
+    rows.push(['Y Hot', yHot]); 
+    rows.push(['Y Cool', yCool]); 
+    rows.push(['Y Rpt', Object.entries(insight.counts.Y).filter(([n])=>n!=='0').map(([n,c])=>`${n}:${c}`).join(' | ') || '-']); 
+    rows.push(['K Hot', kHot]); 
+    rows.push(['K Cool', kCool]); 
+    rows.push(['K Rpt', Object.entries(insight.counts.K).filter(([n])=>n!=='0').map(([n,c])=>`${n}:${c}`).join(' | ') || '-']);
+    
+    return { name:`Kumbh_${String(k.id).padStart(2,'0')}`, rows };
+  });
 }
 
 function setupControls() {
