@@ -44,7 +44,7 @@ function triggerStagePopup(amount) {
     setTimeout(() => popup.remove(), 1800);
 }
 
-const defaultSettings = { bankroll: 0, targetDollar: 500, targetPercent: 1.67, stopLoss: 30000, min: 200, max: 3000, coin: 100, targetNum: 1000, doubleLadder: 'on', keypadMode: 'combined', maxSteps: 30, reserve: 20000, capRule: 'on', stopLossPerNumber: -100, attackMode: 'classic', theme: 'warhunt', vaultBg: 'bg-molten' };
+const defaultSettings = { bankroll: 0, targetDollar: 500, targetPercent: 1.67, stopLoss: 30000, min: 200, max: 3000, coin: 100, targetNum: 1000, doubleLadder: 'on', keypadMode: 'combined', maxSteps: 30, reserve: -100000, capRule: 'on', stopLossPerNumber: -100, attackMode: 'classic', theme: 'warhunt', vaultBg: 'bg-molten' };
 const titles = { sangram:'⚔ SANGRAM', vyuha:'🛡 VYUHA', granth:'📜 GRANTH', drishti:'👁 DRISHTI', sopana:'🪜 SOPANA', yantra:'⚙ YANTRA', medha:'🧠 MEDHA' };
 const themePalette = { warhunt: { themeColor:'#120a05' }, temple: { themeColor:'#2a1408' }, vault: { themeColor:'#0f1a12' }, oracle: { themeColor:'#0b1024' }, crimson: { themeColor:'#2a0a0d' }, onyx: { themeColor:'#0b0b0d' }, sapphire: { themeColor:'#07182d' }, emerald: { themeColor:'#071f17' }, moon: { themeColor:'#161526' }, thunder: { themeColor:'#10131f' } };
 
