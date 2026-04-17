@@ -43,7 +43,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
 @keyframes fadeInTab { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ========================================================================
-   🔥 CLASSIC GAMING BOARD LAYOUT (Matches Screenshot perfectly)
+   🔥 CLASSIC GAMING BOARD LAYOUT (3x4 Perfect Grid)
    ======================================================================== */
 
 .boards-compact {
@@ -83,6 +83,11 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
     min-height: 230px;
 }
 
+/* 🔥 PERFECT ZERO CENTERING RULE RESTORED 🔥 */
+.treasure-grid .zero { 
+    grid-column: 2; 
+}
+
 /* 🔥 The Classic Gold Keys 🔥 */
 .treasure-grid .tile {
     position: relative;
@@ -106,7 +111,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
     background: linear-gradient(145deg, var(--gold), var(--gold-soft)) !important;
 }
 
-/* 🔥 BACKGROUND WATERMARK NUMBERS (Instead of being hidden) 🔥 */
+/* 🔥 BACKGROUND WATERMARK NUMBERS 🔥 */
 .treasure-grid .tile .num { 
     display: block !important; 
     position: absolute;
@@ -115,8 +120,8 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
     transform: translate(-50%, -50%);
     font-size: 55px !important;
     font-weight: 900;
-    color: rgba(255, 255, 255, 0.18) !important; /* Huge, faint watermark */
-    z-index: 1; /* Sits completely behind the decoy symbols */
+    color: rgba(255, 255, 255, 0.18) !important; 
+    z-index: 1; 
     pointer-events: none;
 }
 
@@ -127,29 +132,25 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manip
     position: absolute;
     bottom: 3px;
     right: 5px;
-    background: transparent !important; /* Forces NO BOX */
+    background: transparent !important; 
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
     font-size: 14px !important; 
     font-weight: 900 !important;
     color: #FFFFFF !important;
-    
-    /* Heavy black text-shadow creates a clean outline instead of a box */
     text-shadow: 
         -1.5px -1.5px 0 #000,  
          1.5px -1.5px 0 #000,
         -1.5px  1.5px 0 #000,
          1.5px  1.5px 0 #000,
          0      2px   4px rgba(0,0,0,0.9) !important;
-         
     z-index: 10;
     text-align: right;
     opacity: 1 !important;
     pointer-events: none;
 }
 
-/* T1, T2 colors (Text changes color, outline stays black) */
 .tile .meta.step1 { color: #40b46b !important; } 
 .tile .meta.step2 { color: #42b7c8 !important; } 
 .tile .meta.step3 { color: #4f83d3 !important; } 
